@@ -17,8 +17,8 @@ public class RepoInfo {
 
     public enum Headers {
         RepoName,
-        LastCommitAuthor,
         LastCommitDate,
+        LastCommitAuthor,
         CoP,
         ContributorNames,
         Topics,
