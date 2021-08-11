@@ -23,7 +23,11 @@ public class RepoInfo {
         ContributorNames,
         Topics,
         ClonesInPast14Days,
-        ViewsInPast14Days
+        ViewsInPast14Days,
+        HasOwners,
+        HasCodeOwners,
+        HasWorkflows,
+        HasTravis
     }
 
     private final String repoName;
@@ -34,13 +38,21 @@ public class RepoInfo {
     private final List<String> topics;
     private final long clonesInPast14Days;
     private final long viewsInPast14Days;
+    private final boolean hasOwners;
+    private final boolean hasCodeOwners;
+    private final boolean hasWorkflows;
+    private final boolean hasTravis;
 
     public RepoInfo(String repoName,
                     GHCommit lastCommit,
                     List<GHRepository.Contributor> contributors,
                     List<String> topics,
                     GHRepositoryCloneTraffic cloneTraffic,
-                    GHRepositoryViewTraffic viewTraffic) throws IOException {
+                    GHRepositoryViewTraffic viewTraffic,
+                    boolean hasOwners,
+                    boolean hasCodeOwners,
+                    boolean hasWorkflows,
+                    boolean hasTravis) throws IOException {
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
         this.repoName = repoName;
@@ -51,6 +63,10 @@ public class RepoInfo {
         this.topics = topics;
         this.clonesInPast14Days = cloneTraffic == null ? 0 : cloneTraffic.getUniques();
         this.viewsInPast14Days = viewTraffic == null ? 0 : viewTraffic.getUniques();
+        this.hasOwners = hasOwners;
+        this.hasCodeOwners = hasCodeOwners;
+        this.hasWorkflows = hasWorkflows;
+        this.hasTravis = hasTravis;
     }
 
     public String getRepoName() {
@@ -85,9 +101,27 @@ public class RepoInfo {
         return viewsInPast14Days;
     }
 
+    public boolean isHasOwners() {
+        return hasOwners;
+    }
+
+    public boolean isHasCodeOwners() {
+        return hasCodeOwners;
+    }
+
+    public boolean isHasWorkflows() {
+        return hasWorkflows;
+    }
+
+    public boolean isHasTravis() {
+        return hasTravis;
+    }
+
     public List<String> toArray() {
         return Arrays.asList(getRepoName(), getLastCommitDate(), getLastCommitAuthor(), getCop(),
                 String.join(",", getContributorNames()), String.join(",", getTopics()),
-                String.valueOf(getClonesInPast14Days()), String.valueOf(getViewsInPast14Days()));
+                String.valueOf(getClonesInPast14Days()), String.valueOf(getViewsInPast14Days()),
+                String.valueOf(hasOwners), String.valueOf(hasCodeOwners),
+                String.valueOf(hasWorkflows), String.valueOf(hasTravis));
     }
 }
