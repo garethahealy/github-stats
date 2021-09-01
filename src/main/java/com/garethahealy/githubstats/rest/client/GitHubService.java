@@ -2,26 +2,30 @@ package com.garethahealy.githubstats.rest.client;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.garethahealy.githubstats.model.RepoInfo;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.kohsuke.github.GHCommit;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHException;
 import org.kohsuke.github.GHFileNotFoundException;
+import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHRepositoryCloneTraffic;
 import org.kohsuke.github.GHRepositoryViewTraffic;
@@ -50,22 +54,35 @@ public class GitHubService {
 
         logger.info("Found {} repos.", repos.size());
 
+        logger.info("Downloading org/config.yaml");
+
+        GHRepository coreOrg = org.getRepository("org");
+        GHContent orgConfig = coreOrg.getFileContent("config.yaml");
+        File outputFile = new File("target/core-config.yaml");
+        FileUtils.copyInputStreamToFile(orgConfig.read(), outputFile);
+        String configContent = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+
         LocalDateTime started = LocalDateTime.now();
-        try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get("target/github-output.csv")), CSVFormat.DEFAULT.withHeader(RepoInfo.Headers.class))) {
+        try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(outputFile.toPath()), CSVFormat.DEFAULT.withHeader(RepoInfo.Headers.class))) {
             for (Map.Entry<String, GHRepository> current : repos.entrySet()) {
                 logger.info("Working on: {}", current.getValue().getName());
 
                 GHRepository repo = current.getValue();
                 String repoName = repo.getName();
                 List<GHRepository.Contributor> contributors = repo.listContributors().toList();
+                List<GHCommit> commits = null;
+                List<GHIssue> issues = repo.listIssues(GHIssueState.OPEN).toList();
+                List<GHPullRequest> pullRequests = repo.listPullRequests(GHIssueState.OPEN).toList();
                 List<String> topics = repo.listTopics();
                 GHCommit lastCommit = null;
                 GHRepositoryCloneTraffic cloneTraffic = null;
                 GHRepositoryViewTraffic viewTraffic = null;
+                boolean inConfig = configContent.contains(repoName);
 
                 try {
-                    lastCommit = repo.listCommits().iterator().next();
-                } catch (GHException ex) {
+                    commits = repo.listCommits().toList();
+                    lastCommit = commits.get(0);
+                } catch (GHException | GHFileNotFoundException ex) {
                     //ignore - has no commits
                 }
 
@@ -109,7 +126,9 @@ public class GitHubService {
                     //ignore - file doesnt exist
                 }
 
-                RepoInfo repoInfo = new RepoInfo(repoName, lastCommit, contributors, topics, cloneTraffic, viewTraffic, hasOwners, hasCodeOwners, hasWorkflows, hasTravis);
+                RepoInfo repoInfo = new RepoInfo(repoName, lastCommit, contributors, commits, issues, pullRequests,
+                        topics, cloneTraffic, viewTraffic, hasOwners, hasCodeOwners, hasWorkflows, hasTravis, inConfig);
+
                 answer.add(repoInfo);
 
                 csvPrinter.printRecord(repoInfo.toArray());
