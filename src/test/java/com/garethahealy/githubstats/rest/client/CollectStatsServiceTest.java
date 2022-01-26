@@ -7,11 +7,11 @@ import com.garethahealy.githubstats.model.RepoInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class GitHubServiceTest {
+class CollectStatsServiceTest {
 
     @Test
     public void canRun() throws IOException {
-        GitHubService service = new GitHubService();
+        CollectStatsService service = new CollectStatsService();
         List<RepoInfo> answer = service.run();
 
         Assertions.assertNotNull(answer);

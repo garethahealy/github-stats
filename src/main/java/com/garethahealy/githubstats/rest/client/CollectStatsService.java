@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,9 +32,9 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.github.extras.okhttp3.OkHttpConnector;
 
-public class GitHubService {
+public class CollectStatsService {
 
-    private static final Logger logger = LogManager.getLogger(GitHubService.class);
+    private static final Logger logger = LogManager.getLogger(CollectStatsService.class);
 
     public List<RepoInfo> run() throws IOException {
         logger.info("Starting...");
