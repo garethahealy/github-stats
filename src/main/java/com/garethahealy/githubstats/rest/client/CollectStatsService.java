@@ -56,6 +56,11 @@ public class CollectStatsService {
         }
 
         logger.info("Connector with cache created.");
+        logger.info("RateLimit: limit {}, remaining {}, resetDate {}", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
+
+        if (gitHub.getRateLimit().getRemaining() == 0) {
+            throw new IllegalStateException("RateLimit - is zero, you need to wait until the reset date");
+        }
 
         GHOrganization org = gitHub.getOrganization("redhat-cop");
 
@@ -72,8 +77,9 @@ public class CollectStatsService {
             Map<String, GHRepository> repos = org.getRepositories();
             logger.info("Found {} repos.", repos.size());
 
+            int i = 1;
             for (Map.Entry<String, GHRepository> current : repos.entrySet()) {
-                logger.info("Working on: {}", current.getValue().getName());
+                logger.info("Working on: {} - {} / {}", current.getValue().getName(), i, repos.size());
 
                 GHRepository repo = current.getValue();
                 String repoName = repo.getName();
@@ -162,6 +168,8 @@ public class CollectStatsService {
                 }
 
                 logger.info("-> DONE");
+
+                i++;
             }
         }
 

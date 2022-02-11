@@ -36,6 +36,11 @@ public class CreateWhoAreYouIssueService {
         }
 
         logger.info("Connector with cache created.");
+        logger.info("RateLimit: limit {}, remaining {}, resetDate {}", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
+
+        if (gitHub.getRateLimit().getRemaining() == 0) {
+            throw new IllegalStateException("RateLimit - is zero, you need to wait until the reset date");
+        }
 
         GHOrganization org = gitHub.getOrganization("redhat-cop");
         GHRepository orgRepo = org.getRepository("org");
