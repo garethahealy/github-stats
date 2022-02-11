@@ -2,10 +2,8 @@ package com.garethahealy.githubstats.rest.client;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import com.garethahealy.githubstats.model.RepoInfo;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import org.apache.logging.log4j.LogManager;
@@ -15,7 +13,7 @@ import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
-import org.kohsuke.github.extras.okhttp3.OkHttpConnector;
+import org.kohsuke.github.extras.okhttp3.OkHttpGitHubConnector;
 
 public class CreateWhoAreYouIssueService {
 
@@ -24,12 +22,18 @@ public class CreateWhoAreYouIssueService {
     public void run() throws IOException {
         logger.info("Starting...");
 
-        List<RepoInfo> answer = new ArrayList<>();
-
         Cache cache = new Cache(new File("/tmp/github-okhttp"), 10 * 1024 * 1024); // 10MB cache
         GitHub gitHub = GitHubBuilder.fromEnvironment()
-                .withConnector(new OkHttpConnector(new OkHttpClient.Builder().cache(cache).build()))
+                .withConnector(new OkHttpGitHubConnector(new OkHttpClient.Builder().cache(cache).build()))
                 .build();
+
+        if (!gitHub.isCredentialValid()) {
+            throw new IllegalStateException("isCredentialValid - are GITHUB_LOGIN / GITHUB_OAUTH valid?");
+        }
+
+        if (gitHub.isAnonymous()) {
+            throw new IllegalStateException("isAnonymous - have you set GITHUB_LOGIN / GITHUB_OAUTH ?");
+        }
 
         logger.info("Connector with cache created.");
 

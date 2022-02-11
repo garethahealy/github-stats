@@ -13,9 +13,16 @@
         </File>
     </Appenders>
     <Loggers>
+        <!--
+        <Logger name="org.kohsuke.github" level="TRACE">
+            <AppenderRef ref="STDOUT"/>
+            <AppenderRef ref="FILE"/>
+        </Logger>
+        -->
         <Root level="INFO">
             <AppenderRef ref="STDOUT"/>
             <AppenderRef ref="FILE"/>
         </Root>
     </Loggers>
 </Configuration>
+

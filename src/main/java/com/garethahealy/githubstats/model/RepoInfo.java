@@ -31,7 +31,8 @@ public class RepoInfo {
         HasCodeOwners,
         HasWorkflows,
         HasTravis,
-        InConfig
+        InConfig,
+        IsArchived
     }
 
     private final String repoName;
@@ -50,6 +51,7 @@ public class RepoInfo {
     private final boolean hasWorkflows;
     private final boolean hasTravis;
     private final boolean inConfig;
+    private final boolean isArchived;
 
     public RepoInfo(String repoName,
                     GHCommit lastCommit,
@@ -64,7 +66,8 @@ public class RepoInfo {
                     boolean hasCodeOwners,
                     boolean hasWorkflows,
                     boolean hasTravis,
-                    boolean inConfig) throws IOException {
+                    boolean inConfig,
+                    boolean isArchived) throws IOException {
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
         this.repoName = repoName;
@@ -83,6 +86,7 @@ public class RepoInfo {
         this.hasWorkflows = hasWorkflows;
         this.hasTravis = hasTravis;
         this.inConfig = inConfig;
+        this.isArchived = isArchived;
     }
 
     public String getRepoName() {
@@ -149,6 +153,10 @@ public class RepoInfo {
         return inConfig;
     }
 
+    public boolean isArchived() {
+        return isArchived;
+    }
+
     public List<String> toArray() {
         return Arrays.asList(repoName, cop, lastCommitDate, lastCommitAuthor,
                 String.valueOf(contributorCount), String.valueOf(commitCount), String.valueOf(openIssueCount),
@@ -156,6 +164,6 @@ public class RepoInfo {
                 String.valueOf(clonesInPast14Days), String.valueOf(viewsInPast14Days),
                 String.valueOf(hasOwners), String.valueOf(hasCodeOwners),
                 String.valueOf(hasWorkflows), String.valueOf(hasTravis),
-                String.valueOf(inConfig));
+                String.valueOf(inConfig), String.valueOf(isArchived));
     }
 }
