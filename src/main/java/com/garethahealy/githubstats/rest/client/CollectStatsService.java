@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,7 @@ public class CollectStatsService {
         FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
         String configContent = FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
 
-        LocalDateTime started = LocalDateTime.now();
+        LocalDateTime flushAt = LocalDateTime.now();
         try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get("target/github-output.csv")), CSVFormat.DEFAULT.withHeader(RepoInfo.Headers.class))) {
             Map<String, GHRepository> repos = org.getRepositories();
             logger.info("Found {} repos.", repos.size());
@@ -162,16 +163,21 @@ public class CollectStatsService {
 
                 csvPrinter.printRecord(repoInfo.toArray());
 
-                if (started.getMinute() != LocalDateTime.now().getMinute()) {
-                    started = LocalDateTime.now();
-                    csvPrinter.flush();
-                }
-
                 logger.info("-> DONE");
+
+                if (Duration.between(flushAt, LocalDateTime.now()).getSeconds() > 60) {
+                    flushAt = LocalDateTime.now();
+                    csvPrinter.flush();
+
+                    logger.info("RateLimit: limit {}, remaining {}, resetDate {}", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
+                }
 
                 i++;
             }
         }
+
+        logger.info("Finished.");
+        logger.info("RateLimit: limit {}, remaining {}, resetDate {}", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
 
         return answer;
     }
