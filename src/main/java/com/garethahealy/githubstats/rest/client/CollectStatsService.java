@@ -1,5 +1,14 @@
 package com.garethahealy.githubstats.rest.client;
 
+import com.garethahealy.githubstats.model.RepoInfo;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.io.FileUtils;
+import org.jboss.logging.Logger;
+import org.kohsuke.github.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -11,153 +20,121 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.garethahealy.githubstats.model.RepoInfo;
-import okhttp3.Cache;
-import okhttp3.OkHttpClient;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.kohsuke.github.GHCommit;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHException;
-import org.kohsuke.github.GHFileNotFoundException;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHRepositoryCloneTraffic;
-import org.kohsuke.github.GHRepositoryViewTraffic;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
-import org.kohsuke.github.extras.okhttp3.OkHttpGitHubConnector;
+@ApplicationScoped
+public class CollectStatsService extends BaseGitHubService {
 
-public class CollectStatsService {
+    @Inject
+    Logger logger;
 
-    private static final Logger logger = LogManager.getLogger(CollectStatsService.class);
-
-    public List<RepoInfo> run() throws IOException {
-        logger.info("Starting...");
-
+    public List<RepoInfo> run(String organization, boolean validateOrgConfig, String output) throws IOException {
         List<RepoInfo> answer = new ArrayList<>();
 
-        Cache cache = new Cache(new File("/tmp/github-okhttp"), 10 * 1024 * 1024); // 10MB cache
-        GitHub gitHub = GitHubBuilder.fromEnvironment()
-                .withConnector(new OkHttpGitHubConnector(new OkHttpClient.Builder().cache(cache).build()))
-                .build();
+        GitHub gitHub = getGitHub();
+        GHOrganization org = gitHub.getOrganization(organization);
 
-        if (!gitHub.isCredentialValid()) {
-            throw new IllegalStateException("isCredentialValid - are GITHUB_LOGIN / GITHUB_OAUTH valid?");
-        }
+        String configContent = validateOrgConfig ? getOrgConfigYaml(org) : "";
 
-        if (gitHub.isAnonymous()) {
-            throw new IllegalStateException("isAnonymous - have you set GITHUB_LOGIN / GITHUB_OAUTH ?");
-        }
-
-        logger.info("Connector with cache created.");
-        logger.info("RateLimit: limit {}, remaining {}, resetDate {}", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
-
-        if (gitHub.getRateLimit().getRemaining() == 0) {
-            throw new IllegalStateException("RateLimit - is zero, you need to wait until the reset date");
-        }
-
-        GHOrganization org = gitHub.getOrganization("redhat-cop");
-
-        logger.info("Downloading org/config.yaml");
-
-        GHRepository coreOrg = org.getRepository("org");
-        GHContent orgConfig = coreOrg.getFileContent("config.yaml");
-        File configOutputFile = new File("target/core-config.yaml");
-        FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
-        String configContent = FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
-
+        CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader((RepoInfo.Headers.class)).build();
         LocalDateTime flushAt = LocalDateTime.now();
-        try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get("target/github-output.csv")), CSVFormat.DEFAULT.withHeader(RepoInfo.Headers.class))) {
+        try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output)), csvFormat)) {
             Map<String, GHRepository> repos = org.getRepositories();
-            logger.info("Found {} repos.", repos.size());
+            logger.infof("Found %s repos.", repos.size());
 
             int i = 1;
             for (Map.Entry<String, GHRepository> current : repos.entrySet()) {
-                logger.info("Working on: {} - {} / {}", current.getValue().getName(), i, repos.size());
+                logger.infof("Working on: %s - %s / %s", current.getValue().getName(), i, repos.size());
 
                 GHRepository repo = current.getValue();
                 String repoName = repo.getName();
 
-                logger.info("-> listContributors");
-                List<GHRepository.Contributor> contributors = repo.listContributors().toList();
+                List<GHRepository.Contributor> contributors = null;
                 List<GHCommit> commits = null;
-
-                logger.info("-> listIssues");
-                List<GHIssue> issues = repo.getIssues(GHIssueState.OPEN);
-
-                logger.info("-> listPullRequests");
-                List<GHPullRequest> pullRequests = repo.getPullRequests(GHIssueState.OPEN);
-
-                logger.info("-> listTopics");
-                List<String> topics = repo.listTopics();
+                List<GHIssue> issues = null;
+                List<GHPullRequest> pullRequests = null;
+                List<String> topics = new ArrayList<>();
                 GHCommit lastCommit = null;
                 GHRepositoryCloneTraffic cloneTraffic = null;
                 GHRepositoryViewTraffic viewTraffic = null;
                 boolean inConfig = configContent.contains(repoName);
                 boolean isArchived = repo.isArchived();
-
-                try {
-                    logger.info("-> listCommits");
-                    commits = repo.listCommits().toList();
-                    lastCommit = commits.get(0);
-                } catch (GHException | IOException ex) {
-                    //ignore - has no commits
-                }
-
-                try {
-                    logger.info("-> Traffic");
-                    cloneTraffic = repo.getCloneTraffic();
-                    viewTraffic = repo.getViewTraffic();
-                } catch (GHException | GHFileNotFoundException ex) {
-                    //ignore - token doesnt have access to this repo to get traffic
-                }
-
                 boolean hasOwners = false;
                 boolean hasCodeOwners = false;
                 boolean hasWorkflows = false;
                 boolean hasTravis = false;
+                boolean hasRenovate = false;
 
-                try {
-                    logger.info("-> OWNERS");
-                    GHContent owners = repo.getFileContent("OWNERS");
-                    hasOwners = owners != null && owners.isFile();
-                } catch (GHFileNotFoundException ex) {
-                    //ignore - file doesnt exist
-                }
+                if (!isArchived) {
+                    logger.info("-> listContributors");
+                    contributors = repo.listContributors().toList();
 
-                try {
-                    logger.info("-> CODEOWNERS");
-                    GHContent codeowners = repo.getFileContent("CODEOWNERS");
-                    hasCodeOwners = codeowners != null && codeowners.isFile();
-                } catch (GHFileNotFoundException ex) {
-                    //ignore - file doesnt exist
-                }
+                    logger.info("-> listIssues");
+                    issues = repo.getIssues(GHIssueState.OPEN);
 
-                try {
-                    logger.info("-> .github/workflows");
-                    List<GHContent> workflows = repo.getDirectoryContent(".github/workflows");
-                    hasWorkflows = workflows != null && workflows.size() > 0;
-                } catch (GHFileNotFoundException ex) {
-                    //ignore - file doesnt exist
-                }
+                    logger.info("-> listPullRequests");
+                    pullRequests = repo.getPullRequests(GHIssueState.OPEN);
 
-                try {
-                    logger.info("-> .travis.yml");
-                    GHContent travis = repo.getFileContent(".travis.yml");
-                    hasTravis = travis != null && travis.isFile();
-                } catch (GHFileNotFoundException ex) {
-                    //ignore - file doesnt exist
+                    logger.info("-> listTopics");
+                    topics = repo.listTopics();
+
+                    try {
+                        logger.info("-> listCommits");
+                        commits = repo.listCommits().toList();
+                        lastCommit = commits.get(0);
+                    } catch (GHException | IOException ex) {
+                        //ignore - has no commits
+                    }
+
+                    try {
+                        logger.info("-> Traffic");
+                        cloneTraffic = repo.getCloneTraffic();
+                        viewTraffic = repo.getViewTraffic();
+                    } catch (GHException | GHFileNotFoundException ex) {
+                        //ignore - token doesn't have access to this repo to get traffic
+                    }
+
+                    try {
+                        logger.info("-> OWNERS");
+                        GHContent owners = repo.getFileContent("OWNERS");
+                        hasOwners = owners != null && owners.isFile();
+                    } catch (GHFileNotFoundException ex) {
+                        //ignore - file doesn't exist
+                    }
+
+                    try {
+                        logger.info("-> CODEOWNERS");
+                        GHContent codeowners = repo.getFileContent("CODEOWNERS");
+                        hasCodeOwners = codeowners != null && codeowners.isFile();
+                    } catch (GHFileNotFoundException ex) {
+                        //ignore - file doesn't exist
+                    }
+
+                    try {
+                        logger.info("-> .github/workflows");
+                        List<GHContent> workflows = repo.getDirectoryContent(".github/workflows");
+                        hasWorkflows = workflows != null && !workflows.isEmpty();
+                    } catch (GHFileNotFoundException ex) {
+                        //ignore - file doesn't exist
+                    }
+
+                    try {
+                        logger.info("-> .travis.yml");
+                        GHContent travis = repo.getFileContent(".travis.yml");
+                        hasTravis = travis != null && travis.isFile();
+                    } catch (GHFileNotFoundException ex) {
+                        //ignore - file doesn't exist
+                    }
+
+                    try {
+                        logger.info("-> renovate.json");
+                        GHContent renovate = repo.getFileContent("renovate.json");
+                        hasRenovate = renovate != null && renovate.isFile();
+                    } catch (GHFileNotFoundException ex) {
+                        //ignore - file doesn't exist
+                    }
                 }
 
                 RepoInfo repoInfo = new RepoInfo(repoName, lastCommit, contributors, commits, issues, pullRequests,
-                        topics, cloneTraffic, viewTraffic, hasOwners, hasCodeOwners, hasWorkflows, hasTravis, inConfig, isArchived);
+                        topics, cloneTraffic, viewTraffic, hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived);
 
                 answer.add(repoInfo);
 
@@ -169,7 +146,7 @@ public class CollectStatsService {
                     flushAt = LocalDateTime.now();
                     csvPrinter.flush();
 
-                    logger.info("RateLimit: limit {}, remaining {}, resetDate {}", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
+                    logger.infof("RateLimit: limit %s, remaining %s, resetDate %s", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
                 }
 
                 i++;
@@ -177,8 +154,19 @@ public class CollectStatsService {
         }
 
         logger.info("Finished.");
-        logger.info("RateLimit: limit {}, remaining {}, resetDate {}", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
+        logger.infof("RateLimit: limit %s, remaining %s, resetDate %s", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
 
         return answer;
+    }
+
+    private String getOrgConfigYaml(GHOrganization org) throws IOException {
+        logger.info("Downloading org/config.yaml");
+
+        GHRepository coreOrg = org.getRepository("org");
+        GHContent orgConfig = coreOrg.getFileContent("config.yaml");
+        File configOutputFile = new File("target/core-config.yaml");
+        FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
+
+        return FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
     }
 }

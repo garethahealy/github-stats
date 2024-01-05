@@ -1,16 +1,7 @@
 package com.garethahealy.githubstats.rest.client;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import okhttp3.Cache;
-import okhttp3.OkHttpClient;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
@@ -21,57 +12,38 @@ import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.directory.ldap.client.api.exception.InvalidConnectionException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.kohsuke.github.GHIssueBuilder;
-import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
-import org.kohsuke.github.extras.okhttp3.OkHttpGitHubConnector;
+import org.jboss.logging.Logger;
+import org.kohsuke.github.*;
 
-public class CreateWhoAreYouIssueService {
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-    private static final Logger logger = LogManager.getLogger(CreateWhoAreYouIssueService.class);
-    private final boolean isDryRun = true;
+@ApplicationScoped
+public class CreateWhoAreYouIssueService extends BaseGitHubService {
 
-    public void run() throws IOException, LdapException {
-        logger.info("Starting...");
+    @Inject
+    Logger logger;
 
-        Cache cache = new Cache(new File("/tmp/github-okhttp"), 10 * 1024 * 1024); // 10MB cache
-        GitHub gitHub = GitHubBuilder.fromEnvironment()
-                .withConnector(new OkHttpGitHubConnector(new OkHttpClient.Builder().cache(cache).build()))
-                .build();
+    public void run(String organization, String orgRepoName, boolean isDryRun) throws IOException, LdapException {
+        GitHub gitHub = getGitHub();
+        GHOrganization org = gitHub.getOrganization(organization);
 
-        if (!gitHub.isCredentialValid()) {
-            throw new IllegalStateException("isCredentialValid - are GITHUB_LOGIN / GITHUB_OAUTH valid?");
-        }
-
-        if (gitHub.isAnonymous()) {
-            throw new IllegalStateException("isAnonymous - have you set GITHUB_LOGIN / GITHUB_OAUTH ?");
-        }
-
-        logger.info("Connector with cache created.");
-        logger.info("RateLimit: limit {}, remaining {}, resetDate {}", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
-
-        if (gitHub.getRateLimit().getRemaining() == 0) {
-            throw new IllegalStateException("RateLimit - is zero, you need to wait until the reset date");
-        }
-
-        GHOrganization org = gitHub.getOrganization("redhat-cop");
-        GHRepository orgRepo = org.getRepository("org");
+        GHRepository orgRepo = org.getRepository(orgRepoName);
         List<GHUser> members = org.listMembers().toList();
-
-        logger.info("There are {} members", members.size());
 
         Set<String> usernamesToIgnore = getUsernamesToIgnore();
 
-        logger.info("There are {} members we already have emails for who will be ignored", usernamesToIgnore.size());
+        logger.infof("There are %s members", members.size());
+        logger.infof("There are %s members we already have emails for who will be ignored", usernamesToIgnore.size());
 
         for (GHUser current : members) {
             if (usernamesToIgnore.contains(current.getLogin())) {
-                logger.info("Ignoring: {}", current.getLogin());
+                logger.infof("Ignoring: %s", current.getLogin());
             } else {
                 GHIssueBuilder builder = orgRepo.createIssue("@" + current.getLogin() + " please complete form")
                         .assignee(current)
@@ -83,11 +55,11 @@ public class CreateWhoAreYouIssueService {
                                 "https://red.ht/github-redhat-cop-username");
 
                 if (isDryRun) {
-                    logger.info("DRY-RUN: Would have created issue for {}", current.getLogin());
+                    logger.infof("DRY-RUN: Would have created issue for %s", current.getLogin());
                 } else {
                     builder.create();
 
-                    logger.info("Created issue for {}", current.getLogin());
+                    logger.infof("Created issue for %s", current.getLogin());
                 }
             }
         }
@@ -97,7 +69,7 @@ public class CreateWhoAreYouIssueService {
         Set<String> membersLogins = getMembersLogins(members);
         for (String current : usernamesToIgnore) {
             if (!membersLogins.contains(current)) {
-                logger.info("Have a google form response but they are not part the git hub org anymore for {}", current);
+                logger.infof("Have a google form response but they are not part the git hub org anymore for %s", current);
             }
         }
 
@@ -116,7 +88,7 @@ public class CreateWhoAreYouIssueService {
                     }
 
                     if (!found) {
-                        logger.info("Did not find {} in ldap", uid);
+                        logger.infof("Did not find %s in ldap", uid);
                     }
                 }
             }
