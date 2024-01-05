@@ -1,0 +1,116 @@
+name: "Build, Analyze and Test"
+
+on: [push, pull_request]
+
+# Declare default permissions as read only.
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4
+        with:
+          distribution: "temurin"
+          java-version: 21
+
+      - uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven
+          restore-keys: |
+            ${{ runner.os }}-maven
+
+      - name: Build
+        run: ./mvnw clean install --batch-mode
+
+      - name: Build native
+        run: ./mvnw clean install -Pnative --batch-mode
+
+      - name: Run help
+        run: target/github-stats-*-runner help
+
+      - name: Upload target
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
+        with:
+          name: target
+          path: target/
+          if-no-files-found: error
+
+      - name: Get image tags
+        id: image_tags
+        uses: redhat-cop/github-actions/get-image-version@main
+        with:
+          IMAGE_CONTEXT_DIR: src/main/docker
+
+      - name: Build image
+        uses: redhat-actions/buildah-build@b4dc19b4ba891854660ab1f88a097d45aa158f76 # v2
+        with:
+          dockerfiles: src/main/docker/Dockerfile.native-micro
+          image: github-stats
+          oci: true
+          tags: "${{ steps.image_tags.outputs.IMAGE_TAGS }}"
+
+  analyze:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4
+        with:
+          distribution: "temurin"
+          java-version: 21
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@012739e5082ff0c22ca6d6ab32e07c36df03c4a4 # v3
+        with:
+          languages: java
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@012739e5082ff0c22ca6d6ab32e07c36df03c4a4 # v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@012739e5082ff0c22ca6d6ab32e07c36df03c4a4 # v3
+        with:
+          category: "/language:java"
+
+  test:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Download target
+        uses: actions/download-artifact@f44cd7b40bfd40b6aa1cc1b9b5b7bf03d3c67110 # v4
+        with:
+          name: target
+
+      - name: Make github-stats-*-runner executable
+        run: chmod +x github-stats-*-runner
+
+      - name: Run collect-stats for UKI
+        env:
+          GITHUB_LOGIN: ${{ github.repository_owner }}
+          GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
+        run: ./github-stats-*-runner collect-stats --organization=RedHat-Consulting-UK
+
+      - name: Upload github-output.csv
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
+        with:
+          name: github-output.csv
+          path: github-output.csv
+          if-no-files-found: error
+
+      - name: Run create-who-are-you-issues for UKI
+        env:
+          GITHUB_LOGIN: ${{ github.repository_owner }}
+          GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
+        run: ./github-stats-*-runner create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --members-csv=tests/members.csv --fail-if-no-vpn=false

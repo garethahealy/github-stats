@@ -1,31 +1,39 @@
 # github-stats
-Generates a CSV for a Git Hub org
+CLI to generate stats and issues for a GitHub org.
 
-# CollectStatsService
-## Run
-As this is a simple mvn project, just:
+## Build
+Both JVM and Native mode are supported.
+
+```bash
+./mvnw clean install
+./mvnw clean install -Pnative
+```
+
+## GitHub Auth
+Read permissions are required for the OAuth PAT.
+
 ```
 export GITHUB_LOGIN=replace
 export GITHUB_OAUTH=replace
-mvn clean install -Dtest=CollectStatsServiceTest
 ```
 
-Once the build is complete, you can view the CSV:
+## APIs
+Once you've built the code, you can execute by...
+
+### CollectStatsService
+```
+./target/github-stats-1.0.0-SNAPSHOT-runner collect-stats --organization={your-org}
+```
+
+Once the binary is complete, you can view the CSV:
+
+```bash
+open github-output.csv
+```
+
+### CreateWhoAreYouIssueService
+`--members-csv` is a list of known members that have validated their GitHub ID against their RH ID. See: `tests/members.csv` as an example.
 
 ```
-ls -lh target/github-output.csv
-open target/github-output.csv
-```
-
-# CreateWhoAreYouIssueService
-## Download Responses
-The current form responses can be excluded from the issue creation by downloading and putting in the root directory:
-- GitHub Red Hat CoP Members (Responses) - Form Responses 1.csv
-
-## Run
-As this is a simple mvn project, just:
-```
-export GITHUB_LOGIN=replace
-export GITHUB_OAUTH=replace
-mvn clean install -Dtest=CreateWhoAreYouIssueServiceTest
+./target/github-stats-1.0.0-SNAPSHOT-runner create-who-are-you-issues --dry-run=true --organization={your-org} --issue-repo={a-repo-in-that-org} --members-csv={list-of-known-members} --fail-if-no-vpn=false
 ```
