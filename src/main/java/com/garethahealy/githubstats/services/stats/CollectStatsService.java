@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.services.stats;
 
-import com.garethahealy.githubstats.model.RepoInfo;
+import com.garethahealy.githubstats.model.csv.Repository;
 import com.garethahealy.githubstats.services.GitHubService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -47,13 +47,13 @@ public class CollectStatsService {
         logger.infof("Found %s repos.", repos.size());
 
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
-                .setHeader((RepoInfo.Headers.class))
+                .setHeader((Repository.Headers.class))
                 .build();
 
         int cores = Runtime.getRuntime().availableProcessors() * 2;
         try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output)), csvFormat)) {
             try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-                List<Future<RepoInfo>> futures = new ArrayList<>();
+                List<Future<Repository>> futures = new ArrayList<>();
                 for (Map.Entry<String, GHRepository> current : repos.entrySet()) {
                     futures.add(executor.submit(() -> {
                         logger.infof("Working on: %s", current.getValue().getName());
@@ -61,16 +61,16 @@ public class CollectStatsService {
                         GHRepository repo = current.getValue();
                         String repoName = repo.getName();
                         boolean isArchived = repo.isArchived();
+                        boolean inConfig = configContent.contains(repoName);
 
+                        List<String> topics = gitHubService.listTopics(repo);
                         List<GHRepository.Contributor> contributors = null;
                         List<GHCommit> commits = null;
                         List<GHIssue> issues = null;
                         List<GHPullRequest> pullRequests = null;
-                        List<String> topics = null;
                         GHCommit lastCommit = null;
                         GHRepositoryCloneTraffic cloneTraffic = null;
                         GHRepositoryViewTraffic viewTraffic = null;
-                        boolean inConfig = false;
                         boolean hasOwners = false;
                         boolean hasCodeOwners = false;
                         boolean hasWorkflows = false;
@@ -81,7 +81,6 @@ public class CollectStatsService {
                             contributors = gitHubService.listContributors(repo);
                             issues = gitHubService.listOpenIssues(repo);
                             pullRequests = gitHubService.listOpenPullRequests(repo);
-                            topics = gitHubService.listTopics(repo);
                             commits = gitHubService.listCommits(repo);
                             lastCommit = commits != null && !commits.isEmpty() ? commits.getFirst() : null;
                             cloneTraffic = gitHubService.cloneTraffic(repo);
@@ -91,15 +90,14 @@ public class CollectStatsService {
                             hasWorkflows = gitHubService.hasWorkflows(repo);
                             hasTravis = gitHubService.hasTravis(repo);
                             hasRenovate = gitHubService.hasRenovate(repo);
-                            inConfig = configContent.contains(repoName);
                         }
 
-                        return new RepoInfo(repoName, lastCommit, contributors, commits, issues, pullRequests, topics, cloneTraffic, viewTraffic,
+                        return new Repository(repoName, lastCommit, contributors, commits, issues, pullRequests, topics, cloneTraffic, viewTraffic,
                                 hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived);
                     }));
 
                     if (futures.size() == cores) {
-                        for (Future<RepoInfo> future : futures) {
+                        for (Future<Repository> future : futures) {
                             csvPrinter.printRecord(future.get().toArray());
                         }
 
@@ -110,7 +108,7 @@ public class CollectStatsService {
                     }
                 }
 
-                for (Future<RepoInfo> future : futures) {
+                for (Future<Repository> future : futures) {
                     csvPrinter.printRecord(future.get().toArray());
                 }
             }

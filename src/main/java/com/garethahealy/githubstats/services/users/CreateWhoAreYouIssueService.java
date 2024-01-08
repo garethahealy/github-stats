@@ -1,29 +1,22 @@
 package com.garethahealy.githubstats.services.users;
 
-import com.garethahealy.githubstats.model.MembersInfo;
+import com.garethahealy.githubstats.model.WhoAreYou;
+import com.garethahealy.githubstats.model.csv.Members;
+import com.garethahealy.githubstats.services.CsvService;
 import com.garethahealy.githubstats.services.GitHubService;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import io.quarkiverse.freemarker.TemplatePath;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.directory.api.ldap.model.cursor.EntryCursor;
-import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.api.ldap.model.message.SearchScope;
-import org.apache.directory.api.ldap.model.name.Dn;
-import org.apache.directory.ldap.client.api.LdapConnection;
-import org.apache.directory.ldap.client.api.LdapNetworkConnection;
-import org.apache.directory.ldap.client.api.exception.InvalidConnectionException;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.StringWriter;
+import java.util.*;
+import java.util.concurrent.*;
 
 @ApplicationScoped
 public class CreateWhoAreYouIssueService {
@@ -31,130 +24,122 @@ public class CreateWhoAreYouIssueService {
     @Inject
     Logger logger;
 
+    @Inject
+    @TemplatePath("CreateWhoAreYouIssue.ftl")
+    Template issue;
+
     private final GitHubService gitHubService;
+    private final CsvService csvService;
 
     @Inject
-    public CreateWhoAreYouIssueService(GitHubService gitHubService) {
+    public CreateWhoAreYouIssueService(GitHubService gitHubService, CsvService csvService) {
         this.gitHubService = gitHubService;
+        this.csvService = csvService;
     }
 
-    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, boolean failNoVpn) throws IOException, LdapException {
+    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
         GitHub gitHub = gitHubService.getGitHub();
-        GHOrganization org = gitHub.getOrganization(organization);
+        GHOrganization org = gitHubService.getOrganization(gitHub, organization);
 
-        GHRepository orgRepo = org.getRepository(issueRepo);
-        List<GHUser> members = org.listMembers().toList();
+        GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
+        List<GHUser> members = gitHubService.listMembers(org);
 
-        Set<String> usernamesToIgnore = getUsernamesToIgnore(membersCsv);
+        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
+        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
 
-        logger.infof("There are %s members", members.size());
-        logger.infof("There are %s members we already have emails for who will be ignored", usernamesToIgnore.size());
+        logger.infof("There are %s GitHub members", members.size());
+        logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
 
-        for (GHUser current : members) {
-            if (usernamesToIgnore.contains(current.getLogin())) {
-                logger.infof("Ignoring: %s", current.getLogin());
+        List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, knownMembers, supplementaryMembers, perms);
+        createIssue(usersToInform, orgRepo, perms, isDryRun);
+
+        logger.info("Finished.");
+    }
+
+    private List<WhoAreYou> collectUnknownUsers(GitHub gitHub, GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers, GHPermissionType perms) throws IOException, ExecutionException, InterruptedException {
+        Map<String, WhoAreYou> usersToInform = new ConcurrentHashMap<>();
+
+        List<Future<Integer>> futures = new ArrayList<>();
+        int cores = Runtime.getRuntime().availableProcessors() * 2;
+
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (GHTeam team : gitHubService.listTeams(org)) {
+                futures.add(executor.submit(() -> {
+                    logger.infof("Working on team %s", team.getName());
+
+                    int changed = 0;
+                    for (GHUser member : team.getMembers()) {
+                        if (knownMembers.containsKey(member.getLogin()) || supplementaryMembers.containsKey(member.getLogin()) || usersToInform.containsKey(member.getLogin())) {
+                            logger.debugf("Ignoring: %s", member.getLogin());
+                        } else {
+                            for (GHRepository repository : team.listRepositories()) {
+                                //Another thread added this user as they are in multiple teams, so break out
+                                if (usersToInform.containsKey(member.getLogin())) {
+                                    break;
+                                }
+
+                                boolean hasPermission = repository.hasPermission(member, perms);
+                                if (hasPermission) {
+                                    logger.warnf("Member %s has %s on %s - but we don't know who they are", member.getLogin(), perms, repository.getName());
+
+                                    usersToInform.put(member.getLogin(), new WhoAreYou(member.getLogin(), repository.getHtmlUrl().toString()));
+                                    changed++;
+
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    return changed;
+                }));
+
+                if (futures.size() == cores) {
+                    for (Future<Integer> future : futures) {
+                        future.get();
+                    }
+
+                    futures.clear();
+
+                    gitHubService.logRateLimit(gitHub);
+                }
+            }
+
+            for (Future<Integer> future : futures) {
+                future.get();
+            }
+        }
+
+        List<WhoAreYou> sortedList = new ArrayList<>(usersToInform.values());
+        Collections.sort(sortedList);
+
+        logger.info("--> Members collected DONE");
+        return sortedList;
+    }
+
+    private void createIssue(List<WhoAreYou> usersToInform, GHRepository orgRepo, GHPermissionType permissions,
+                             boolean isDryRun) throws TemplateException, IOException {
+        if (!usersToInform.isEmpty()) {
+            Map<String, Object> root = new HashMap<>();
+            root.put("users", usersToInform);
+            root.put("permissions", permissions.toString());
+
+            StringWriter stringWriter = new StringWriter();
+            issue.process(root, stringWriter);
+
+            if (isDryRun) {
+                logger.warnf("DRY-RUN: Would have created issue in %s", orgRepo.getName());
+                logger.warnf(stringWriter.toString());
             } else {
-                GHIssueBuilder builder = orgRepo.createIssue("@" + current.getLogin() + " please complete form")
-                        .assignee(current)
+                GHIssue createdIssue = orgRepo.createIssue("Request GitHub to Red Hat ID linkage for users with " + permissions)
                         .label("admin")
-                        .body("To be a member of the Red Hat CoP GitHub org, you are required to be a Red Hat employee. " +
-                                "Non-employees are invited to be outside-collaborators (https://github.com/orgs/redhat-cop/outside-collaborators). " +
-                                "As we currently do not know who is an employee and who is not, we are requiring all members to submit the following google form " +
-                                "so that we can verify who are employees: " +
-                                "https://red.ht/github-redhat-cop-username");
+                        .body(stringWriter.toString())
+                        .create();
 
-                if (isDryRun) {
-                    logger.infof("DRY-RUN: Would have created issue for %s in %s", current.getLogin(), orgRepo.getName());
-                } else {
-                    //TODO: check if issue already exists
-                    builder.create();
-
-                    logger.infof("Created issue for %s", current.getLogin());
-                }
+                logger.infof("Created issue: %s", createdIssue.getUrl());
             }
         }
 
-        logger.info("Issues DONE");
-        logger.infof("RateLimit: limit %s, remaining %s, resetDate %s", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
-
-        Set<String> membersLogins = getMembersLogins(members);
-        for (String current : usernamesToIgnore) {
-            if (!membersLogins.contains(current)) {
-                logger.infof("Have a google form response but they are not part the github org anymore for %s", current);
-            }
-        }
-
-        logger.info("Responses to GH Org Lookup DONE");
-
-        //ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com -s sub 'uid=gahealy'
-        Dn systemDn = new Dn("dc=redhat,dc=com");
-        try (LdapConnection connection = new LdapNetworkConnection("ldap.corp.redhat.com")) {
-            for (String current : getCollectedEmails(membersCsv)) {
-                String uid = current.split("@")[0];
-                try (EntryCursor cursor = connection.search(systemDn, "(uid=" + uid + ")", SearchScope.SUBTREE)) {
-                    boolean found = false;
-                    for (Entry entry : cursor) {
-                        entry.getDn();
-                        logger.infof("Found %s in ldap", uid);
-                        found = true;
-                    }
-
-                    if (!found) {
-                        logger.infof("Did not find %s in ldap", uid);
-                    }
-                }
-            }
-        } catch (InvalidConnectionException ex) {
-            if (failNoVpn) {
-                logger.error("Unable to search ldap for users. Are you on the VPN?", ex);
-            } else {
-                logger.warn("Unable to search ldap for users. Are you on the VPN?", ex);
-            }
-        }
-
-        logger.info("Ldap Lookup DONE");
-    }
-
-    private Set<String> getUsernamesToIgnore(String membersCsv) throws IOException {
-        Set<String> answer = new HashSet<>();
-        CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
-                .setHeader(MembersInfo.Headers.class)
-                .setSkipHeaderRecord(true)
-                .build();
-
-        try (Reader in = new FileReader(membersCsv)) {
-            Iterable<CSVRecord> records = csvFormat.parse(in);
-            for (CSVRecord record : records) {
-                answer.add(record.get(MembersInfo.Headers.WhatIsYourGitHubUsername));
-            }
-        }
-
-        return answer;
-    }
-
-    private List<String> getCollectedEmails(String membersCsv) throws IOException {
-        List<String> answer = new ArrayList<>();
-        CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
-                .setHeader(MembersInfo.Headers.class)
-                .setSkipHeaderRecord(true)
-                .build();
-
-        try (Reader in = new FileReader(membersCsv)) {
-            Iterable<CSVRecord> records = csvFormat.parse(in);
-            for (CSVRecord record : records) {
-                answer.add(record.get(MembersInfo.Headers.EmailAddress));
-            }
-        }
-
-        return answer;
-    }
-
-    private Set<String> getMembersLogins(List<GHUser> members) {
-        Set<String> answer = new HashSet<>();
-        for (GHUser current : members) {
-            answer.add(current.getLogin());
-        }
-
-        return answer;
+        logger.info("--> Issue creation DONE");
     }
 }

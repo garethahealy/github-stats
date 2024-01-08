@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.services.users;
 
-import com.garethahealy.githubstats.model.MembersInfo;
+import com.garethahealy.githubstats.model.csv.Members;
 import com.garethahealy.githubstats.services.CsvService;
 import com.garethahealy.githubstats.services.GitHubService;
 import com.garethahealy.githubstats.services.LdapService;
@@ -42,24 +42,26 @@ public class CollectRedHatLdapSupplementaryListService {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
         List<GHUser> members = gitHubService.listMembers(org);
 
-        Map<String, MembersInfo> knownMembers = csvService.getKnownMembers(membersCsv);
+        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
 
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
-                .setHeader((MembersInfo.Headers.class))
+                .setHeader((Members.Headers.class))
                 .build();
 
         try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output)), csvFormat)) {
+            // Hard code the bot user to be ignored
+            csvPrinter.printRecord(new Members("", "ablock@redhat.com", "redhat-cop-ci-bot").toArray());
+
             if (ldapService.canConnect()) {
                 try (LdapConnection connection = ldapService.open()) {
                     for (GHUser user : members) {
                         if (!knownMembers.containsKey(user.getLogin())) {
                             String email = ldapService.searchOnGitHub(connection, user.getLogin());
                             if (!email.isEmpty()) {
-                                csvPrinter.printRecord(new MembersInfo("", email, user.getLogin()).toArray());
+                                csvPrinter.printRecord(new Members("", email, user.getLogin()).toArray());
                             }
                         }
                     }
-
                 }
             } else {
                 if (failNoVpn) {

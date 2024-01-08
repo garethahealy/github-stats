@@ -148,4 +148,8 @@ public class GitHubService {
 
         return answer;
     }
+
+    public PagedIterable<GHTeam> listTeams(GHOrganization org) throws IOException {
+        return org.listTeams();
+    }
 }

@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.model;
+package com.garethahealy.githubstats.model.csv;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
@@ -6,7 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 
 @RegisterForReflection
-public class MembersInfo {
+public class Members {
+
     public enum Headers {
         Timestamp,
         EmailAddress,
@@ -34,7 +35,7 @@ public class MembersInfo {
         return whatIsYourGitHubUsername;
     }
 
-    public MembersInfo(String timestamp, String emailAddress, String whatIsYourGitHubUsername) {
+    public Members(String timestamp, String emailAddress, String whatIsYourGitHubUsername) {
         this.timestamp = timestamp;
         this.emailAddress = emailAddress;
         this.whatIsYourGitHubUsername = whatIsYourGitHubUsername;

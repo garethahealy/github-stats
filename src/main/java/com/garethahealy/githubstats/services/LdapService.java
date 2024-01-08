@@ -86,7 +86,6 @@ public class LdapService {
                         value = foundAttribute.get().toString();
                     }
                 }
-                break;
             }
         }
 

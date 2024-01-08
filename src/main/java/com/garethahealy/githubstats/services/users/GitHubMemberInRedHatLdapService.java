@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.services.users;
 
-import com.garethahealy.githubstats.model.MembersInfo;
+import com.garethahealy.githubstats.model.csv.Members;
 import com.garethahealy.githubstats.services.CsvService;
 import com.garethahealy.githubstats.services.GitHubService;
 import com.garethahealy.githubstats.services.LdapService;
@@ -50,22 +50,22 @@ public class GitHubMemberInRedHatLdapService {
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
         List<GHUser> members = gitHubService.listMembers(org);
 
-        Map<String, MembersInfo> knownMembers = csvService.getKnownMembers(membersCsv);
-        Map<String, MembersInfo> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
+        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
+        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
 
         logger.infof("There are %s GitHub members", members.size());
         logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
 
-        List<MembersInfo> ldapCheck = collectLdapCheckList(members, knownMembers, supplementaryMembers);
-        List<MembersInfo> usersToRemove = searchFor(ldapCheck, failNoVpn);
+        List<Members> ldapCheck = collectLdapCheckList(members, knownMembers, supplementaryMembers);
+        List<Members> usersToRemove = searchFor(ldapCheck, failNoVpn);
 
         createIssue(usersToRemove, orgRepo, isDryRun);
 
         logger.info("Finished.");
     }
 
-    private List<MembersInfo> collectLdapCheckList(List<GHUser> members, Map<String, MembersInfo> knownMembers, Map<String, MembersInfo> supplementaryMembers) {
-        List<MembersInfo> answer = new ArrayList<>();
+    private List<Members> collectLdapCheckList(List<GHUser> members, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers) {
+        List<Members> answer = new ArrayList<>();
         for (GHUser current : members) {
             if (knownMembers.containsKey(current.getLogin())) {
                 logger.infof("Adding %s to LDAP check list from known members", current.getLogin());
@@ -84,11 +84,11 @@ public class GitHubMemberInRedHatLdapService {
         return answer;
     }
 
-    private List<MembersInfo> searchFor(List<MembersInfo> ldapCheck, boolean failNoVpn) throws IOException, LdapException {
-        List<MembersInfo> answer = new ArrayList<>();
+    private List<Members> searchFor(List<Members> ldapCheck, boolean failNoVpn) throws IOException, LdapException {
+        List<Members> answer = new ArrayList<>();
         if (ldapService.canConnect()) {
             try (LdapConnection connection = ldapService.open()) {
-                for (MembersInfo current : ldapCheck) {
+                for (Members current : ldapCheck) {
                     boolean found = ldapService.searchOnUser(connection, current.getRedHatUserId());
                     if (!found) {
                         logger.warnf("Did not find %s in LDAP", current.getRedHatUserId());
@@ -106,7 +106,7 @@ public class GitHubMemberInRedHatLdapService {
         return answer;
     }
 
-    private void createIssue(List<MembersInfo> usersToRemove, GHRepository orgRepo, boolean isDryRun) throws TemplateException, IOException {
+    private void createIssue(List<Members> usersToRemove, GHRepository orgRepo, boolean isDryRun) throws TemplateException, IOException {
         if (!usersToRemove.isEmpty()) {
             Map<String, Object> root = new HashMap<>();
             root.put("users", usersToRemove);
@@ -115,8 +115,8 @@ public class GitHubMemberInRedHatLdapService {
             issue.process(root, stringWriter);
 
             if (isDryRun) {
-                logger.infof("DRY-RUN: Would have created issue in %s", orgRepo.getName());
-                logger.infof(stringWriter.toString());
+                logger.warnf("DRY-RUN: Would have created issue in %s", orgRepo.getName());
+                logger.warnf(stringWriter.toString());
             } else {
                 GHIssue createdIssue = orgRepo.createIssue("Remove users - Not in RH LDAP")
                         .label("admin")

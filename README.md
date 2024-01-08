@@ -54,6 +54,8 @@ Loop over the GitHub members and see if we can find them in LDAP. Output what we
 ### GitHubMemberInRedHatLdap
 Loop over the GitHub members and see if we can find them in LDAP. Output what we find to a CSV.
 
+`--supplementary-csv` is a list of known members that been created via `CollectRedHatLdapSupplementaryList`
+
 ```bash
 ./target/github-stats-1.0.0-SNAPSHOT-runner github-member-in-ldap --dry-run=true --organization={your-org} --issue-repo={a-repo-in-that-org} --members-csv={list-of-known-members} --supplementary-csv={list-of-supplementary-members} -fail-if-no-vpn=false
 ```
@@ -62,5 +64,5 @@ Loop over the GitHub members and see if we can find them in LDAP. Output what we
 `--members-csv` is a list of known members that have validated their GitHub ID against their RH ID. See: `tests/members.csv` as an example.
 
 ```bash
-./target/github-stats-1.0.0-SNAPSHOT-runner create-who-are-you-issues --dry-run=true --organization={your-org} --issue-repo={a-repo-in-that-org} --members-csv={list-of-known-members} --fail-if-no-vpn=false
+./target/github-stats-1.0.0-SNAPSHOT-runner create-who-are-you-issues --dry-run=true --organization={your-org} --issue-repo={a-repo-in-that-org} --members-csv={list-of-known-members} --supplementary-csv={list-of-supplementary-members} --fail-if-no-vpn=false
 ```

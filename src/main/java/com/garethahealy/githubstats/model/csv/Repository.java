@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.model;
+package com.garethahealy.githubstats.model.csv;
 
 import org.kohsuke.github.*;
 
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class RepoInfo {
+public class Repository {
 
     public enum Headers {
         RepoName,
@@ -51,22 +51,22 @@ public class RepoInfo {
     private final boolean inConfig;
     private final boolean isArchived;
 
-    public RepoInfo(String repoName,
-                    GHCommit lastCommit,
-                    List<GHRepository.Contributor> contributors,
-                    List<GHCommit> commits,
-                    List<GHIssue> issues,
-                    List<GHPullRequest> pullRequests,
-                    List<String> topics,
-                    GHRepositoryCloneTraffic cloneTraffic,
-                    GHRepositoryViewTraffic viewTraffic,
-                    boolean hasOwners,
-                    boolean hasCodeOwners,
-                    boolean hasWorkflows,
-                    boolean hasTravis,
-                    boolean hasRenovate,
-                    boolean inConfig,
-                    boolean isArchived) throws IOException {
+    public Repository(String repoName,
+                      GHCommit lastCommit,
+                      List<GHRepository.Contributor> contributors,
+                      List<GHCommit> commits,
+                      List<GHIssue> issues,
+                      List<GHPullRequest> pullRequests,
+                      List<String> topics,
+                      GHRepositoryCloneTraffic cloneTraffic,
+                      GHRepositoryViewTraffic viewTraffic,
+                      boolean hasOwners,
+                      boolean hasCodeOwners,
+                      boolean hasWorkflows,
+                      boolean hasTravis,
+                      boolean hasRenovate,
+                      boolean inConfig,
+                      boolean isArchived) throws IOException {
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
         this.repoName = repoName;
