@@ -38,5 +38,6 @@ nb-configuration.xml
 # Local environment
 .env
 
-logs/
 creds.source
+gh-members.csv
+supplementary.csv

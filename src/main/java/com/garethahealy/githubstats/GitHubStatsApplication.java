@@ -1,8 +1,10 @@
 package com.garethahealy.githubstats;
 
-import com.garethahealy.githubstats.commands.CollectStatsCommand;
-import com.garethahealy.githubstats.commands.CreateWhoAreYouIssueCommand;
-import com.garethahealy.githubstats.commands.QuarkusCommand;
+import com.garethahealy.githubstats.commands.GitHubStatsCommand;
+import com.garethahealy.githubstats.commands.stats.CollectStatsCommand;
+import com.garethahealy.githubstats.commands.users.CollectRedHatLdapSupplementaryListCommand;
+import com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand;
+import com.garethahealy.githubstats.commands.users.GitHubMemberInRedHatLdapCommand;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
@@ -15,6 +17,11 @@ public class GitHubStatsApplication implements QuarkusApplication {
     CollectStatsCommand collectStatsCommand;
     @Inject
     CreateWhoAreYouIssueCommand createWhoAreYouIssueCommand;
+    @Inject
+    GitHubMemberInRedHatLdapCommand gitHubMemberInRedHatLdapCommand;
+
+    @Inject
+    CollectRedHatLdapSupplementaryListCommand collectRedHatLdapSupplementaryListCommand;
 
     public static void main(String[] args) {
         Quarkus.run(GitHubStatsApplication.class, args);
@@ -22,9 +29,11 @@ public class GitHubStatsApplication implements QuarkusApplication {
 
     @Override
     public int run(String... args) throws Exception {
-        return new CommandLine(new QuarkusCommand())
+        return new CommandLine(new GitHubStatsCommand())
                 .addSubcommand(collectStatsCommand)
                 .addSubcommand(createWhoAreYouIssueCommand)
+                .addSubcommand(gitHubMemberInRedHatLdapCommand)
+                .addSubcommand(collectRedHatLdapSupplementaryListCommand)
                 .execute(args);
     }
 }

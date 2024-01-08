@@ -7,7 +7,7 @@
   <version>1.0.0-SNAPSHOT</version>
   <properties>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
-    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -16,6 +16,7 @@
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.2.3</surefire-plugin.version>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -27,6 +28,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -61,7 +63,17 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-caffeine</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.slf4j</groupId>
+      <artifactId>slf4j-jboss-logmanager</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.freemarker</groupId>
+      <artifactId>quarkus-freemarker</artifactId>
+      <version>1.0.0</version>
+    </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
@@ -128,11 +140,9 @@
         </property>
       </activation>
       <properties>
+        <quarkus.native.additional-build-args>-H:+UnlockExperimentalVMOptions,-H:ReflectionConfigurationFiles=reflection-config.json,-H:-UnlockExperimentalVMOptions</quarkus.native.additional-build-args>
         <skipITs>false</skipITs>
         <quarkus.package.type>native</quarkus.package.type>
-        <quarkus.native.additional-build-args>
-          -H:+UnlockExperimentalVMOptions,-H:ReflectionConfigurationFiles=reflection-config.json,-H:-UnlockExperimentalVMOptions
-        </quarkus.native.additional-build-args>
       </properties>
     </profile>
   </profiles>

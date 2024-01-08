@@ -6,5 +6,5 @@ import picocli.CommandLine;
         name = "github-stats",
         description = "GitHub helper utility",
         subcommands = {CommandLine.HelpCommand.class})
-public class QuarkusCommand {
+public class GitHubStatsCommand {
 }

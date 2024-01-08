@@ -1,6 +1,6 @@
-package com.garethahealy.githubstats.commands;
+package com.garethahealy.githubstats.commands.users;
 
-import com.garethahealy.githubstats.rest.client.CreateWhoAreYouIssueService;
+import com.garethahealy.githubstats.services.users.CreateWhoAreYouIssueService;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -21,7 +21,7 @@ public class CreateWhoAreYouIssueCommand implements Runnable {
     @CommandLine.Option(names = {"-dry", "--dry-run"}, description = "Dry-run aka don't actually create the GitHub issues", required = true)
     boolean dryRun;
 
-    @CommandLine.Option(names = {"-i", "--members-csv"}, description = "CSV container current known members", required = true)
+    @CommandLine.Option(names = {"-i", "--members-csv"}, description = "CSV of current known members", required = true)
     String membersCsv;
 
     @CommandLine.Option(names = {"-vpn", "--fail-if-no-vpn"}, description = "Throw an exception if can't connect to LDAP")

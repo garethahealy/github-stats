@@ -1,6 +1,7 @@
-package com.garethahealy.githubstats.rest.client;
+package com.garethahealy.githubstats.services.users;
 
 import com.garethahealy.githubstats.model.MembersInfo;
+import com.garethahealy.githubstats.services.GitHubService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
@@ -25,13 +26,20 @@ import java.util.List;
 import java.util.Set;
 
 @ApplicationScoped
-public class CreateWhoAreYouIssueService extends BaseGitHubService {
+public class CreateWhoAreYouIssueService {
 
     @Inject
     Logger logger;
 
+    private final GitHubService gitHubService;
+
+    @Inject
+    public CreateWhoAreYouIssueService(GitHubService gitHubService) {
+        this.gitHubService = gitHubService;
+    }
+
     public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, boolean failNoVpn) throws IOException, LdapException {
-        GitHub gitHub = getGitHub();
+        GitHub gitHub = gitHubService.getGitHub();
         GHOrganization org = gitHub.getOrganization(organization);
 
         GHRepository orgRepo = org.getRepository(issueRepo);
@@ -58,6 +66,7 @@ public class CreateWhoAreYouIssueService extends BaseGitHubService {
                 if (isDryRun) {
                     logger.infof("DRY-RUN: Would have created issue for %s in %s", current.getLogin(), orgRepo.getName());
                 } else {
+                    //TODO: check if issue already exists
                     builder.create();
 
                     logger.infof("Created issue for %s", current.getLogin());
@@ -66,6 +75,7 @@ public class CreateWhoAreYouIssueService extends BaseGitHubService {
         }
 
         logger.info("Issues DONE");
+        logger.infof("RateLimit: limit %s, remaining %s, resetDate %s", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
 
         Set<String> membersLogins = getMembersLogins(members);
         for (String current : usernamesToIgnore) {

@@ -5,6 +5,7 @@ import org.kohsuke.github.*;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -71,12 +72,12 @@ public class RepoInfo {
         this.repoName = repoName;
         this.lastCommitAuthor = lastCommit == null || lastCommit.getAuthor() == null ? null : lastCommit.getAuthor().getLogin();
         this.lastCommitDate = lastCommit == null ? null : df.format(lastCommit.getCommitDate());
-        this.cop = topics.stream().filter(topic -> topic.contains("-cop") || topic.contains("gpte")).findFirst().orElse(null);
+        this.cop = topics == null ? null : topics.stream().filter(topic -> topic.contains("-cop") || topic.contains("gpte")).findFirst().orElse(null);
         this.contributorCount = contributors == null ? 0 : contributors.size();
         this.commitCount = commits == null ? 0 : commits.size();
         this.openIssueCount = issues == null ? 0 : issues.size();
         this.openPullRequestCount = pullRequests == null ? 0 : pullRequests.size();
-        this.topics = topics;
+        this.topics = topics == null ? new ArrayList<>() : topics;
         this.clonesInPast14Days = cloneTraffic == null ? 0 : cloneTraffic.getUniques();
         this.viewsInPast14Days = viewTraffic == null ? 0 : viewTraffic.getUniques();
         this.hasOwners = hasOwners;
