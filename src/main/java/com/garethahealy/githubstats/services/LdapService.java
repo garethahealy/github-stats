@@ -75,6 +75,7 @@ public class LdapService {
     private String search(LdapConnection connection, String filter, String attribute) throws LdapException, IOException {
         String value = "";
         try (EntryCursor cursor = connection.search(systemDn, filter, SearchScope.SUBTREE, attribute)) {
+            int count = 0;
             for (Entry entry : cursor) {
                 if (attribute == null) {
                     logger.infof("Found %s", filter);
@@ -85,6 +86,11 @@ public class LdapService {
                         logger.infof("Found %s - returning %s", filter, attribute);
                         value = foundAttribute.get().toString();
                     }
+                }
+
+                count++;
+                if (count >= 2) {
+                    throw new LdapException("cursor returned multiple entries for: " + filter);
                 }
             }
         }
