@@ -57,6 +57,37 @@ public class CreateWhoAreYouIssueService {
     }
 
     private List<WhoAreYou> collectUnknownUsers(GitHub gitHub, GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers, GHPermissionType perms) throws IOException, ExecutionException, InterruptedException {
+        List<WhoAreYou> usersToInform;
+
+        if (GHPermissionType.READ == perms) {
+            usersToInform = collectUnknownUsersWithRead(org, knownMembers, supplementaryMembers);
+        } else {
+            usersToInform = collectUnknownUsersWithAdminOrWrite(gitHub, org, knownMembers, supplementaryMembers, perms);
+        }
+
+        List<WhoAreYou> sortedList = new ArrayList<>(usersToInform);
+        Collections.sort(sortedList);
+
+        logger.info("--> Members collected DONE");
+        return sortedList;
+    }
+
+    private List<WhoAreYou> collectUnknownUsersWithRead(GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers) throws IOException {
+        List<WhoAreYou> usersToInform = new ArrayList<>();
+
+        List<GHUser> members = gitHubService.listMembers(org);
+        for (GHUser member : members) {
+            if (knownMembers.containsKey(member.getLogin()) || supplementaryMembers.containsKey(member.getLogin())) {
+                logger.debugf("Ignoring: %s", member.getLogin());
+            } else {
+                usersToInform.add(new WhoAreYou(member.getLogin(), "https://github.com/redhat-cop"));
+            }
+        }
+
+        return usersToInform;
+    }
+
+    private List<WhoAreYou> collectUnknownUsersWithAdminOrWrite(GitHub gitHub, GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers, GHPermissionType perms) throws IOException, ExecutionException, InterruptedException {
         Map<String, WhoAreYou> usersToInform = new ConcurrentHashMap<>();
 
         List<Future<Integer>> futures = new ArrayList<>();
@@ -110,11 +141,7 @@ public class CreateWhoAreYouIssueService {
             }
         }
 
-        List<WhoAreYou> sortedList = new ArrayList<>(usersToInform.values());
-        Collections.sort(sortedList);
-
-        logger.info("--> Members collected DONE");
-        return sortedList;
+        return new ArrayList<>(usersToInform.values());
     }
 
     private void createIssue(List<WhoAreYou> usersToInform, GHRepository orgRepo, GHPermissionType permissions,
