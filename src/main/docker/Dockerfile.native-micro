@@ -17,7 +17,7 @@
 # docker run -i --rm -p 8080:8080 quarkus/github-stats
 #
 ###
-FROM quay.io/quarkus/quarkus-micro-image:2.0@sha256:c21c05b16f284fc039438c9d8d756cb145eeaee2f19c66afc542eeab341c7b98
+FROM quay.io/quarkus/quarkus-micro-image:2.0@sha256:9a00f5a91f452a5df675df2abd1608b900f83b07b8fb92e9a891d6f3ff927e68
 WORKDIR /work/
 RUN chown 1001 /work \
     && chmod "g+rwX" /work \
