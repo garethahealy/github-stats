@@ -18,6 +18,9 @@ import org.kohsuke.github.GHUser;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -38,27 +41,35 @@ public class CollectRedHatLdapSupplementaryListService {
         this.ldapService = ldapService;
     }
 
-    public void run(String organization, String output, String membersCsv, boolean failNoVpn) throws IOException, LdapException, TemplateException {
+    public void run(String organization, String output, String membersCsv, String supplementaryCsv, boolean failNoVpn) throws IOException, LdapException, TemplateException {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
         List<GHUser> members = gitHubService.listMembers(org);
 
         Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
+        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
 
-        CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
-                .setHeader((Members.Headers.class))
-                .build();
+        CSVFormat.Builder csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT);
+        if (supplementaryMembers.isEmpty()) {
+            csvFormat.setHeader(Members.Headers.class);
+        }
 
-        try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output)), csvFormat)) {
-            // Hard code the bot user to be ignored
-            csvPrinter.printRecord(new Members("", "ablock@redhat.com", "redhat-cop-ci-bot").toArray());
+        try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output), StandardOpenOption.APPEND), csvFormat.build())) {
+            String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+            if (!supplementaryMembers.containsKey("redhat-cop-ci-bot")) {
+                // Hard code the bot user to be ignored
+                csvPrinter.printRecord(new Members(date, "ablock@redhat.com", "redhat-cop-ci-bot").toArray());
+            }
 
             if (ldapService.canConnect()) {
                 try (LdapConnection connection = ldapService.open()) {
+
                     for (GHUser user : members) {
                         if (!knownMembers.containsKey(user.getLogin())) {
-                            String email = ldapService.searchOnGitHub(connection, user.getLogin());
-                            if (!email.isEmpty()) {
-                                csvPrinter.printRecord(new Members("", email, user.getLogin()).toArray());
+                            if (!supplementaryMembers.containsKey(user.getLogin())) {
+                                String email = ldapService.searchOnGitHub(connection, user.getLogin());
+                                if (!email.isEmpty()) {
+                                    csvPrinter.printRecord(new Members(date, email, user.getLogin()).toArray());
+                                }
                             }
                         }
                     }
