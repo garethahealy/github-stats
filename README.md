@@ -1,7 +1,9 @@
 # github-stats
+
 CLI to generate stats and issues for a GitHub org.
 
 ## Build
+
 Both JVM and Native mode are supported.
 
 ```bash
@@ -17,6 +19,7 @@ java -jar target/quarkus-app/quarkus-run.jar
 ```
 
 ## GitHub Auth
+
 Read permissions are required for the OAuth PAT.
 
 ```bash
@@ -25,11 +28,13 @@ export GITHUB_OAUTH=replace
 ```
 
 ## LDAP Lookup
+
 ```bash
 ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com -s sub 'uid=gahealy'
 ```
 
 ## APIs
+
 Once you've built the code, you can execute by...
 
 ### CollectStats
@@ -45,6 +50,7 @@ open github-output.csv
 ```
 
 ### CollectRedHatLdapSupplementaryList
+
 Loop over the GitHub members and see if we can find them in LDAP. Output what we find to a CSV.
 
 ```bash
@@ -52,6 +58,7 @@ Loop over the GitHub members and see if we can find them in LDAP. Output what we
 ```
 
 ### GitHubMemberInRedHatLdap
+
 Loop over the GitHub members and see if we can find them in LDAP. Output what we find to a CSV.
 
 `--supplementary-csv` is a list of known members that been created via `CollectRedHatLdapSupplementaryList`
@@ -61,7 +68,9 @@ Loop over the GitHub members and see if we can find them in LDAP. Output what we
 ```
 
 ### CreateWhoAreYouIssue
-`--members-csv` is a list of known members that have validated their GitHub ID against their RH ID. See: `tests/members.csv` as an example.
+
+`--members-csv` is a list of known members that have validated their GitHub ID against their RH ID.
+See: `tests/members.csv` as an example.
 
 ```bash
 ./target/github-stats-1.0.0-SNAPSHOT-runner create-who-are-you-issues --dry-run=true --organization={your-org} --issue-repo={a-repo-in-that-org} --members-csv={list-of-known-members} --supplementary-csv={list-of-supplementary-members} --fail-if-no-vpn=false

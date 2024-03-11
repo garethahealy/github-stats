@@ -1,6 +1,6 @@
 name: "Build, Analyze and Test"
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 # Declare default permissions as read only.
 permissions: read-all

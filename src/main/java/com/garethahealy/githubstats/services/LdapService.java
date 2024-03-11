@@ -67,6 +67,11 @@ public class LdapService {
         return !value.isEmpty();
     }
 
+    public String searchOnName(LdapConnection connection, String name) throws LdapException, IOException {
+        String filter = "(cn=" + name + ")";
+        return search(connection, filter, "uid");
+    }
+
     public String searchOnGitHub(LdapConnection connection, String githubId) throws LdapException, IOException {
         String filter = "(rhatSocialURL=Github->https://github.com/" + githubId + ")";
         return search(connection, filter, "rhatPrimaryMail");
@@ -83,8 +88,8 @@ public class LdapService {
                 } else {
                     Attribute foundAttribute = entry.get(attribute);
                     if (foundAttribute != null) {
-                        logger.infof("Found %s - returning %s", filter, attribute);
                         value = foundAttribute.get().toString();
+                        logger.infof("Found %s - returning %s - %s", filter, attribute, value);
                     }
                 }
 

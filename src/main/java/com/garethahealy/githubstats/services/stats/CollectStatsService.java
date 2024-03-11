@@ -108,6 +108,7 @@ public class CollectStatsService {
                     }
                 }
 
+                //Incase there are any leftover calls to be made
                 for (Future<Repository> future : futures) {
                     csvPrinter.printRecord(future.get().toArray());
                 }

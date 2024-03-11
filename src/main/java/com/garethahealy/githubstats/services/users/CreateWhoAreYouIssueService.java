@@ -4,12 +4,14 @@ import com.garethahealy.githubstats.model.WhoAreYou;
 import com.garethahealy.githubstats.model.csv.Members;
 import com.garethahealy.githubstats.services.CsvService;
 import com.garethahealy.githubstats.services.GitHubService;
+import com.garethahealy.githubstats.services.LdapService;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.quarkiverse.freemarker.TemplatePath;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
@@ -30,14 +32,16 @@ public class CreateWhoAreYouIssueService {
 
     private final GitHubService gitHubService;
     private final CsvService csvService;
+    private final LdapService ldapService;
 
     @Inject
-    public CreateWhoAreYouIssueService(GitHubService gitHubService, CsvService csvService) {
+    public CreateWhoAreYouIssueService(GitHubService gitHubService, CsvService csvService, LdapService ldapService) {
         this.gitHubService = gitHubService;
         this.csvService = csvService;
+        this.ldapService = ldapService;
     }
 
-    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
+    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
         GitHub gitHub = gitHubService.getGitHub();
         GHOrganization org = gitHubService.getOrganization(gitHub, organization);
 
@@ -51,6 +55,7 @@ public class CreateWhoAreYouIssueService {
         logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
 
         List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, knownMembers, supplementaryMembers, perms);
+        guessRedHatId(usersToInform, failNoVpn);
         createIssue(usersToInform, orgRepo, perms, isDryRun);
 
         logger.info("Finished.");
@@ -80,7 +85,7 @@ public class CreateWhoAreYouIssueService {
             if (knownMembers.containsKey(member.getLogin()) || supplementaryMembers.containsKey(member.getLogin())) {
                 logger.debugf("Ignoring: %s", member.getLogin());
             } else {
-                usersToInform.add(new WhoAreYou(member.getLogin(), "https://github.com/redhat-cop"));
+                usersToInform.add(new WhoAreYou(member.getName(), member.getLogin(), "https://github.com/redhat-cop"));
             }
         }
 
@@ -113,7 +118,7 @@ public class CreateWhoAreYouIssueService {
                                 if (hasPermission) {
                                     logger.warnf("Member %s has %s on %s - but we don't know who they are", member.getLogin(), perms, repository.getName());
 
-                                    usersToInform.put(member.getLogin(), new WhoAreYou(member.getLogin(), repository.getHtmlUrl().toString()));
+                                    usersToInform.put(member.getLogin(), new WhoAreYou(member.getName(), member.getLogin(), repository.getHtmlUrl().toString()));
                                     changed++;
 
                                     break;
@@ -136,6 +141,7 @@ public class CreateWhoAreYouIssueService {
                 }
             }
 
+            //Incase there are any leftover calls to be made
             for (Future<Integer> future : futures) {
                 future.get();
             }
@@ -168,5 +174,38 @@ public class CreateWhoAreYouIssueService {
         }
 
         logger.info("--> Issue creation DONE");
+    }
+
+    private void guessRedHatId(List<WhoAreYou> usersToInform, boolean failNoVpn) throws IOException, LdapException {
+        Map<String, String> guessed = new HashMap<>();
+        List<String> unknowns = new ArrayList<>();
+        if (ldapService.canConnect()) {
+            try (LdapConnection connection = ldapService.open()) {
+                for (WhoAreYou current : usersToInform) {
+                    String uid = ldapService.searchOnName(connection, current.name());
+                    if (uid.isEmpty()) {
+                        unknowns.add(current.username());
+                    } else {
+                        guessed.put(current.username(), uid);
+                    }
+                }
+            }
+        } else {
+            if (failNoVpn) {
+                throw new IOException("Unable to connect to LDAP. Are you on the VPN?");
+            }
+        }
+
+        for (String login : unknowns) {
+            logger.infof("Unable to work out who %s is via LDAP", login);
+        }
+
+        StringBuilder emailList = new StringBuilder();
+        for (Map.Entry<String, String> guess : guessed.entrySet()) {
+            logger.infof("Think %s is %s", guess.getKey(), guess.getValue());
+            emailList.append(guess.getValue()).append("@redhat.com,");
+        }
+
+        logger.infof("%s", emailList.toString());
     }
 }
