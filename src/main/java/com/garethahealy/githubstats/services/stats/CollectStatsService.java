@@ -1,5 +1,8 @@
 package com.garethahealy.githubstats.services.stats;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.garethahealy.githubstats.model.csv.Repository;
 import com.garethahealy.githubstats.services.GitHubService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -42,9 +45,10 @@ public class CollectStatsService {
         GHRepository coreOrg = gitHubService.getRepository(org, "org");
         Map<String, GHRepository> repos = gitHubService.getRepositories(org);
 
-        String configContent = validateOrgConfig ? getOrgConfigYaml(coreOrg) : "";
-
         logger.infof("Found %s repos.", repos.size());
+
+        String configContent = validateOrgConfig ? getOrgConfigYaml(coreOrg) : "";
+        JsonNode archivedRepos = getArchivedRepos(configContent);
 
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader((Repository.Headers.class))
@@ -62,6 +66,7 @@ public class CollectStatsService {
                         String repoName = repo.getName();
                         boolean isArchived = repo.isArchived();
                         boolean inConfig = configContent.contains(repoName);
+                        boolean inArchivedTeam = isArchived && archivedRepos.get(repoName) != null;
 
                         List<String> topics = gitHubService.listTopics(repo);
                         List<GHRepository.Contributor> contributors = null;
@@ -93,7 +98,7 @@ public class CollectStatsService {
                         }
 
                         return new Repository(repoName, lastCommit, contributors, commits, issues, pullRequests, topics, cloneTraffic, viewTraffic,
-                                hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived);
+                                hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived, inArchivedTeam);
                     }));
 
                     if (futures.size() == cores) {
@@ -114,6 +119,8 @@ public class CollectStatsService {
                 }
             }
         }
+
+        logger.infof("Output written to %s", output);
     }
 
     private String getOrgConfigYaml(GHRepository coreOrg) throws IOException {
@@ -124,5 +131,12 @@ public class CollectStatsService {
         FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
 
         return FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
+    }
+
+    private JsonNode getArchivedRepos(String configContent) throws JsonProcessingException {
+        YAMLMapper mapper = new YAMLMapper();
+        JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
+
+        return configMap.get("orgs").get("redhat-cop").get("teams").get("aarchived").get("repos");
     }
 }

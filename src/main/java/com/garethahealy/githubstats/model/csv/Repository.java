@@ -5,6 +5,9 @@ import org.kohsuke.github.*;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +32,8 @@ public class Repository {
         HasTravis,
         HasRenovate,
         InConfig,
-        IsArchived
+        IsArchived,
+        InArchivedTeam
     }
 
     private final String repoName;
@@ -50,6 +54,7 @@ public class Repository {
     private final boolean hasRenovate;
     private final boolean inConfig;
     private final boolean isArchived;
+    private final boolean inArchivedTeam;
 
     public Repository(String repoName,
                       GHCommit lastCommit,
@@ -66,13 +71,12 @@ public class Repository {
                       boolean hasTravis,
                       boolean hasRenovate,
                       boolean inConfig,
-                      boolean isArchived) throws IOException {
-        DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-
+                      boolean isArchived,
+                      boolean inArchivedTeam) throws IOException {
         this.repoName = repoName;
         this.lastCommitAuthor = lastCommit == null || lastCommit.getAuthor() == null ? null : lastCommit.getAuthor().getLogin();
-        this.lastCommitDate = lastCommit == null ? null : df.format(lastCommit.getCommitDate());
-        this.cop = topics == null ? null : topics.stream().filter(topic -> topic.contains("-cop") || topic.contains("gpte")).findFirst().orElse(null);
+        this.lastCommitDate = lastCommit == null ? null : DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.ofInstant(lastCommit.getCommitDate().toInstant(), ZoneId.systemDefault()));
+        this.cop = topics == null ? null : topics.stream().filter(topic -> topic.contains("-cop") || topic.contains("gpte") || topic.contains("validated-content")).findFirst().orElse(null);
         this.contributorCount = contributors == null ? 0 : contributors.size();
         this.commitCount = commits == null ? 0 : commits.size();
         this.openIssueCount = issues == null ? 0 : issues.size();
@@ -87,6 +91,7 @@ public class Repository {
         this.hasRenovate = hasRenovate;
         this.inConfig = inConfig;
         this.isArchived = isArchived;
+        this.inArchivedTeam = inArchivedTeam;
     }
 
     public List<String> toArray() {
@@ -97,6 +102,6 @@ public class Repository {
                 String.valueOf(hasOwners), String.valueOf(hasCodeOwners),
                 String.valueOf(hasWorkflows), String.valueOf(hasTravis),
                 String.valueOf(hasRenovate),
-                String.valueOf(inConfig), String.valueOf(isArchived));
+                String.valueOf(inConfig), String.valueOf(isArchived), String.valueOf(inArchivedTeam));
     }
 }
