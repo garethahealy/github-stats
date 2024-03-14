@@ -65,7 +65,7 @@ public class CollectStatsService {
                         GHRepository repo = current.getValue();
                         String repoName = repo.getName();
                         boolean isArchived = repo.isArchived();
-                        boolean inConfig = configContent.contains(repoName);
+                        boolean inConfig = configContent.contains(" " + repoName + ":");
                         boolean inArchivedTeam = isArchived && archivedRepos.get(repoName) != null;
 
                         List<String> topics = gitHubService.listTopics(repo);
