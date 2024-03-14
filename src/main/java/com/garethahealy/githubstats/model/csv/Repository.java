@@ -95,7 +95,8 @@ public class Repository {
     }
 
     public List<String> toArray() {
-        return Arrays.asList(repoName, cop, lastCommitDate, lastCommitAuthor,
+        String repoLink = "=HYPERLINK(\"https://www.github.com/redhat-cop/" + repoName + "\",\"" + repoName + "\")";
+        return Arrays.asList(repoLink, cop, lastCommitDate, lastCommitAuthor,
                 String.valueOf(contributorCount), String.valueOf(commitCount), String.valueOf(openIssueCount),
                 String.valueOf(openPullRequestCount), String.join(",", topics),
                 String.valueOf(clonesInPast14Days), String.valueOf(viewsInPast14Days),

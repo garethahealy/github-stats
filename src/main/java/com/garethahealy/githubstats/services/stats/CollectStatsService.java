@@ -45,6 +45,8 @@ public class CollectStatsService {
         GHRepository coreOrg = gitHubService.getRepository(org, "org");
         Map<String, GHRepository> repos = gitHubService.getRepositories(org);
 
+        gitHubService.hasRateLimit(gitHub, 3000);
+
         logger.infof("Found %s repos.", repos.size());
 
         String configContent = validateOrgConfig ? getOrgConfigYaml(coreOrg) : "";
@@ -120,6 +122,7 @@ public class CollectStatsService {
             }
         }
 
+        gitHubService.logRateLimit(gitHub);
         logger.infof("Output written to %s", output);
     }
 

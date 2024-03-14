@@ -39,6 +39,14 @@ public class GitHubService {
         logger.infof("RateLimit: limit %s, remaining %s, resetDate %s", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
     }
 
+    public void hasRateLimit(GitHub gitHub, Integer need) throws IOException {
+        if ((gitHub.getRateLimit().getRemaining() - need) <= 0) {
+            logRateLimit(gitHub);
+
+            throw new IllegalStateException("RateLimit - we think we need " + need + " which is not enough to complete");
+        }
+    }
+
     public GHOrganization getOrganization(GitHub gitHub, String organization) throws IOException {
         return gitHub.getOrganization(organization);
     }
