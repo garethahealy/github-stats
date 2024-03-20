@@ -73,7 +73,7 @@ public class LdapService {
     }
 
     public String searchOnGitHub(LdapConnection connection, String githubId) throws LdapException, IOException {
-        String filter = "(rhatSocialURL=Github->https://github.com/" + githubId + ")";
+        String filter = "(rhatSocialURL=Github->*" + githubId + "*)";
         return search(connection, filter, "rhatPrimaryMail");
     }
 
