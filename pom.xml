@@ -50,7 +50,7 @@
     <dependency>
       <groupId>io.quarkiverse.githubapi</groupId>
       <artifactId>quarkus-github-api</artifactId>
-      <version>1.319.0</version>
+      <version>1.321.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
