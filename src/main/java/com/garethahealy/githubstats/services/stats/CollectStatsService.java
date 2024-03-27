@@ -3,6 +3,7 @@ package com.garethahealy.githubstats.services.stats;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.garethahealy.githubstats.model.EmptyJsonNode;
 import com.garethahealy.githubstats.model.csv.Repository;
 import com.garethahealy.githubstats.services.GitHubService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -50,7 +51,7 @@ public class CollectStatsService {
         logger.infof("Found %s repos.", repos.size());
 
         String configContent = validateOrgConfig ? getOrgConfigYaml(coreOrg) : "";
-        JsonNode archivedRepos = getArchivedRepos(configContent);
+        JsonNode archivedRepos = validateOrgConfig ? getArchivedRepos(configContent) : new EmptyJsonNode();
 
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader((Repository.Headers.class))
