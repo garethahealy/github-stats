@@ -54,7 +54,7 @@ open github-output.csv
 Loop over the GitHub members and see if we can find them in LDAP. Output what we find to a CSV.
 
 ```bash
-./target/github-stats-1.0.0-SNAPSHOT-runner collect-members-from-ldap --organization={your-org} --members-csv={list-of-known-members} --csv-output=supplementary.csv --supplementary-csv={list-of-supplementary-members} --fail-if-no-vpn=false
+./target/github-stats-1.0.0-SNAPSHOT-runner collect-members-from-ldap --organization={your-org} --csv-output=supplementary.csv --supplementary-csv={list-of-supplementary-members} --guess=false --fail-if-no-vpn=false
 ```
 
 ### GitHubMemberInRedHatLdap
@@ -73,5 +73,5 @@ Loop over the GitHub members and see if we can find them in LDAP. Output what we
 See: `tests/members.csv` as an example.
 
 ```bash
-./target/github-stats-1.0.0-SNAPSHOT-runner create-who-are-you-issues --dry-run=true --organization={your-org} --issue-repo={a-repo-in-that-org} --members-csv={list-of-known-members} --supplementary-csv={list-of-supplementary-members} --permission={admin|write|read} --fail-if-no-vpn=false
+./target/github-stats-1.0.0-SNAPSHOT-runner create-who-are-you-issues --dry-run=true --organization={your-org} --issue-repo={a-repo-in-that-org} --members-csv={list-of-known-members} --supplementary-csv={list-of-supplementary-members} --permission={admin|write|read}
 ```

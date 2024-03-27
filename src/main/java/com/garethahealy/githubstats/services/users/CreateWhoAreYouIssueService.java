@@ -10,8 +10,6 @@ import freemarker.template.TemplateException;
 import io.quarkiverse.freemarker.TemplatePath;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
@@ -41,7 +39,7 @@ public class CreateWhoAreYouIssueService {
         this.ldapService = ldapService;
     }
 
-    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
+    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms) throws IOException, ExecutionException, InterruptedException, TemplateException {
         GitHub gitHub = gitHubService.getGitHub();
         GHOrganization org = gitHubService.getOrganization(gitHub, organization);
 
@@ -55,7 +53,6 @@ public class CreateWhoAreYouIssueService {
         logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
 
         List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, knownMembers, supplementaryMembers, perms);
-        guessRedHatId(usersToInform, failNoVpn);
         createIssue(usersToInform, orgRepo, perms, isDryRun);
 
         logger.info("Finished.");
@@ -150,8 +147,7 @@ public class CreateWhoAreYouIssueService {
         return new ArrayList<>(usersToInform.values());
     }
 
-    private void createIssue(List<WhoAreYou> usersToInform, GHRepository orgRepo, GHPermissionType permissions,
-                             boolean isDryRun) throws TemplateException, IOException {
+    private void createIssue(List<WhoAreYou> usersToInform, GHRepository orgRepo, GHPermissionType permissions, boolean isDryRun) throws TemplateException, IOException {
         if (!usersToInform.isEmpty()) {
             Map<String, Object> root = new HashMap<>();
             root.put("users", usersToInform);
@@ -174,38 +170,5 @@ public class CreateWhoAreYouIssueService {
         }
 
         logger.info("--> Issue creation DONE");
-    }
-
-    private void guessRedHatId(List<WhoAreYou> usersToInform, boolean failNoVpn) throws IOException, LdapException {
-        Map<String, String> guessed = new HashMap<>();
-        List<String> unknowns = new ArrayList<>();
-        if (ldapService.canConnect()) {
-            try (LdapConnection connection = ldapService.open()) {
-                for (WhoAreYou current : usersToInform) {
-                    String uid = ldapService.searchOnName(connection, current.name());
-                    if (uid.isEmpty()) {
-                        unknowns.add(current.username());
-                    } else {
-                        guessed.put(current.username(), uid);
-                    }
-                }
-            }
-        } else {
-            if (failNoVpn) {
-                throw new IOException("Unable to connect to LDAP. Are you on the VPN?");
-            }
-        }
-
-        for (String login : unknowns) {
-            logger.infof("Unable to work out who %s is via LDAP", login);
-        }
-
-        StringBuilder emailList = new StringBuilder();
-        for (Map.Entry<String, String> guess : guessed.entrySet()) {
-            logger.infof("Think %s is %s", guess.getKey(), guess.getValue());
-            emailList.append(guess.getValue()).append("@redhat.com,");
-        }
-
-        logger.infof("%s", emailList.toString());
     }
 }

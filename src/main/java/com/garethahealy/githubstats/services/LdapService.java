@@ -69,11 +69,21 @@ public class LdapService {
 
     public String searchOnName(LdapConnection connection, String name) throws LdapException, IOException {
         String filter = "(cn=" + name + ")";
-        return search(connection, filter, "uid");
+        return search(connection, filter, "rhatPrimaryMail");
     }
 
-    public String searchOnGitHub(LdapConnection connection, String githubId) throws LdapException, IOException {
+    public String searchOnGitHubLogin(LdapConnection connection, String githubId) throws LdapException, IOException {
+        String filter = "(uid=" + githubId + ")";
+        return search(connection, filter, "rhatPrimaryMail");
+    }
+
+    public String searchOnGitHubSocial(LdapConnection connection, String githubId) throws LdapException, IOException {
         String filter = "(rhatSocialURL=Github->*" + githubId + "*)";
+        return search(connection, filter, "rhatPrimaryMail");
+    }
+
+    public String searchOnEmail(LdapConnection connection, String email) throws LdapException, IOException {
+        String filter = "(rhatPrimaryMail=" + email + ")";
         return search(connection, filter, "rhatPrimaryMail");
     }
 

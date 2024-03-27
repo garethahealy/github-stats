@@ -4,7 +4,6 @@ import com.garethahealy.githubstats.services.users.CreateWhoAreYouIssueService;
 import freemarker.template.TemplateException;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.kohsuke.github.GHPermissionType;
 import picocli.CommandLine;
 
@@ -33,17 +32,14 @@ public class CreateWhoAreYouIssueCommand implements Runnable {
     @CommandLine.Option(names = {"-p", "--permission"}, description = "Permission to search against; ADMIN, WRITE, READ", required = true)
     String permission;
 
-    @CommandLine.Option(names = {"-vpn", "--fail-if-no-vpn"}, description = "Throw an exception if can't connect to LDAP")
-    boolean failNoVpn;
-
     @Inject
     CreateWhoAreYouIssueService createWhoAreYouIssueService;
 
     @Override
     public void run() {
         try {
-            createWhoAreYouIssueService.run(organization, orgRepo, dryRun, membersCsv, supplementaryCsv, convert(permission), failNoVpn);
-        } catch (IOException | LdapException | TemplateException | ExecutionException | InterruptedException e) {
+            createWhoAreYouIssueService.run(organization, orgRepo, dryRun, membersCsv, supplementaryCsv, convert(permission));
+        } catch (IOException | TemplateException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
