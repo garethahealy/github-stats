@@ -138,6 +138,42 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>generateManPages</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <includeProjectDependencies>true</includeProjectDependencies>
+          <includePluginDependencies>true</includePluginDependencies>
+          <mainClass>picocli.codegen.docgen.manpage.ManPageGenerator</mainClass>
+          <arguments>
+            <argument>--outdir=docs</argument>
+            <argument>com.garethahealy.githubstats.commands.GitHubStatsCommand</argument>
+            <argument>com.garethahealy.githubstats.commands.users.CollectRedHatLdapSupplementaryListCommand</argument>
+            <argument>com.garethahealy.githubstats.commands.users.GitHubMemberInRedHatLdapCommand</argument>
+            <argument>com.garethahealy.githubstats.commands.users.MembersToSupplementaryDiffCommand</argument>
+            <argument>com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand</argument>
+            <argument>com.garethahealy.githubstats.commands.stats.CollectStatsCommand</argument>
+          </arguments>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli-codegen</artifactId>
+            <version>4.7.5</version>
+            <type>jar</type>
+          </dependency>
+        </dependencies>
+      </plugin>
     </plugins>
   </build>
   <profiles>
