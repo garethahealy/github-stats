@@ -19,8 +19,9 @@ create-who-are-you-issues - Creates an issue per user in the org config that isn
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*create-who-are-you-issues* [*-hV*] *-dry* *-i*=_<membersCsv>_ *-org*=_<organization>_
-                          *-p*=_<permission>_ *-repo*=_<orgRepo>_ *-s*=_<supplementaryCsv>_
+*create-who-are-you-issues* [*-ghV*] *-dry* [*-vpn*] *-i*=_<membersCsv>_
+                          *-org*=_<organization>_ *-p*=_<permission>_ *-repo*=_<orgRepo>_
+                          *-s*=_<supplementaryCsv>_
 
 // end::picocli-generated-man-section-synopsis[]
 
@@ -36,6 +37,9 @@ Creates an issue per user in the org config that isn't in a CVS
 
 *-dry, --dry-run*::
   Dry-run aka don't actually create the GitHub issues
+
+*-g*, *--guess*::
+  Attempt to guess users we cant look up via InfoSec LDAP
 
 *-h*, *--help*::
   Show this help message and exit.
@@ -57,6 +61,9 @@ Creates an issue per user in the org config that isn't in a CVS
 
 *-V*, *--version*::
   Print version information and exit.
+
+*-vpn, --fail-if-no-vpn*::
+  Throw an exception if can't connect to LDAP
 
 // end::picocli-generated-man-section-options[]
 

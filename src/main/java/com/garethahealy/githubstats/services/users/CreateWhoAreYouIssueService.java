@@ -4,12 +4,13 @@ import com.garethahealy.githubstats.model.WhoAreYou;
 import com.garethahealy.githubstats.model.csv.Members;
 import com.garethahealy.githubstats.services.CsvService;
 import com.garethahealy.githubstats.services.GitHubService;
-import com.garethahealy.githubstats.services.LdapService;
+import com.garethahealy.githubstats.services.LdapGuessService;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.quarkiverse.freemarker.TemplatePath;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
@@ -30,16 +31,16 @@ public class CreateWhoAreYouIssueService {
 
     private final GitHubService gitHubService;
     private final CsvService csvService;
-    private final LdapService ldapService;
+    private final LdapGuessService ldapGuessService;
 
     @Inject
-    public CreateWhoAreYouIssueService(GitHubService gitHubService, CsvService csvService, LdapService ldapService) {
+    public CreateWhoAreYouIssueService(GitHubService gitHubService, CsvService csvService, LdapGuessService ldapGuessService) {
         this.gitHubService = gitHubService;
         this.csvService = csvService;
-        this.ldapService = ldapService;
+        this.ldapGuessService = ldapGuessService;
     }
 
-    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms) throws IOException, ExecutionException, InterruptedException, TemplateException {
+    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms, boolean shouldGuess, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException, TemplateException, LdapException {
         GitHub gitHub = gitHubService.getGitHub();
         GHOrganization org = gitHubService.getOrganization(gitHub, organization);
 
@@ -53,6 +54,7 @@ public class CreateWhoAreYouIssueService {
         logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
 
         List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, knownMembers, supplementaryMembers, perms);
+        ldapGuessService.attemptToGuess(usersToInform.stream().map(WhoAreYou::ghUser).toList(), shouldGuess, failNoVpn);
         createIssue(usersToInform, orgRepo, perms, isDryRun);
 
         logger.info("Finished.");
@@ -82,7 +84,7 @@ public class CreateWhoAreYouIssueService {
             if (knownMembers.containsKey(member.getLogin()) || supplementaryMembers.containsKey(member.getLogin())) {
                 logger.debugf("Ignoring: %s", member.getLogin());
             } else {
-                usersToInform.add(new WhoAreYou(member.getName(), member.getLogin(), "https://github.com/redhat-cop"));
+                usersToInform.add(new WhoAreYou(member.getName(), member.getLogin(), "https://github.com/redhat-cop", member));
             }
         }
 
@@ -115,7 +117,7 @@ public class CreateWhoAreYouIssueService {
                                 if (hasPermission) {
                                     logger.warnf("Member %s has %s on %s - but we don't know who they are", member.getLogin(), perms, repository.getName());
 
-                                    usersToInform.put(member.getLogin(), new WhoAreYou(member.getName(), member.getLogin(), repository.getHtmlUrl().toString()));
+                                    usersToInform.put(member.getLogin(), new WhoAreYou(member.getName(), member.getLogin(), repository.getHtmlUrl().toString(), member));
                                     changed++;
 
                                     break;
