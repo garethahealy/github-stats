@@ -76,7 +76,6 @@ public class CollectStatsService {
                         List<GHCommit> commits = null;
                         List<GHIssue> issues = null;
                         List<GHPullRequest> pullRequests = null;
-                        GHCommit lastCommit = null;
                         GHRepositoryCloneTraffic cloneTraffic = null;
                         GHRepositoryViewTraffic viewTraffic = null;
                         boolean hasOwners = false;
@@ -90,7 +89,6 @@ public class CollectStatsService {
                             issues = gitHubService.listOpenIssues(repo);
                             pullRequests = gitHubService.listOpenPullRequests(repo);
                             commits = gitHubService.listCommits(repo);
-                            lastCommit = commits != null && !commits.isEmpty() ? commits.getFirst() : null;
                             cloneTraffic = gitHubService.cloneTraffic(repo);
                             viewTraffic = gitHubService.viewTraffic(repo);
                             hasOwners = gitHubService.hasOwners(repo);
@@ -100,7 +98,7 @@ public class CollectStatsService {
                             hasRenovate = gitHubService.hasRenovate(repo);
                         }
 
-                        return new Repository(repoName, lastCommit, contributors, commits, issues, pullRequests, topics, cloneTraffic, viewTraffic,
+                        return new Repository(repoName, contributors, commits, issues, pullRequests, topics, cloneTraffic, viewTraffic,
                                 hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived, inArchivedTeam);
                     }));
 

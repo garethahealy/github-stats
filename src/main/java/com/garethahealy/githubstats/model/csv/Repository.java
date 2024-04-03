@@ -55,7 +55,6 @@ public class Repository {
     private final boolean inArchivedTeam;
 
     public Repository(String repoName,
-                      GHCommit lastCommit,
                       List<GHRepository.Contributor> contributors,
                       List<GHCommit> commits,
                       List<GHIssue> issues,
@@ -71,6 +70,8 @@ public class Repository {
                       boolean inConfig,
                       boolean isArchived,
                       boolean inArchivedTeam) throws IOException {
+        GHCommit lastCommit = commits != null && !commits.isEmpty() ? commits.getFirst() : null;
+
         this.repoName = repoName;
         this.lastCommitAuthor = lastCommit == null || lastCommit.getAuthor() == null ? null : lastCommit.getAuthor().getLogin();
         this.lastCommitDate = lastCommit == null ? null : DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.ofInstant(lastCommit.getCommitDate().toInstant(), ZoneId.systemDefault()));
