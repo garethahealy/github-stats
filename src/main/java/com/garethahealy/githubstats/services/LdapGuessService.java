@@ -30,6 +30,7 @@ public class LdapGuessService {
         if (shouldGuess) {
             Map<String, GHUser> guessed = new HashMap<>();
             List<GHUser> unknown = new ArrayList<>();
+            List<GHUser> unknownWorksForRH = new ArrayList<>();
 
             if (ldapService.canConnect()) {
                 try (LdapConnection connection = ldapService.open()) {
@@ -44,7 +45,11 @@ public class LdapGuessService {
                         }
 
                         if (guess == null) {
-                            unknown.add(user);
+                            if (guessWorksForRedHat(user)) {
+                                unknownWorksForRH.add(user);
+                            } else {
+                                unknown.add(user);
+                            }
                         } else {
                             guessed.put(guess.getKey(), guess.getValue());
                         }
@@ -56,17 +61,34 @@ public class LdapGuessService {
                 }
             }
 
-            for (GHUser current : unknown) {
-                logger.infof("Unable to work out: %s", current.getLogin());
+            if (!unknown.isEmpty()) {
+                logger.info("Unable to work out the following:");
+
+                for (GHUser current : unknown) {
+                    String company = current.getCompany() == null ? "" : " - they work for: " + current.getCompany();
+                    logger.infof("-> %s%s", current.getLogin(), company);
+                }
             }
 
-            StringBuilder emailList = new StringBuilder();
-            for (Map.Entry<String, GHUser> current : guessed.entrySet()) {
-                logger.infof("Think %s is %s", current.getValue().getLogin(), current.getKey());
-                emailList.append(current.getKey()).append(",");
+            if (!unknownWorksForRH.isEmpty()) {
+                logger.info("Unable to work out the following via LDAP but profile says Red Hat:");
+
+                for (GHUser current : unknownWorksForRH) {
+                    logger.infof("-> %s", current.getLogin());
+                }
             }
 
-            logger.infof("%s", emailList.toString());
+            if (!guessed.isEmpty()) {
+                logger.info("Guessed the following via LDAP:");
+
+                StringBuilder emailList = new StringBuilder();
+                for (Map.Entry<String, GHUser> current : guessed.entrySet()) {
+                    logger.infof("-> %s is %s", current.getValue().getLogin(), current.getKey());
+                    emailList.append(current.getKey()).append(",");
+                }
+
+                logger.infof("Email list dump: %s", emailList.toString());
+            }
 
             logger.info("--> Attempt to guess DONE");
         }
@@ -102,6 +124,18 @@ public class LdapGuessService {
             String rhEmail = ldapService.searchOnName(connection, user.getName());
             if (!rhEmail.isEmpty()) {
                 answer = Pair.of(rhEmail, user);
+            }
+        }
+
+        return answer;
+    }
+
+    private boolean guessWorksForRedHat(GHUser user) throws IOException {
+        boolean answer = false;
+        if (user.getCompany() != null && !user.getCompany().isEmpty()) {
+            String companyLower = user.getCompany().toLowerCase();
+            if (companyLower.contains("redhat") || companyLower.contains("red hat")) {
+                answer = true;
             }
         }
 
