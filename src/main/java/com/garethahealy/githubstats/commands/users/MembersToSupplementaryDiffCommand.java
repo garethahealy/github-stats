@@ -3,6 +3,7 @@ package com.garethahealy.githubstats.commands.users;
 import com.garethahealy.githubstats.services.users.MembersToSupplementaryDiffService;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import org.apache.directory.api.ldap.model.exception.LdapException;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -10,6 +11,9 @@ import java.io.IOException;
 @Dependent
 @CommandLine.Command(name = "members-to-supplementary-diff", mixinStandardHelpOptions = true, description = "Check the diff between the two CSVs")
 public class MembersToSupplementaryDiffCommand implements Runnable {
+
+    @CommandLine.Option(names = {"-org", "--organization"}, description = "GitHub organization", required = true)
+    String organization;
 
     @CommandLine.Option(names = {"-i", "--members-csv"}, description = "CSV of current known members", required = true)
     String membersCsv;
@@ -23,7 +27,7 @@ public class MembersToSupplementaryDiffCommand implements Runnable {
     @Override
     public void run() {
         try {
-            membersToSupplementaryDiffService.run(membersCsv, supplementaryCsv);
+            membersToSupplementaryDiffService.run(organization, membersCsv, supplementaryCsv);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

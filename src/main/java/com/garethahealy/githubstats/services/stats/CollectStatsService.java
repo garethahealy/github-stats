@@ -1,8 +1,6 @@
 package com.garethahealy.githubstats.services.stats;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.garethahealy.githubstats.model.EmptyJsonNode;
 import com.garethahealy.githubstats.model.csv.Repository;
 import com.garethahealy.githubstats.services.GitHubService;
@@ -10,13 +8,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.io.FileUtils;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -50,8 +45,8 @@ public class CollectStatsService {
 
         logger.infof("Found %s repos.", repos.size());
 
-        String configContent = validateOrgConfig ? getOrgConfigYaml(coreOrg) : "";
-        JsonNode archivedRepos = validateOrgConfig ? getArchivedRepos(configContent) : new EmptyJsonNode();
+        String configContent = validateOrgConfig ? gitHubService.getOrgConfigYaml(coreOrg) : "";
+        JsonNode archivedRepos = validateOrgConfig ? gitHubService.getArchivedRepos(configContent) : new EmptyJsonNode();
 
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader((Repository.Headers.class))
@@ -123,22 +118,5 @@ public class CollectStatsService {
 
         gitHubService.logRateLimit(gitHub);
         logger.infof("Output written to %s", output);
-    }
-
-    private String getOrgConfigYaml(GHRepository coreOrg) throws IOException {
-        logger.info("Downloading org/config.yaml");
-
-        GHContent orgConfig = coreOrg.getFileContent("config.yaml");
-        File configOutputFile = new File("target/core-config.yaml");
-        FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
-
-        return FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
-    }
-
-    private JsonNode getArchivedRepos(String configContent) throws JsonProcessingException {
-        YAMLMapper mapper = new YAMLMapper();
-        JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
-
-        return configMap.get("orgs").get("redhat-cop").get("teams").get("aarchived").get("repos");
     }
 }

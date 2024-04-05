@@ -1,12 +1,13 @@
 package com.garethahealy.githubstats.model.csv;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 
 import java.util.Arrays;
 import java.util.List;
 
 @RegisterForReflection
-public class Members {
+public class Members implements Comparable<Members> {
 
     public enum Headers {
         Timestamp,
@@ -43,5 +44,10 @@ public class Members {
 
     public List<String> toArray() {
         return Arrays.asList(timestamp, emailAddress, whatIsYourGitHubUsername);
+    }
+
+    @Override
+    public int compareTo(Members o) {
+        return new CompareToBuilder().append(getRedHatUserId(), o.getRedHatUserId()).toComparison();
     }
 }

@@ -19,10 +19,7 @@ import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ApplicationScoped
 public class GitHubMemberInRedHatLdapService {
@@ -50,30 +47,31 @@ public class GitHubMemberInRedHatLdapService {
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
         List<GHUser> members = gitHubService.listMembers(org);
 
-        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
-        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
-
-        logger.infof("There are %s GitHub members", members.size());
-        logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
-
-        List<Members> ldapCheck = collectLdapCheckList(members, knownMembers, supplementaryMembers);
-        List<Members> usersToRemove = searchFor(ldapCheck, failNoVpn);
+        List<Members> ldapCheck = collectMembersToCheck(members, membersCsv, supplementaryCsv);
+        List<Members> usersToRemove = searchViaLdapFor(ldapCheck, failNoVpn);
 
         createIssue(usersToRemove, orgRepo, isDryRun);
 
         logger.info("Finished.");
     }
 
-    private List<Members> collectLdapCheckList(List<GHUser> members, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers) {
+    private List<Members> collectMembersToCheck(List<GHUser> members, String membersCsv, String supplementaryCsv) throws IOException {
         List<Members> answer = new ArrayList<>();
+
+        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
+        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
+
+        logger.infof("There are %s GitHub members", members.size());
+        logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
+
         for (GHUser current : members) {
             if (knownMembers.containsKey(current.getLogin())) {
-                logger.infof("Adding %s to LDAP check list from known members", current.getLogin());
+                logger.debugf("Adding %s to LDAP check list from known members", current.getLogin());
 
                 answer.add(knownMembers.get(current.getLogin()));
             } else {
                 if (supplementaryMembers.containsKey(current.getLogin())) {
-                    logger.infof("Adding %s to LDAP check list from supplementary", current.getLogin());
+                    logger.debugf("Adding %s to LDAP check list from supplementary", current.getLogin());
 
                     answer.add(supplementaryMembers.get(current.getLogin()));
                 }
@@ -84,8 +82,9 @@ public class GitHubMemberInRedHatLdapService {
         return answer;
     }
 
-    private List<Members> searchFor(List<Members> ldapCheck, boolean failNoVpn) throws IOException, LdapException {
+    private List<Members> searchViaLdapFor(List<Members> ldapCheck, boolean failNoVpn) throws IOException, LdapException {
         List<Members> answer = new ArrayList<>();
+
         if (ldapService.canConnect()) {
             try (LdapConnection connection = ldapService.open()) {
                 for (Members current : ldapCheck) {

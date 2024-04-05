@@ -6,13 +6,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
+import org.kohsuke.github.GHPerson;
 import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ApplicationScoped
 public class LdapGuessService {
@@ -28,7 +26,7 @@ public class LdapGuessService {
 
     public void attemptToGuess(List<GHUser> members, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException {
         if (shouldGuess) {
-            Map<String, GHUser> guessed = new HashMap<>();
+            Map<String, GHUser> guessed = new TreeMap<>();
             List<GHUser> unknown = new ArrayList<>();
             List<GHUser> unknownWorksForRH = new ArrayList<>();
 
@@ -64,6 +62,8 @@ public class LdapGuessService {
             if (!unknown.isEmpty()) {
                 logger.info("Unable to work out the following:");
 
+                unknown.sort(Comparator.comparing(GHPerson::getLogin));
+
                 for (GHUser current : unknown) {
                     String company = current.getCompany() == null ? "" : " - they work for: " + current.getCompany();
                     logger.infof("-> %s%s", current.getLogin(), company);
@@ -72,6 +72,8 @@ public class LdapGuessService {
 
             if (!unknownWorksForRH.isEmpty()) {
                 logger.info("Unable to work out the following via LDAP but profile says Red Hat:");
+
+                unknownWorksForRH.sort(Comparator.comparing(GHPerson::getLogin));
 
                 for (GHUser current : unknownWorksForRH) {
                     logger.infof("-> %s", current.getLogin());
@@ -110,7 +112,7 @@ public class LdapGuessService {
 
     private Pair<String, GHUser> guessViaGithubLogin(LdapConnection connection, GHUser user) throws IOException, LdapException {
         Pair<String, GHUser> answer = null;
-        String rhEmail = ldapService.searchOnGitHubLogin(connection, user.getName());
+        String rhEmail = ldapService.searchOnGitHubLogin(connection, user.getLogin());
         if (!rhEmail.isEmpty()) {
             answer = Pair.of(rhEmail, user);
         }

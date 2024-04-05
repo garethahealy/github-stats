@@ -2,20 +2,31 @@ package com.garethahealy.githubstats.services;
 
 import com.garethahealy.githubstats.model.csv.Members;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.jboss.logging.Logger;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 @ApplicationScoped
 public class CsvService {
 
+    @Inject
+    Logger logger;
+
     public Map<String, Members> getKnownMembers(String membersCsv) throws IOException {
-        Map<String, Members> answer = new HashMap<>();
+        Map<String, Members> answer = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader(Members.Headers.class)
                 .setSkipHeaderRecord(true)
@@ -28,10 +39,27 @@ public class CsvService {
                 String redhatEmail = record.get(Members.Headers.EmailAddress);
                 String username = record.get(Members.Headers.WhatIsYourGitHubUsername);
 
-                answer.put(username, new Members(timestamp, redhatEmail, username));
+                answer.put(username.trim(), new Members(timestamp, redhatEmail.trim(), username.trim()));
             }
         }
 
         return answer;
+    }
+
+    public void writeSupplementaryCsv(String output, List<Members> members, boolean supplementaryMembersIsEmpty) throws IOException {
+        if (!members.isEmpty()) {
+            CSVFormat.Builder csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT);
+            if (supplementaryMembersIsEmpty) {
+                csvFormat.setHeader(Members.Headers.class);
+            }
+
+            try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output), StandardOpenOption.APPEND), csvFormat.build())) {
+                for (Members current : members) {
+                    csvPrinter.printRecord(current.toArray());
+                }
+            }
+
+            logger.info("--> Write CSV DONE");
+        }
     }
 }

@@ -1,13 +1,19 @@
 package com.garethahealy.githubstats.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.commons.io.FileUtils;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.Charset;
+import java.util.*;
 
 @ApplicationScoped
 public class GitHubService {
@@ -61,6 +67,15 @@ public class GitHubService {
 
     public List<GHUser> listMembers(GHOrganization org) throws IOException {
         return org.listMembers().toList();
+    }
+
+    public Map<String, GHUser> mapMembers(GHOrganization org) throws IOException {
+        Map<String, GHUser> answer = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for (GHUser current : listMembers(org)) {
+            answer.put(current.getLogin(), current);
+        }
+
+        return answer;
     }
 
     public List<GHRepository.Contributor> listContributors(GHRepository repo) throws IOException {
@@ -159,5 +174,40 @@ public class GitHubService {
 
     public PagedIterable<GHTeam> listTeams(GHOrganization org) throws IOException {
         return org.listTeams();
+    }
+
+    public String getOrgConfigYaml(GHRepository coreOrg) throws IOException {
+        logger.info("Downloading org/config.yaml");
+
+        GHContent orgConfig = coreOrg.getFileContent("config.yaml");
+        File configOutputFile = new File("target/core-config.yaml");
+        FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
+
+        return FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
+    }
+
+    public JsonNode getArchivedRepos(String configContent) throws JsonProcessingException {
+        YAMLMapper mapper = new YAMLMapper();
+        JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
+
+        return configMap.get("orgs").get("redhat-cop").get("teams").get("aarchived").get("repos");
+    }
+
+    public Set<String> getOrgMembers(String configContent) throws IOException {
+        YAMLMapper mapper = new YAMLMapper();
+        JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
+
+        Set<String> membersAsSet = new HashSet<>();
+        ArrayNode admins = (ArrayNode)configMap.get("orgs").get("redhat-cop").get("admins");
+        for (JsonNode current : admins) {
+            membersAsSet.add(current.textValue());
+        }
+
+        ArrayNode members = (ArrayNode)configMap.get("orgs").get("redhat-cop").get("members");
+        for (JsonNode current : members) {
+            membersAsSet.add(current.textValue());
+        }
+
+        return membersAsSet;
     }
 }

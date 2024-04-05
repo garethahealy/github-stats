@@ -43,40 +43,37 @@ public class CreateWhoAreYouIssueService {
     public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms, boolean shouldGuess, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException, TemplateException, LdapException {
         GitHub gitHub = gitHubService.getGitHub();
         GHOrganization org = gitHubService.getOrganization(gitHub, organization);
-
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
-        List<GHUser> members = gitHubService.listMembers(org);
 
-        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
-        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
-
-        logger.infof("There are %s GitHub members", members.size());
-        logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
-
-        List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, knownMembers, supplementaryMembers, perms);
+        List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, membersCsv, supplementaryCsv, perms, orgRepo);
         ldapGuessService.attemptToGuess(usersToInform.stream().map(WhoAreYou::ghUser).toList(), shouldGuess, failNoVpn);
         createIssue(usersToInform, orgRepo, perms, isDryRun);
 
         logger.info("Finished.");
     }
 
-    private List<WhoAreYou> collectUnknownUsers(GitHub gitHub, GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers, GHPermissionType perms) throws IOException, ExecutionException, InterruptedException {
+    private List<WhoAreYou> collectUnknownUsers(GitHub gitHub, GHOrganization org, String membersCsv, String supplementaryCsv, GHPermissionType perms, GHRepository orgRepo) throws IOException, ExecutionException, InterruptedException {
         List<WhoAreYou> usersToInform;
 
+        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
+        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
+
+        logger.infof("There are %s GitHub members", gitHubService.listMembers(org).size());
+        logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
+
         if (GHPermissionType.READ == perms) {
-            usersToInform = collectUnknownUsersWithRead(org, knownMembers, supplementaryMembers);
+            usersToInform = collectUnknownUsersWithRead(org, knownMembers, supplementaryMembers, orgRepo);
         } else {
             usersToInform = collectUnknownUsersWithAdminOrWrite(gitHub, org, knownMembers, supplementaryMembers, perms);
         }
 
-        List<WhoAreYou> sortedList = new ArrayList<>(usersToInform);
-        Collections.sort(sortedList);
+        Collections.sort(usersToInform);
 
         logger.info("--> Members collected DONE");
-        return sortedList;
+        return usersToInform;
     }
 
-    private List<WhoAreYou> collectUnknownUsersWithRead(GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers) throws IOException {
+    private List<WhoAreYou> collectUnknownUsersWithRead(GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers, GHRepository orgRepo) throws IOException {
         List<WhoAreYou> usersToInform = new ArrayList<>();
 
         List<GHUser> members = gitHubService.listMembers(org);
