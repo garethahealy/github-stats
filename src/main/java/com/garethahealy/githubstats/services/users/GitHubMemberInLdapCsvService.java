@@ -3,14 +3,12 @@ package com.garethahealy.githubstats.services.users;
 import com.garethahealy.githubstats.model.csv.Members;
 import com.garethahealy.githubstats.services.CsvService;
 import com.garethahealy.githubstats.services.GitHubService;
-import com.garethahealy.githubstats.services.LdapService;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.quarkiverse.freemarker.TemplatePath;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHOrganization;
@@ -32,14 +30,12 @@ public class GitHubMemberInLdapCsvService {
     Template issue;
 
     private final GitHubService gitHubService;
-    private final LdapService ldapService;
     private final CsvService csvService;
 
     @Inject
-    public GitHubMemberInLdapCsvService(GitHubService gitHubService, CsvService csvService, LdapService ldapService) {
+    public GitHubMemberInLdapCsvService(GitHubService gitHubService, CsvService csvService) {
         this.gitHubService = gitHubService;
         this.csvService = csvService;
-        this.ldapService = ldapService;
     }
 
     public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv) throws IOException, LdapException, TemplateException {

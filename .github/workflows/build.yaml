@@ -129,11 +129,23 @@ jobs:
       - name: Make github-stats-*-runner executable
         run: chmod +x github-stats-*-runner
 
-      - name: Run collect-stats for UKI
+      - name: Run 'collect-stats' for UKI
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
         run: ./github-stats-*-runner collect-stats --organization=RedHat-Consulting-UK --validate-org-config=false
+
+      - name: Run 'create-who-are-you-issues' for UKI
+        env:
+          GITHUB_LOGIN: ${{ github.repository_owner }}
+          GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
+        run: ./github-stats-*-runner create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --members-csv=tests/members.csv --supplementary-csv=tests/supplementary.csv --permission=admin --guess=false --fail-if-no-vpn=false
+
+      - name: Run 'members-to-supplementary-diff' for UKI
+        env:
+          GITHUB_LOGIN: ${{ github.repository_owner }}
+          GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
+        run: ./github-stats-*-runner members-to-supplementary-diff --organization=RedHat-Consulting-UK --members-csv=tests/members.csv --supplementary-csv=tests/supplementary.csv
 
       - name: Upload github-output.csv
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4

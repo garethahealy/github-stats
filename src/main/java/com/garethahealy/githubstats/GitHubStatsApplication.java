@@ -2,10 +2,7 @@ package com.garethahealy.githubstats;
 
 import com.garethahealy.githubstats.commands.GitHubStatsCommand;
 import com.garethahealy.githubstats.commands.stats.CollectStatsCommand;
-import com.garethahealy.githubstats.commands.users.CollectRedHatLdapSupplementaryListCommand;
-import com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand;
-import com.garethahealy.githubstats.commands.users.GitHubMemberInRedHatLdapCommand;
-import com.garethahealy.githubstats.commands.users.MembersToSupplementaryDiffCommand;
+import com.garethahealy.githubstats.commands.users.*;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
@@ -25,6 +22,9 @@ public class GitHubStatsApplication implements QuarkusApplication {
     GitHubMemberInRedHatLdapCommand gitHubMemberInRedHatLdapCommand;
 
     @Inject
+    GitHubMemberInLdapCsvCommand gitHubMemberInLdapCsvCommand;
+
+    @Inject
     MembersToSupplementaryDiffCommand membersToSupplementaryDiffCommand;
 
     @Inject
@@ -40,6 +40,7 @@ public class GitHubStatsApplication implements QuarkusApplication {
                 .addSubcommand(collectStatsCommand)
                 .addSubcommand(createWhoAreYouIssueCommand)
                 .addSubcommand(gitHubMemberInRedHatLdapCommand)
+                .addSubcommand(gitHubMemberInLdapCsvCommand)
                 .addSubcommand(collectRedHatLdapSupplementaryListCommand)
                 .addSubcommand(membersToSupplementaryDiffCommand)
                 .execute(args);
