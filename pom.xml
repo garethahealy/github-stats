@@ -160,6 +160,7 @@
             <argument>com.garethahealy.githubstats.commands.GitHubStatsCommand</argument>
             <argument>com.garethahealy.githubstats.commands.users.CollectRedHatLdapSupplementaryListCommand</argument>
             <argument>com.garethahealy.githubstats.commands.users.GitHubMemberInRedHatLdapCommand</argument>
+            <argument>com.garethahealy.githubstats.commands.users.GitHubMemberInLdapCsvCommand</argument>
             <argument>com.garethahealy.githubstats.commands.users.MembersToSupplementaryDiffCommand</argument>
             <argument>com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand</argument>
             <argument>com.garethahealy.githubstats.commands.stats.CollectStatsCommand</argument>
