@@ -36,14 +36,14 @@ jobs:
         run: target/github-stats-*-runner help
 
       - name: Upload target
-        uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: target
           path: target/
           if-no-files-found: error
 
       - name: Upload runner binary
-        uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: runner
           path: target/github-stats-*-runner
@@ -154,7 +154,7 @@ jobs:
         run: ./github-stats-*-runner members-to-supplementary-diff --organization=RedHat-Consulting-UK --members-csv=tests/members.csv --supplementary-csv=tests/supplementary.csv
 
       - name: Upload github-output.csv
-        uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: github-output.csv
           path: github-output.csv
