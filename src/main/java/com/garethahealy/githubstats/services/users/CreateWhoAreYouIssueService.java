@@ -13,6 +13,13 @@ import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
+import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHPermissionType;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHTeam;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitHub;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -28,6 +35,10 @@ public class CreateWhoAreYouIssueService {
     @Inject
     @TemplatePath("CreateWhoAreYouIssue.ftl")
     Template issue;
+
+    @Inject
+    @TemplatePath("CreateWhoAreYouIssueRead.ftl")
+    Template issueRead;
 
     private final GitHubService gitHubService;
     private final CsvService csvService;
@@ -46,7 +57,7 @@ public class CreateWhoAreYouIssueService {
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
 
         List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, membersCsv, supplementaryCsv, perms, orgRepo);
-        ldapGuessService.attemptToGuess(usersToInform.stream().map(WhoAreYou::ghUser).toList(), shouldGuess, failNoVpn);
+        ldapGuessService.attemptToGuess(usersToInform.stream().map(WhoAreYou::ghUser).toList(), shouldGuess, failNoVpn, org);
         createIssue(usersToInform, orgRepo, perms, isDryRun);
 
         logger.info("Finished.");
@@ -153,7 +164,11 @@ public class CreateWhoAreYouIssueService {
             root.put("permissions", permissions.toString());
 
             StringWriter stringWriter = new StringWriter();
-            issue.process(root, stringWriter);
+            if (permissions == GHPermissionType.READ) {
+                issueRead.process(root, stringWriter);
+            } else {
+                issue.process(root, stringWriter);
+            }
 
             if (isDryRun) {
                 logger.warnf("DRY-RUN: Would have created issue in %s", orgRepo.getName());
