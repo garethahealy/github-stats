@@ -34,12 +34,14 @@ public class MembersToSupplementaryDiffService {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
         Map<String, GHUser> members = gitHubService.mapMembers(org);
 
-        List<String> found = collect(members, membersCsv, supplementaryCsv);
+        List<Members> found = collect(members, membersCsv, supplementaryCsv);
         log(found);
+
+        //csvService.writeSupplementaryCsv("gh-members-cutdown.csv", found, found.isEmpty());
     }
 
-    private List<String> collect(Map<String, GHUser> members, String membersCsv, String supplementaryCsv) throws IOException {
-        List<String> answer = new ArrayList<>();
+    private List<Members> collect(Map<String, GHUser> members, String membersCsv, String supplementaryCsv) throws IOException {
+        List<Members> answer = new ArrayList<>();
 
         Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
         Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
@@ -48,7 +50,7 @@ public class MembersToSupplementaryDiffService {
             boolean isStillInGithubOrg = members.containsKey(current.getWhatIsYourGitHubUsername());
             if (isStillInGithubOrg) {
                 if (!supplementaryMembers.containsKey(current.getWhatIsYourGitHubUsername())) {
-                    answer.add(current.getEmailAddress());
+                    answer.add(current);
                 }
             }
         }
@@ -56,14 +58,14 @@ public class MembersToSupplementaryDiffService {
         return answer;
     }
 
-    private void log(List<String> found) {
+    private void log(List<Members> found) {
         if (!found.isEmpty()) {
             Collections.sort(found);
 
             StringBuilder emailList = new StringBuilder();
-            for (String current : found) {
-                emailList.append(current).append(",");
-                logger.infof("%s is not in supplementary list", current);
+            for (Members current : found) {
+                emailList.append(current.getEmailAddress()).append(",");
+                logger.infof("%s is not in supplementary list", current.getEmailAddress());
             }
 
             logger.infof("Email list dump: %s", emailList);

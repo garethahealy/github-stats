@@ -19,8 +19,8 @@ collect-members-from-ldap - Creates a supplementary CSV containing members who h
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*collect-members-from-ldap* [*-ghV*] [*-vpn*] [*-o*=_<output>_] *-org*=_<organization>_
-                          *-s*=_<supplementaryCsv>_
+*collect-members-from-ldap* [*-ghV*] [*-vpn*] *-i*=_<membersCsv>_ [*-o*=_<output>_]
+                          *-org*=_<organization>_ *-s*=_<supplementaryCsv>_
 
 // end::picocli-generated-man-section-synopsis[]
 
@@ -39,6 +39,9 @@ Creates a supplementary CSV containing members who have added their GitHub ID to
 
 *-h*, *--help*::
   Show this help message and exit.
+
+*-i*, *--members-csv*=_<membersCsv>_::
+  CSV of current known members
 
 *-o*, *--csv-output*=_<output>_::
   Output location for CSV

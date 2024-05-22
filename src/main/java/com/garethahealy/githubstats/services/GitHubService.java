@@ -4,16 +4,36 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.garethahealy.githubstats.model.csv.Repository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.jboss.logging.Logger;
+import org.apache.commons.lang3.tuple.Pair;
 import org.kohsuke.github.*;
+import org.kohsuke.github.GHCommit;
+import org.kohsuke.github.GHContent;
+import org.kohsuke.github.GHException;
+import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHRepositoryCloneTraffic;
+import org.kohsuke.github.GHRepositoryViewTraffic;
+import org.kohsuke.github.GHTeam;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.PagedIterable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.*;
 
 @ApplicationScoped
 public class GitHubService {
@@ -21,21 +41,25 @@ public class GitHubService {
     @Inject
     Logger logger;
 
+    private GitHub gitHub;
+
     public GitHub getGitHub() throws IOException {
-        logger.info("Starting...");
+        if (gitHub == null) {
+            logger.info("Starting...");
 
-        GitHub gitHub = GitHubBuilder.fromEnvironment().build();
-        if (!gitHub.isCredentialValid()) {
-            throw new IllegalStateException("isCredentialValid - are GITHUB_LOGIN / GITHUB_OAUTH valid?");
-        }
+            gitHub = GitHubBuilder.fromEnvironment().build();
+            if (!gitHub.isCredentialValid()) {
+                throw new IllegalStateException("isCredentialValid - are GITHUB_LOGIN / GITHUB_OAUTH valid?");
+            }
 
-        if (gitHub.isAnonymous()) {
-            throw new IllegalStateException("isAnonymous - have you set GITHUB_LOGIN / GITHUB_OAUTH ?");
-        }
+            if (gitHub.isAnonymous()) {
+                throw new IllegalStateException("isAnonymous - have you set GITHUB_LOGIN / GITHUB_OAUTH ?");
+            }
 
-        logger.infof("RateLimit: limit %s, remaining %s, resetDate %s", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
-        if (gitHub.getRateLimit().getRemaining() == 0) {
-            throw new IllegalStateException("RateLimit - is zero, you need to wait until the reset date");
+            logger.infof("RateLimit: limit %s, remaining %s, resetDate %s", gitHub.getRateLimit().getLimit(), gitHub.getRateLimit().getRemaining(), gitHub.getRateLimit().getResetDate());
+            if (gitHub.getRateLimit().getRemaining() == 0) {
+                throw new IllegalStateException("RateLimit - is zero, you need to wait until the reset date");
+            }
         }
 
         return gitHub;
@@ -198,16 +222,64 @@ public class GitHubService {
         JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
 
         Set<String> membersAsSet = new HashSet<>();
-        ArrayNode admins = (ArrayNode)configMap.get("orgs").get("redhat-cop").get("admins");
+        ArrayNode admins = (ArrayNode) configMap.get("orgs").get("redhat-cop").get("admins");
         for (JsonNode current : admins) {
             membersAsSet.add(current.textValue());
         }
 
-        ArrayNode members = (ArrayNode)configMap.get("orgs").get("redhat-cop").get("members");
+        ArrayNode members = (ArrayNode) configMap.get("orgs").get("redhat-cop").get("members");
         for (JsonNode current : members) {
             membersAsSet.add(current.textValue());
         }
 
         return membersAsSet;
+    }
+
+    public Map<GHUser, String> getContributedTo(GHOrganization org, Set<GHUser> unknown, Set<GHUser> unknownWorksForRH) throws IOException, ExecutionException, InterruptedException {
+        Map<GHUser, String> contributedTo = new ConcurrentHashMap<>();
+
+        logger.info("Started to build contribute and commit history...");
+        logRateLimit(getGitHub());
+
+        Collection<GHRepository> repositories = getRepositories(org).values();
+
+        int cores = Runtime.getRuntime().availableProcessors() * 2;
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Future<GHRepository>> futures = new ArrayList<>();
+            for (GHRepository repository : repositories) {
+                futures.add(executor.submit(() -> {
+                    logger.infof("Working on: %s", repository.getName());
+
+                    if (!repository.isArchived()) {
+                        List<GHRepository.Contributor> contributors = listContributors(repository);
+                        for (GHRepository.Contributor contributor : contributors) {
+                            if (unknown.contains(contributor) || unknownWorksForRH.contains(contributor)) {
+                                if (contributedTo.containsKey(contributor)) {
+                                    contributedTo.compute(contributor, (k, message) -> message + ", " + repository.getName());
+                                } else {
+                                    contributedTo.put(contributor, repository.getName());
+                                }
+                            }
+                        }
+                    }
+
+                    return repository;
+                }));
+
+                if (futures.size() == cores) {
+                    for (Future<GHRepository> future : futures) {
+                        future.get();
+                    }
+
+                    futures.clear();
+                }
+            }
+
+            for (Future<GHRepository> future : futures) {
+                future.get();
+            }
+        }
+
+        return contributedTo;
     }
 }

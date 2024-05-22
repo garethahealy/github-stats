@@ -12,7 +12,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
+import org.kohsuke.github.GHCommit;
 import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
@@ -21,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @ApplicationScoped
 public class CollectRedHatLdapSupplementaryListService {
@@ -41,16 +44,17 @@ public class CollectRedHatLdapSupplementaryListService {
         this.ldapGuessService = ldapGuessService;
     }
 
-    public void run(String organization, String output, String supplementaryCsv, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException, TemplateException {
+    public void run(String organization, String output, String membersCsv, String supplementaryCsv, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
         List<GHUser> members = gitHubService.listMembers(org);
 
+        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
         Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
 
         Pair<List<Members>, List<GHUser>> membersPair = collectMembers(members, supplementaryMembers, failNoVpn);
         csvService.writeSupplementaryCsv(output, membersPair.getLeft(), supplementaryMembers.isEmpty());
 
-        ldapGuessService.attemptToGuess(membersPair.getRight(), shouldGuess, failNoVpn);
+        ldapGuessService.attemptToGuess(knownMembers, membersPair.getRight(), shouldGuess, failNoVpn, org);
 
         logger.info("Finished.");
     }
