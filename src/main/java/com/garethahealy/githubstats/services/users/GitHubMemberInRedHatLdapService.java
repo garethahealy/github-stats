@@ -78,6 +78,8 @@ public class GitHubMemberInRedHatLdapService {
             }
         }
 
+        Collections.sort(answer);
+
         logger.info("--> User Lookup DONE");
         return answer;
     }
