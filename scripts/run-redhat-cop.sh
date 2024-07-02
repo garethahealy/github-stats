@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 
-scripts/download-memebers-sheet.sh
-
 ./mvnw clean install -Pnative
 
 source creds.source
 
-#./target/github-stats-*-runner collect-stats --organization=redhat-cop
+#./target/github-stats-*-runner stats collect-stats --organization=redhat-cop
 
-./target/github-stats-*-runner collect-members-from-ldap --organization=redhat-cop --members-csv=gh-members.csv --csv-output=supplementary.csv --supplementary-csv=supplementary.csv --fail-if-no-vpn=true >> output.log
-./target/github-stats-*-runner github-member-in-ldap --dry-run=true --organization=redhat-cop --issue-repo=org --members-csv=gh-members.csv --supplementary-csv=supplementary.csv --fail-if-no-vpn=true >> output.log
+./target/github-stats-*-runner users collect-members-from-ldap --organization=redhat-cop --csv-output=ldap-members.csv --ldap-members-csv=ldap-members.csv --fail-if-no-vpn=true --guess=false >> output.log
 
-./target/github-stats-*-runner create-who-are-you-issues --dry-run=true --organization=redhat-cop --issue-repo=org --members-csv=gh-members.csv --supplementary-csv=supplementary.csv --fail-if-no-vpn=true --permission=admin >> output.log
-./target/github-stats-*-runner create-who-are-you-issues --dry-run=true --organization=redhat-cop --issue-repo=org --members-csv=gh-members.csv --supplementary-csv=supplementary.csv --fail-if-no-vpn=true --permission=write >> output.log
+./target/github-stats-*-runner users create-who-are-you-issues --dry-run=true --organization=redhat-cop --issue-repo=org --ldap-members-csv=ldap-members.csv --supplementary-csv=supplementary.csv --permission=read  --fail-if-no-vpn=true --guess=true >> output.log
+
+./target/github-stats-*-runner users github-member-in-ldap --dry-run=true --organization=redhat-cop --issue-repo=org --ldap-members-csv=ldap-members.csv --supplementary-csv=supplementary.csv --fail-if-no-vpn=true

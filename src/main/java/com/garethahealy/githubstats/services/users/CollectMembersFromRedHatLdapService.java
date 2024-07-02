@@ -12,9 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
-import org.kohsuke.github.GHCommit;
 import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
@@ -26,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @ApplicationScoped
-public class CollectRedHatLdapSupplementaryListService {
+public class CollectMembersFromRedHatLdapService {
 
     @Inject
     Logger logger;
@@ -37,41 +35,42 @@ public class CollectRedHatLdapSupplementaryListService {
     private final CsvService csvService;
 
     @Inject
-    public CollectRedHatLdapSupplementaryListService(GitHubService gitHubService, CsvService csvService, LdapService ldapService, LdapGuessService ldapGuessService) {
+    public CollectMembersFromRedHatLdapService(GitHubService gitHubService, CsvService csvService, LdapService ldapService, LdapGuessService ldapGuessService) {
         this.gitHubService = gitHubService;
         this.csvService = csvService;
         this.ldapService = ldapService;
         this.ldapGuessService = ldapGuessService;
     }
 
-    public void run(String organization, String output, String membersCsv, String supplementaryCsv, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
+    public void run(String organization, String output, String ldapMembersCsv, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
-        List<GHUser> members = gitHubService.listMembers(org);
+        List<GHUser> githubMembers = gitHubService.listMembers(org);
 
-        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
-        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
+        Map<String, Members> ldapMembers = csvService.getKnownMembers(ldapMembersCsv);
 
-        Pair<List<Members>, List<GHUser>> membersPair = collectMembers(members, supplementaryMembers, failNoVpn);
-        csvService.writeSupplementaryCsv(output, membersPair.getLeft(), supplementaryMembers.isEmpty());
+        Pair<List<Members>, List<GHUser>> membersPair = collectMembers(githubMembers, ldapMembers, failNoVpn);
+        List<Members> foundMembers = membersPair.getLeft();
+        List<GHUser> attemptToGuess = membersPair.getRight();
 
-        ldapGuessService.attemptToGuess(knownMembers, membersPair.getRight(), shouldGuess, failNoVpn, org);
+        csvService.writeLdapMembersCsv(output, foundMembers, ldapMembers.isEmpty());
+        ldapGuessService.attemptToGuess(ldapMembers, attemptToGuess, shouldGuess, failNoVpn, org);
 
         logger.info("Finished.");
     }
 
-    private Pair<List<Members>, List<GHUser>> collectMembers(List<GHUser> members, Map<String, Members> supplementaryMembers, boolean failNoVpn) throws IOException, LdapException {
+    private Pair<List<Members>, List<GHUser>> collectMembers(List<GHUser> githubMembers, Map<String, Members> ldapMembers, boolean failNoVpn) throws IOException, LdapException {
         List<Members> foundMembers = new ArrayList<>();
         List<GHUser> attemptToGuess = new ArrayList<>();
 
         if (ldapService.canConnect()) {
             try (LdapConnection connection = ldapService.open()) {
                 String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
-                if (!supplementaryMembers.containsKey("redhat-cop-ci-bot")) {
+                if (!ldapMembers.containsKey("redhat-cop-ci-bot")) {
                     foundMembers.add(new Members(date, "ablock@redhat.com", "redhat-cop-ci-bot"));
                 }
 
-                for (GHUser user : members) {
-                    if (!supplementaryMembers.containsKey(user.getLogin())) {
+                for (GHUser user : githubMembers) {
+                    if (!ldapMembers.containsKey(user.getLogin())) {
                         String rhEmail = ldapService.searchOnGitHubSocial(connection, user.getLogin());
                         if (rhEmail.isEmpty()) {
                             attemptToGuess.add(user);

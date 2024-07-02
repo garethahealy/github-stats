@@ -14,7 +14,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -46,10 +45,10 @@ public class CsvService {
         return answer;
     }
 
-    public void writeSupplementaryCsv(String output, List<Members> members, boolean supplementaryMembersIsEmpty) throws IOException {
+    public void writeLdapMembersCsv(String output, List<Members> members, boolean isCsvEmpty) throws IOException {
         if (!members.isEmpty()) {
             CSVFormat.Builder csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT);
-            if (supplementaryMembersIsEmpty) {
+            if (isCsvEmpty) {
                 csvFormat.setHeader(Members.Headers.class);
             }
 

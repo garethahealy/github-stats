@@ -9,14 +9,7 @@ import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.jboss.logging.Logger;
-import org.kohsuke.github.GHCommit;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHRepositoryCloneTraffic;
-import org.kohsuke.github.GHRepositoryViewTraffic;
-import org.kohsuke.github.GitHub;
+import org.kohsuke.github.*;
 
 import java.io.IOException;
 import java.nio.file.Files;

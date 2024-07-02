@@ -2,36 +2,16 @@ package com.garethahealy.githubstats.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.garethahealy.githubstats.model.csv.Repository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.jboss.logging.Logger;
-import org.apache.commons.lang3.tuple.Pair;
 import org.kohsuke.github.*;
-import org.kohsuke.github.GHCommit;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHException;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHRepositoryCloneTraffic;
-import org.kohsuke.github.GHRepositoryViewTraffic;
-import org.kohsuke.github.GHTeam;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
-import org.kohsuke.github.PagedIterable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -215,24 +195,6 @@ public class GitHubService {
         JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
 
         return configMap.get("orgs").get("redhat-cop").get("teams").get("aarchived").get("repos");
-    }
-
-    public Set<String> getOrgMembers(String configContent) throws IOException {
-        YAMLMapper mapper = new YAMLMapper();
-        JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
-
-        Set<String> membersAsSet = new HashSet<>();
-        ArrayNode admins = (ArrayNode) configMap.get("orgs").get("redhat-cop").get("admins");
-        for (JsonNode current : admins) {
-            membersAsSet.add(current.textValue());
-        }
-
-        ArrayNode members = (ArrayNode) configMap.get("orgs").get("redhat-cop").get("members");
-        for (JsonNode current : members) {
-            membersAsSet.add(current.textValue());
-        }
-
-        return membersAsSet;
     }
 
     public Map<GHUser, String> getContributedTo(GHOrganization org, Set<GHUser> unknown, Set<GHUser> unknownWorksForRH) throws IOException, ExecutionException, InterruptedException {

@@ -133,25 +133,19 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner collect-stats --organization=RedHat-Consulting-UK --validate-org-config=false
+        run: ./github-stats-*-runner stats collect-stats --organization=RedHat-Consulting-UK --validate-org-config=false
 
       - name: Run 'collect-members-from-ldap' for UKI
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner collect-members-from-ldap --organization=RedHat-Consulting-UK --csv-output=/tmp/supplementary.csv --members-csv=tests/members.csv --supplementary-csv=tests/supplementary.csv --fail-if-no-vpn=false --guess=false
+        run: ./github-stats-*-runner users collect-members-from-ldap --organization=RedHat-Consulting-UK --csv-output=/tmp/members.csv --ldap-members-csv=tests/ldap-members.csv --fail-if-no-vpn=false --guess=false
 
       - name: Run 'create-who-are-you-issues' for UKI
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --members-csv=tests/members.csv --supplementary-csv=tests/supplementary.csv --permission=admin --guess=false --fail-if-no-vpn=false
-
-      - name: Run 'members-to-supplementary-diff' for UKI
-        env:
-          GITHUB_LOGIN: ${{ github.repository_owner }}
-          GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner members-to-supplementary-diff --organization=RedHat-Consulting-UK --members-csv=tests/members.csv --supplementary-csv=tests/supplementary.csv
+        run: ./github-stats-*-runner users create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=admin --guess=false --fail-if-no-vpn=false
 
       - name: Upload github-output.csv
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
@@ -164,7 +158,7 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --members-csv=tests/members.csv --supplementary-csv=tests/supplementary.csv --permission=write
+        run: ./github-stats-*-runner users create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=write --guess=false --fail-if-no-vpn=false
 
   sign-image:
     needs: [ build ]

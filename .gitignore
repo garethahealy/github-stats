@@ -39,6 +39,7 @@ nb-configuration.xml
 .env
 
 creds.source
-/gh-members.csv
+
 /gh-members-googleform.csv
+/ldap-members.csv
 /supplementary.csv

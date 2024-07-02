@@ -39,7 +39,7 @@ ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com -s sub 'rhatSocialURL=
 Once you've built the code, you can execute the commands, for example:
 
 ```bash
-./target/github-stats-1.0.0-SNAPSHOT-runner collect-members-from-ldap --organization={your-org} --csv-output=supplementary.csv --supplementary-csv={list-of-supplementary-members} --guess=false --fail-if-no-vpn=false
+./target/github-stats-*-runner users collect-members-from-ldap --organization=redhat-cop --csv-output=ldap-members.csv --ldap-members-csv=ldap-members.csv --fail-if-no-vpn=true --guess=false
 ```
 
 For a full list of commands, see: [docs](docs)

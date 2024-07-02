@@ -13,13 +13,6 @@ import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHPermissionType;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHTeam;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -66,16 +59,16 @@ public class CreateWhoAreYouIssueService {
     private List<WhoAreYou> collectUnknownUsers(GitHub gitHub, GHOrganization org, String membersCsv, String supplementaryCsv, GHPermissionType perms, GHRepository orgRepo) throws IOException, ExecutionException, InterruptedException {
         List<WhoAreYou> usersToInform;
 
-        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
+        Map<String, Members> ldapMembers = csvService.getKnownMembers(membersCsv);
         Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
 
         logger.infof("There are %s GitHub members", gitHubService.listMembers(org).size());
-        logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
+        logger.infof("There are %s known members and %s supplementary members in the CSVs, total %s", ldapMembers.size(), supplementaryMembers.size(), (ldapMembers.size() + supplementaryMembers.size()));
 
         if (GHPermissionType.READ == perms) {
-            usersToInform = collectUnknownUsersWithRead(org, knownMembers, supplementaryMembers, orgRepo);
+            usersToInform = collectUnknownUsersWithRead(org, ldapMembers, supplementaryMembers);
         } else {
-            usersToInform = collectUnknownUsersWithAdminOrWrite(gitHub, org, knownMembers, supplementaryMembers, perms);
+            usersToInform = collectUnknownUsersWithAdminOrWrite(gitHub, org, ldapMembers, supplementaryMembers, perms);
         }
 
         Collections.sort(usersToInform);
@@ -84,12 +77,12 @@ public class CreateWhoAreYouIssueService {
         return usersToInform;
     }
 
-    private List<WhoAreYou> collectUnknownUsersWithRead(GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers, GHRepository orgRepo) throws IOException {
+    private List<WhoAreYou> collectUnknownUsersWithRead(GHOrganization org, Map<String, Members> ldapMembers, Map<String, Members> supplementaryMembers) throws IOException {
         List<WhoAreYou> usersToInform = new ArrayList<>();
 
         List<GHUser> members = gitHubService.listMembers(org);
         for (GHUser member : members) {
-            if (knownMembers.containsKey(member.getLogin()) || supplementaryMembers.containsKey(member.getLogin())) {
+            if (ldapMembers.containsKey(member.getLogin()) || supplementaryMembers.containsKey(member.getLogin())) {
                 logger.debugf("Ignoring: %s", member.getLogin());
             } else {
                 usersToInform.add(new WhoAreYou(member.getName(), member.getLogin(), "https://github.com/redhat-cop", member));

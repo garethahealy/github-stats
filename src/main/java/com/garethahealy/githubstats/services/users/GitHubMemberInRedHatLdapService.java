@@ -42,12 +42,12 @@ public class GitHubMemberInRedHatLdapService {
         this.ldapService = ldapService;
     }
 
-    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, boolean failNoVpn) throws IOException, LdapException, TemplateException {
+    public void run(String organization, String issueRepo, boolean isDryRun, String ldapMembersCsv, String supplementaryCsv, boolean failNoVpn) throws IOException, LdapException, TemplateException {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
         List<GHUser> members = gitHubService.listMembers(org);
 
-        List<Members> ldapCheck = collectMembersToCheck(members, membersCsv, supplementaryCsv);
+        List<Members> ldapCheck = collectMembersToCheck(members, ldapMembersCsv, supplementaryCsv);
         List<Members> usersToRemove = searchViaLdapFor(ldapCheck, failNoVpn);
 
         createIssue(usersToRemove, orgRepo, isDryRun);
@@ -55,20 +55,20 @@ public class GitHubMemberInRedHatLdapService {
         logger.info("Finished.");
     }
 
-    private List<Members> collectMembersToCheck(List<GHUser> members, String membersCsv, String supplementaryCsv) throws IOException {
+    private List<Members> collectMembersToCheck(List<GHUser> members, String ldapMembersCsv, String supplementaryCsv) throws IOException {
         List<Members> answer = new ArrayList<>();
 
-        Map<String, Members> knownMembers = csvService.getKnownMembers(membersCsv);
+        Map<String, Members> ldapMembers = csvService.getKnownMembers(ldapMembersCsv);
         Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
 
         logger.infof("There are %s GitHub members", members.size());
-        logger.infof("There are %s known members and %s supplementary members in the CSVs", knownMembers.size(), supplementaryMembers.size());
+        logger.infof("There are %s known members and %s supplementary members in the CSVs, total %s", ldapMembers.size(), supplementaryMembers.size(), (ldapMembers.size() + supplementaryMembers.size()));
 
         for (GHUser current : members) {
-            if (knownMembers.containsKey(current.getLogin())) {
+            if (ldapMembers.containsKey(current.getLogin())) {
                 logger.debugf("Adding %s to LDAP check list from known members", current.getLogin());
 
-                answer.add(knownMembers.get(current.getLogin()));
+                answer.add(ldapMembers.get(current.getLogin()));
             } else {
                 if (supplementaryMembers.containsKey(current.getLogin())) {
                     logger.debugf("Adding %s to LDAP check list from supplementary", current.getLogin());
