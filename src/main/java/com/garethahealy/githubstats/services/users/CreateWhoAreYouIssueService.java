@@ -44,16 +44,17 @@ public class CreateWhoAreYouIssueService {
         this.ldapGuessService = ldapGuessService;
     }
 
-    public void run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms, boolean shouldGuess, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException, TemplateException, LdapException {
+    public String run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms, boolean shouldGuess, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException, TemplateException, LdapException {
         GitHub gitHub = gitHubService.getGitHub();
         GHOrganization org = gitHubService.getOrganization(gitHub, organization);
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
 
         List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, membersCsv, supplementaryCsv, perms, orgRepo);
         ldapGuessService.attemptToGuess(usersToInform.stream().map(WhoAreYou::ghUser).toList(), shouldGuess, failNoVpn, org);
-        createIssue(usersToInform, orgRepo, perms, isDryRun);
+        String issueContent = createIssue(usersToInform, orgRepo, perms, isDryRun);
 
         logger.info("Finished.");
+        return issueContent;
     }
 
     private List<WhoAreYou> collectUnknownUsers(GitHub gitHub, GHOrganization org, String membersCsv, String supplementaryCsv, GHPermissionType perms, GHRepository orgRepo) throws IOException, ExecutionException, InterruptedException {
@@ -150,7 +151,8 @@ public class CreateWhoAreYouIssueService {
         return new ArrayList<>(usersToInform.values());
     }
 
-    private void createIssue(List<WhoAreYou> usersToInform, GHRepository orgRepo, GHPermissionType permissions, boolean isDryRun) throws TemplateException, IOException {
+    private String createIssue(List<WhoAreYou> usersToInform, GHRepository orgRepo, GHPermissionType permissions, boolean isDryRun) throws TemplateException, IOException {
+        String issueContent = "";
         if (!usersToInform.isEmpty()) {
             Map<String, Object> root = new HashMap<>();
             root.put("users", usersToInform);
@@ -165,7 +167,9 @@ public class CreateWhoAreYouIssueService {
 
             if (isDryRun) {
                 logger.warnf("DRY-RUN: Would have created issue in %s", orgRepo.getName());
-                logger.warnf(stringWriter.toString());
+
+                issueContent = stringWriter.toString();
+                logger.warnf(issueContent);
             } else {
                 GHIssue createdIssue = orgRepo.createIssue("Request GitHub to Red Hat ID linkage for users with " + permissions)
                         .label("admin")
@@ -177,5 +181,6 @@ public class CreateWhoAreYouIssueService {
         }
 
         logger.info("--> Issue creation DONE");
+        return issueContent;
     }
 }

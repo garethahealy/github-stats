@@ -1,12 +1,14 @@
 package com.garethahealy.githubstats;
 
 import com.garethahealy.githubstats.commands.GitHubStatsCommand;
+import com.garethahealy.githubstats.commands.ListenCommand;
+import com.garethahealy.githubstats.commands.StatsCommand;
+import com.garethahealy.githubstats.commands.UsersCommand;
 import com.garethahealy.githubstats.commands.stats.CollectStatsCommand;
-import com.garethahealy.githubstats.commands.stats.StatsCommand;
 import com.garethahealy.githubstats.commands.users.CollectMembersFromRedHatLdapCommand;
+import com.garethahealy.githubstats.commands.users.ConfigYamlMemberInRedHatLdapCommand;
 import com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand;
 import com.garethahealy.githubstats.commands.users.GitHubMemberInRedHatLdapCommand;
-import com.garethahealy.githubstats.commands.users.UsersCommand;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
@@ -15,6 +17,9 @@ import picocli.CommandLine;
 
 @QuarkusMain
 public class GitHubStatsApplication implements QuarkusApplication {
+
+    @Inject
+    ListenCommand listenCommand;
 
     @Inject
     CollectStatsCommand collectStatsCommand;
@@ -28,6 +33,9 @@ public class GitHubStatsApplication implements QuarkusApplication {
     @Inject
     CollectMembersFromRedHatLdapCommand collectMembersFromRedHatLdapCommand;
 
+    @Inject
+    ConfigYamlMemberInRedHatLdapCommand configYamlMemberInRedHatLdapCommand;
+
     public static void main(String[] args) {
         Quarkus.run(GitHubStatsApplication.class, args);
     }
@@ -40,7 +48,9 @@ public class GitHubStatsApplication implements QuarkusApplication {
                 .addSubcommand(new CommandLine(new UsersCommand())
                         .addSubcommand(createWhoAreYouIssueCommand)
                         .addSubcommand(gitHubMemberInRedHatLdapCommand)
-                        .addSubcommand(collectMembersFromRedHatLdapCommand))
+                        .addSubcommand(collectMembersFromRedHatLdapCommand)
+                        .addSubcommand(configYamlMemberInRedHatLdapCommand))
+                .addSubcommand(listenCommand)
                 .execute(args);
     }
 }

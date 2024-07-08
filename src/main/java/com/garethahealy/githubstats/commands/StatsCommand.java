@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.commands.stats;
+package com.garethahealy.githubstats.commands;
 
 import picocli.CommandLine;
 

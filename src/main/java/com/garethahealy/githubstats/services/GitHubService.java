@@ -65,6 +65,10 @@ public class GitHubService {
         return org.getRepositories();
     }
 
+    public GHRepository getRepository(String owner, String repo) throws IOException {
+        return getGitHub().getRepository(owner + "/" + repo);
+    }
+
     public GHRepository getRepository(GHOrganization org, String repo) throws IOException {
         return org.getRepository(repo);
     }
@@ -181,9 +185,13 @@ public class GitHubService {
     }
 
     public String getOrgConfigYaml(GHRepository coreOrg) throws IOException {
+        return getOrgConfigYaml(coreOrg, "main");
+    }
+
+    public String getOrgConfigYaml(GHRepository coreOrg, String branch) throws IOException {
         logger.info("Downloading org/config.yaml");
 
-        GHContent orgConfig = coreOrg.getFileContent("config.yaml");
+        GHContent orgConfig = coreOrg.getFileContent("config.yaml", branch);
         File configOutputFile = new File("target/core-config.yaml");
         FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
 
@@ -195,6 +203,13 @@ public class GitHubService {
         JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
 
         return configMap.get("orgs").get("redhat-cop").get("teams").get("aarchived").get("repos");
+    }
+
+    public JsonNode getConfigMembers(String configContent) throws JsonProcessingException {
+        YAMLMapper mapper = new YAMLMapper();
+        JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
+        
+        return configMap.get("orgs").get("redhat-cop").get("members");
     }
 
     public Map<GHUser, String> getContributedTo(GHOrganization org, Set<GHUser> unknown, Set<GHUser> unknownWorksForRH) throws IOException, ExecutionException, InterruptedException {

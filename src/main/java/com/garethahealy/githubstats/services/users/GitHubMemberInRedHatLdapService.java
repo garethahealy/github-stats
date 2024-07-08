@@ -42,7 +42,7 @@ public class GitHubMemberInRedHatLdapService {
         this.ldapService = ldapService;
     }
 
-    public void run(String organization, String issueRepo, boolean isDryRun, String ldapMembersCsv, String supplementaryCsv, boolean failNoVpn) throws IOException, LdapException, TemplateException {
+    public String run(String organization, String issueRepo, boolean isDryRun, String ldapMembersCsv, String supplementaryCsv, boolean failNoVpn) throws IOException, LdapException, TemplateException {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
         List<GHUser> members = gitHubService.listMembers(org);
@@ -50,9 +50,10 @@ public class GitHubMemberInRedHatLdapService {
         List<Members> ldapCheck = collectMembersToCheck(members, ldapMembersCsv, supplementaryCsv);
         List<Members> usersToRemove = searchViaLdapFor(ldapCheck, failNoVpn);
 
-        createIssue(usersToRemove, orgRepo, isDryRun);
+        String issueContent = createIssue(usersToRemove, orgRepo, isDryRun);
 
         logger.info("Finished.");
+        return issueContent;
     }
 
     private List<Members> collectMembersToCheck(List<GHUser> members, String ldapMembersCsv, String supplementaryCsv) throws IOException {
@@ -107,7 +108,8 @@ public class GitHubMemberInRedHatLdapService {
         return answer;
     }
 
-    private void createIssue(List<Members> usersToRemove, GHRepository orgRepo, boolean isDryRun) throws TemplateException, IOException {
+    private String createIssue(List<Members> usersToRemove, GHRepository orgRepo, boolean isDryRun) throws TemplateException, IOException {
+        String issueContent = "";
         if (!usersToRemove.isEmpty()) {
             Map<String, Object> root = new HashMap<>();
             root.put("users", usersToRemove);
@@ -117,7 +119,9 @@ public class GitHubMemberInRedHatLdapService {
 
             if (isDryRun) {
                 logger.warnf("DRY-RUN: Would have created issue in %s", orgRepo.getName());
-                logger.warnf(stringWriter.toString());
+
+                issueContent = stringWriter.toString();
+                logger.warnf(issueContent);
             } else {
                 GHIssue createdIssue = orgRepo.createIssue("Remove users - Not in RH LDAP")
                         .label("admin")
@@ -129,5 +133,6 @@ public class GitHubMemberInRedHatLdapService {
         }
 
         logger.info("--> Issue creation DONE");
+        return issueContent;
     }
 }
