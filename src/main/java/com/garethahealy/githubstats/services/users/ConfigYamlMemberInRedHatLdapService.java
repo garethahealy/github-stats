@@ -45,7 +45,7 @@ public class ConfigYamlMemberInRedHatLdapService {
         GHRepository orgRepo = gitHubService.getRepository(sourceOrg, sourceRepo);
 
         String configContent = gitHubService.getOrgConfigYaml(orgRepo, sourceBranch);
-        JsonNode members = gitHubService.getConfigMembers(configContent);
+        List<String> members = gitHubService.getConfigMembers(configContent);
 
         List<String> ldapCheck = collectMembersToCheck(members, ldapMembersCsv, supplementaryCsv);
         List<Members> usersFoundOrNot = searchViaLdapFor(ldapCheck, failNoVpn);
@@ -54,7 +54,7 @@ public class ConfigYamlMemberInRedHatLdapService {
         return usersFoundOrNot;
     }
 
-    private List<String> collectMembersToCheck(JsonNode members, String ldapMembersCsv, String supplementaryCsv) throws IOException {
+    private List<String> collectMembersToCheck(List<String> members, String ldapMembersCsv, String supplementaryCsv) throws IOException {
         List<String> answer = new ArrayList<>();
 
         Map<String, Members> ldapMembers = csvService.getKnownMembers(ldapMembersCsv);
@@ -63,8 +63,7 @@ public class ConfigYamlMemberInRedHatLdapService {
         logger.infof("There are %s config.yaml members", members.size());
         logger.infof("There are %s known members and %s supplementary members in the CSVs, total %s", ldapMembers.size(), supplementaryMembers.size(), (ldapMembers.size() + supplementaryMembers.size()));
 
-        for (JsonNode current : members) {
-            String member = current.asText();
+        for (String member : members) {
             if (!ldapMembers.containsKey(member) && !supplementaryMembers.containsKey(member)) {
                 logger.infof("Adding %s to LDAP check list", member);
 

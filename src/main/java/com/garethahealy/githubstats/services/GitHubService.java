@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
+import org.apache.directory.api.ldap.codec.api.ResponseCarryingException;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
@@ -205,11 +206,24 @@ public class GitHubService {
         return configMap.get("orgs").get("redhat-cop").get("teams").get("aarchived").get("repos");
     }
 
-    public JsonNode getConfigMembers(String configContent) throws JsonProcessingException {
+    public List<String> getConfigMembers(String configContent) throws JsonProcessingException {
         YAMLMapper mapper = new YAMLMapper();
         JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
-        
-        return configMap.get("orgs").get("redhat-cop").get("members");
+
+        JsonNode admins = configMap.get("orgs").get("redhat-cop").get("admins");
+        JsonNode members = configMap.get("orgs").get("redhat-cop").get("members");
+
+        List<String> allMembers = new ArrayList<>();
+        for (JsonNode current : admins) {
+            allMembers.add(current.asText());
+        }
+
+        for (JsonNode current : members) {
+            allMembers.add(current.asText());
+        }
+
+        Collections.sort(allMembers);
+        return allMembers;
     }
 
     public Map<GHUser, String> getContributedTo(GHOrganization org, Set<GHUser> unknown, Set<GHUser> unknownWorksForRH) throws IOException, ExecutionException, InterruptedException {
