@@ -18,6 +18,9 @@ public class CollectStatsCommand implements Runnable {
     @CommandLine.Option(names = {"-cfg", "--validate-org-config"}, description = "Whether to check the 'org/config.yaml'", defaultValue = "true")
     boolean validateOrgConfig;
 
+    @CommandLine.Option(names = {"-i", "--required-limit"}, description = "Number of API requests needed", defaultValue = "3000")
+    int limit;
+
     @CommandLine.Option(names = {"-o", "--csv-output"}, description = "Output location for CSV", defaultValue = "github-output.csv")
     String output;
 
@@ -27,7 +30,7 @@ public class CollectStatsCommand implements Runnable {
     @Override
     public void run() {
         try {
-            collectStatsService.run(organization, validateOrgConfig, output);
+            collectStatsService.run(organization, validateOrgConfig, limit, output);
         } catch (IOException | InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

@@ -35,13 +35,13 @@ public class CollectStatsService {
         this.gitHubService = gitHubService;
     }
 
-    public void run(String organization, boolean validateOrgConfig, String output) throws IOException, ExecutionException, InterruptedException {
+    public void run(String organization, boolean validateOrgConfig, int limit, String output) throws IOException, ExecutionException, InterruptedException {
         GitHub gitHub = gitHubService.getGitHub();
         GHOrganization org = gitHubService.getOrganization(gitHub, organization);
         GHRepository coreOrg = gitHubService.getRepository(org, "org");
         Map<String, GHRepository> repos = gitHubService.getRepositories(org);
 
-        gitHubService.hasRateLimit(gitHub, 3000);
+        gitHubService.hasRateLimit(gitHub, limit);
 
         logger.infof("Found %s repos.", repos.size());
 
