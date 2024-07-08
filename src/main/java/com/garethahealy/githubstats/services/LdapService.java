@@ -36,6 +36,10 @@ public class LdapService {
     private Dn systemDn;
 
     public boolean canConnect() {
+        if (!warmedUp.get()) {
+            init();
+        }
+
         return warmedUp.get();
     }
 
