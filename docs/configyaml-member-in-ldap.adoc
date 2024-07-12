@@ -19,9 +19,8 @@ configyaml-member-in-ldap - Creates a single issue containing any users that are
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*configyaml-member-in-ldap* [*-hV*] [*-vpn*] [*-b*=_<sourceBranch>_] *-i*=_<ldapMembersCsv>_
-                          [*-o*=_<sourceOrg>_] [*-r*=_<sourceRepo>_]
-                          *-s*=_<supplementaryCsv>_
+*configyaml-member-in-ldap* [*-hV*] [*-vpn*] *-b*=_<sourceBranch>_ [*-i*=_<ldapMembersCsv>_]
+                          *-o*=_<sourceOrg>_ *-r*=_<sourceRepo>_ [*-s*=_<supplementaryCsv>_]
 
 // end::picocli-generated-man-section-synopsis[]
 

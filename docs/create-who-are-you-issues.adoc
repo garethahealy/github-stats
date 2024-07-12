@@ -19,9 +19,9 @@ create-who-are-you-issues - Creates a single issue in the org config for users t
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*create-who-are-you-issues* [*-ghV*] *-dry* [*-vpn*] *-i*=_<ldapMembersCsv>_
-                          *-org*=_<organization>_ *-p*=_<permission>_ *-repo*=_<orgRepo>_
-                          *-s*=_<supplementaryCsv>_
+*create-who-are-you-issues* [*-ghV*] *-dry* [*-vpn*] [*-i*=_<ldapMembersCsv>_]
+                          *-org*=_<organization>_ *-p*=_<permission>_ [*-repo*=_<orgRepo>_]
+                          [*-s*=_<supplementaryCsv>_]
 
 // end::picocli-generated-man-section-synopsis[]
 

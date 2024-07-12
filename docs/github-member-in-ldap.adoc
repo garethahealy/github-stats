@@ -19,8 +19,9 @@ github-member-in-ldap - Creates a single issue containing any users that are par
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*github-member-in-ldap* [*-hV*] *-dry* [*-vpn*] *-i*=_<ldapMembersCsv>_ *-org*=_<organization>_
-                      *-repo*=_<orgRepo>_ *-s*=_<supplementaryCsv>_
+*github-member-in-ldap* [*-hV*] *-dry* [*-vpn*] [*-i*=_<ldapMembersCsv>_]
+                      *-org*=_<organization>_ [*-repo*=_<orgRepo>_]
+                      [*-s*=_<supplementaryCsv>_]
 
 // end::picocli-generated-man-section-synopsis[]
 
