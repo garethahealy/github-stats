@@ -40,6 +40,8 @@ nb-configuration.xml
 
 creds.source
 
+member-mapping/
+
 /gh-members-googleform.csv
 /ldap-members.csv
 /supplementary.csv
