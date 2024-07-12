@@ -80,20 +80,23 @@ public class ConfigYamlMemberInRedHatLdapService {
     private List<Members> searchViaLdapFor(List<String> ldapCheck, boolean failNoVpn) throws IOException, LdapException {
         List<Members> answer = new ArrayList<>();
 
-        if (ldapService.canConnect()) {
-            try (LdapConnection connection = ldapService.open()) {
-                for (String current : ldapCheck) {
-                    String rhEmail = ldapService.searchOnGitHubSocial(connection, current);
-                    answer.add(new Members(null, rhEmail, current));
+        if (!ldapCheck.isEmpty()) {
+            if (ldapService.canConnect()) {
+                try (LdapConnection connection = ldapService.open()) {
+                    for (String current : ldapCheck) {
+                        String rhEmail = ldapService.searchOnGitHubSocial(connection, current);
+                        answer.add(new Members(null, rhEmail, current));
+                    }
+                }
+            } else {
+                if (failNoVpn) {
+                    throw new IOException("Unable to connect to LDAP. Are you on the VPN?");
                 }
             }
-        } else {
-            if (failNoVpn) {
-                throw new IOException("Unable to connect to LDAP. Are you on the VPN?");
-            }
+
+            logger.info("--> LDAP Lookup DONE");
         }
 
-        logger.info("--> LDAP Lookup DONE");
         return answer;
     }
 }

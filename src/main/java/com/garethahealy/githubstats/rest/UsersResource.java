@@ -40,7 +40,7 @@ public class UsersResource {
     @POST
     @Path("collect-members-from-ldap")
     public void collect() throws TemplateException, IOException, ExecutionException, LdapException, InterruptedException {
-        collectMembersFromRedHatLdapService.run("redhat-cop", "ldap-members.csv", "ldap-members.csv", false, true);
+        collectMembersFromRedHatLdapService.run("redhat-cop", "ldap-members.csv", "ldap-members.csv", "supplementary.csv", false, true);
     }
 
     @POST

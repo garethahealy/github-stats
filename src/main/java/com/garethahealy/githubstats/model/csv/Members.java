@@ -20,6 +20,10 @@ public class Members implements Comparable<Members> {
     private final String whatIsYourGitHubUsername;
     private String redHatUserId;
 
+    public String getTimestamp() {
+        return timestamp;
+    }
+
     public String getEmailAddress() {
         return emailAddress;
     }

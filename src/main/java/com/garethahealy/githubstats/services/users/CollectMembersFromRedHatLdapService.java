@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -42,7 +43,7 @@ public class CollectMembersFromRedHatLdapService {
         this.ldapGuessService = ldapGuessService;
     }
 
-    public void run(String organization, String output, String ldapMembersCsv, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
+    public void run(String organization, String output, String ldapMembersCsv, String supplementaryCsv, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
         List<GHUser> githubMembers = gitHubService.listMembers(org);
 
@@ -54,6 +55,8 @@ public class CollectMembersFromRedHatLdapService {
 
         csvService.writeLdapMembersCsv(output, foundMembers, ldapMembers.isEmpty());
         ldapGuessService.attemptToGuess(ldapMembers, attemptToGuess, shouldGuess, failNoVpn, org);
+
+        removeFoundFromSupplementary(ldapMembers, foundMembers, supplementaryCsv);
 
         logger.info("Finished.");
     }
@@ -89,5 +92,30 @@ public class CollectMembersFromRedHatLdapService {
         logger.info("--> Collect DONE");
 
         return Pair.of(foundMembers, attemptToGuess);
+    }
+
+    private void removeFoundFromSupplementary(Map<String, Members> ldapMembers, List<Members> foundMembers, String supplementaryCsv) throws IOException {
+        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
+        int oldSize = supplementaryMembers.size();
+
+        for (Members current : ldapMembers.values()) {
+            if (supplementaryMembers.containsKey(current.getWhatIsYourGitHubUsername())) {
+                logger.infof("%s is in supplementary from LDAP", current.getEmailAddress());
+
+                supplementaryMembers.remove(current.getWhatIsYourGitHubUsername());
+            }
+        }
+
+        for (Members current : foundMembers) {
+            if (supplementaryMembers.containsKey(current.getWhatIsYourGitHubUsername())) {
+                logger.infof("%s is in supplementary from newly found", current.getEmailAddress());
+
+                supplementaryMembers.remove(current.getWhatIsYourGitHubUsername());
+            }
+        }
+
+        if (supplementaryMembers.size() != oldSize) {
+            csvService.writeSupplementaryMembersCsv(supplementaryCsv, new ArrayList<>(supplementaryMembers.values()));
+        }
     }
 }

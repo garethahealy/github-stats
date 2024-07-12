@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.jboss.logging.Logger;
 
 import java.io.FileReader;
@@ -14,9 +15,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @ApplicationScoped
 public class CsvService {
@@ -58,7 +57,22 @@ public class CsvService {
                 }
             }
 
-            logger.info("--> Write CSV DONE");
+            logger.info("--> Write LdapMembers CSV DONE");
         }
+    }
+
+    public void writeSupplementaryMembersCsv(String output, List<Members> members) throws IOException {
+        CSVFormat.Builder csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT);
+        csvFormat.setHeader(Members.Headers.class);
+
+        members.sort((o1, o2) -> new CompareToBuilder().append(o1.getTimestamp(), o2.getTimestamp()).toComparison());
+
+        try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output), StandardOpenOption.TRUNCATE_EXISTING), csvFormat.build())) {
+            for (Members current : members) {
+                csvPrinter.printRecord(current.toArray());
+            }
+        }
+
+        logger.info("--> Write Supplementary CSV DONE");
     }
 }

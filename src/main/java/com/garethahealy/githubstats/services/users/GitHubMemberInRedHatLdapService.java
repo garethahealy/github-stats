@@ -88,23 +88,26 @@ public class GitHubMemberInRedHatLdapService {
     private List<Members> searchViaLdapFor(List<Members> ldapCheck, boolean failNoVpn) throws IOException, LdapException {
         List<Members> answer = new ArrayList<>();
 
-        if (ldapService.canConnect()) {
-            try (LdapConnection connection = ldapService.open()) {
-                for (Members current : ldapCheck) {
-                    boolean found = ldapService.searchOnUser(connection, current.getRedHatUserId());
-                    if (!found) {
-                        logger.warnf("Did not find %s in LDAP", current.getRedHatUserId());
-                        answer.add(current);
+        if (!ldapCheck.isEmpty()) {
+            if (ldapService.canConnect()) {
+                try (LdapConnection connection = ldapService.open()) {
+                    for (Members current : ldapCheck) {
+                        boolean found = ldapService.searchOnUser(connection, current.getRedHatUserId());
+                        if (!found) {
+                            logger.warnf("Did not find %s in LDAP", current.getRedHatUserId());
+                            answer.add(current);
+                        }
                     }
                 }
+            } else {
+                if (failNoVpn) {
+                    throw new IOException("Unable to connect to LDAP. Are you on the VPN?");
+                }
             }
-        } else {
-            if (failNoVpn) {
-                throw new IOException("Unable to connect to LDAP. Are you on the VPN?");
-            }
+
+            logger.info("--> LDAP Lookup DONE");
         }
 
-        logger.info("--> LDAP Lookup DONE");
         return answer;
     }
 
