@@ -1,6 +1,5 @@
 package com.garethahealy.githubstats.rest;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garethahealy.githubstats.model.csv.Members;
 import com.garethahealy.githubstats.services.users.CollectMembersFromRedHatLdapService;
@@ -11,7 +10,6 @@ import freemarker.template.TemplateException;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.directory.api.ldap.model.exception.LdapException;

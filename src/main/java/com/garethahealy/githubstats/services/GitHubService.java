@@ -6,7 +6,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
-import org.apache.directory.api.ldap.codec.api.ResponseCarryingException;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 

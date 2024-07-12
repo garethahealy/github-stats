@@ -1,6 +1,5 @@
 package com.garethahealy.githubstats.services.users;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.garethahealy.githubstats.model.csv.Members;
 import com.garethahealy.githubstats.services.CsvService;
 import com.garethahealy.githubstats.services.GitHubService;
@@ -10,15 +9,16 @@ import freemarker.template.TemplateException;
 import io.quarkiverse.freemarker.TemplatePath;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.Path;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHRepository;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @ApplicationScoped
 public class ConfigYamlMemberInRedHatLdapService {
