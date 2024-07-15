@@ -36,7 +36,7 @@ public class CollectStatsCommand implements Runnable {
             if (!Files.exists(Path.of(output))) {
                 throw new FileNotFoundException("--csv-output=" + output + " not found.");
             }
-            
+
             collectStatsService.run(organization, validateOrgConfig, limit, output);
         } catch (IOException | InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
