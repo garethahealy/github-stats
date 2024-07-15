@@ -5,7 +5,10 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
 @Dependent
@@ -30,6 +33,10 @@ public class CollectStatsCommand implements Runnable {
     @Override
     public void run() {
         try {
+            if (!Files.exists(Path.of(output))) {
+                throw new FileNotFoundException("--csv-output=" + output + " not found.");
+            }
+            
             collectStatsService.run(organization, validateOrgConfig, limit, output);
         } catch (IOException | InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);

@@ -133,13 +133,17 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner stats collect-stats --organization=RedHat-Consulting-UK --validate-org-config=false --required-limit=400
+        run: |
+          touch /tmp/stats.csv
+          ./github-stats-*-runner stats collect-stats --organization=RedHat-Consulting-UK --csv-output=/tmp/stats.csv --validate-org-config=false --required-limit=400
 
       - name: Run 'collect-members-from-ldap' for UKI
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner users collect-members-from-ldap --organization=RedHat-Consulting-UK --csv-output=/tmp/members.csv --ldap-members-csv=tests/ldap-members.csv --fail-if-no-vpn=false --guess=false
+        run: |
+          touch /tmp/members.csv
+          ./github-stats-*-runner users collect-members-from-ldap --organization=RedHat-Consulting-UK --csv-output=/tmp/members.csv --ldap-members-csv=tests/ldap-members.csv --fail-if-no-vpn=false --guess=false
 
       - name: Run 'create-who-are-you-issues' for UKI
         env:
