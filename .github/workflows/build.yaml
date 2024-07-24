@@ -119,6 +119,9 @@ jobs:
         with:
           category: "/language:java"
 
+      - name: Submit Dependency Snapshot
+        uses: advanced-security/maven-dependency-submission-action@v4
+
   test:
     needs: [ build ]
     runs-on: ubuntu-latest
