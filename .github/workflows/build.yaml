@@ -35,6 +35,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven
 
+      - name: Collect dependencies
+        run: |
+          ./mvnw dependency:go-offline --batch-mode
+          ./mvnw verify --fail-never --batch-mode
+
       - name: Build
         run: ./mvnw clean install --batch-mode
 
