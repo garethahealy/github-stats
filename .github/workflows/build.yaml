@@ -50,14 +50,14 @@ jobs:
         run: target/github-stats-*-runner help
 
       - name: Upload target
-        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4
+        uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4
         with:
           name: target
           path: target/
           if-no-files-found: error
 
       - name: Upload runner binary
-        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4
+        uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4
         with:
           name: runner
           path: target/github-stats-*-runner
@@ -170,7 +170,7 @@ jobs:
         run: ./github-stats-*-runner users create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=admin --guess=false --fail-if-no-vpn=false
 
       - name: Upload /tmp/*.csv
-        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4
+        uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4
         with:
           name: outputs.csv
           path: /tmp/*.csv
