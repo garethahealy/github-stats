@@ -47,7 +47,12 @@ jobs:
         run: ./mvnw clean install -Pnative --batch-mode
 
       - name: Run help
-        run: target/github-stats-*-runner help
+        id: runner
+        run: |
+          runners=(target/github-stats-*-runner)
+          echo "cmd=$(basename ${runners[0]})" >> "$GITHUB_OUTPUT"
+          
+          "${runners[0]}" help
 
       - name: Upload target
         uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4
@@ -100,6 +105,7 @@ jobs:
       image_repo: "ghcr.io/${{ github.repository }}/${{ steps.build_image.outputs.image }}"
       image_digest: "${{ steps.push_image.outputs.digest }}"
       image_uri: "ghcr.io/${{ github.repository }}/${{ steps.build_image.outputs.image }}@${{ steps.push_image.outputs.digest }}"
+      runner: "${{ steps.runner.outputs.cmd }}"
 
   analyze:
     needs: [ build ]
@@ -135,6 +141,8 @@ jobs:
   test:
     needs: [ build ]
     runs-on: ubuntu-latest
+    env:
+      RUNNER: "${{ needs.build.outputs.runner }}"
     steps:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -145,7 +153,7 @@ jobs:
           name: target
 
       - name: Make github-stats-*-runner executable
-        run: chmod +x github-stats-*-runner
+        run: chmod +x ${{ env.RUNNER }}
 
       - name: Run 'collect-stats' for UKI
         env:
@@ -153,7 +161,7 @@ jobs:
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
         run: |
           touch /tmp/stats.csv
-          ./github-stats-*-runner stats collect-stats --organization=RedHat-Consulting-UK --csv-output=/tmp/stats.csv --validate-org-config=false --required-limit=400
+          ./${{ env.RUNNER }} stats collect-stats --organization=RedHat-Consulting-UK --csv-output=/tmp/stats.csv --validate-org-config=false --required-limit=400
 
       - name: Run 'collect-members-from-ldap' for UKI
         env:
@@ -161,13 +169,13 @@ jobs:
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
         run: |
           touch /tmp/members.csv
-          ./github-stats-*-runner users collect-members-from-ldap --organization=RedHat-Consulting-UK --csv-output=/tmp/members.csv --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --fail-if-no-vpn=false --guess=false
+          ./${{ env.RUNNER }} users collect-members-from-ldap --organization=RedHat-Consulting-UK --csv-output=/tmp/members.csv --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --fail-if-no-vpn=false --guess=false
 
       - name: Run 'create-who-are-you-issues' for UKI
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner users create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=admin --guess=false --fail-if-no-vpn=false
+        run: ./${{ env.RUNNER }} users create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=admin --guess=false --fail-if-no-vpn=false
 
       - name: Upload /tmp/*.csv
         uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4
@@ -180,7 +188,7 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ github.repository_owner }}
           GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
-        run: ./github-stats-*-runner users create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=write --guess=false --fail-if-no-vpn=false
+        run: ./${{ env.RUNNER }} users create-who-are-you-issues --dry-run=true --organization=RedHat-Consulting-UK --issue-repo=helm3 --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=write --guess=false --fail-if-no-vpn=false
 
   sign-image:
     needs: [ build ]
@@ -201,7 +209,7 @@ jobs:
 
       - name: Sign Image
         run: |
-          cosign sign --yes ${image_uri}
+          cosign sign --yes "${image_uri}"
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
@@ -227,8 +235,8 @@ jobs:
 
       - name: Attach attestations
         run: |
-          cosign attest --yes --type vuln --predicate cosign-vuln.json ${image_uri}
-          cosign attest --yes --type cyclonedx --predicate spdx-json.json ${image_uri}
+          cosign attest --yes --type vuln --predicate cosign-vuln.json "${image_uri}"
+          cosign attest --yes --type cyclonedx --predicate spdx-json.json "${image_uri}"
 
   provenance_binary:
     needs: [ build ]
