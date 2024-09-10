@@ -8,7 +8,6 @@ import com.garethahealy.githubstats.services.LdapService;
 import freemarker.template.TemplateException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
@@ -21,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @ApplicationScoped
@@ -44,31 +44,32 @@ public class CollectMembersFromRedHatLdapService {
 
     public void run(String organization, String output, String ldapMembersCsv, String supplementaryCsv, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
+
         List<GHUser> githubMembers = gitHubService.listMembers(org);
-
         Map<String, Members> ldapMembers = csvService.getKnownMembers(ldapMembersCsv);
+        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
 
-        Pair<List<Members>, List<GHUser>> membersPair = collectMembers(githubMembers, ldapMembers, failNoVpn);
-        List<Members> foundMembers = membersPair.getLeft();
-        List<GHUser> attemptToGuess = membersPair.getRight();
+        List<GHUser> attemptToGuess = collectMembersAndBuildGuessList(githubMembers, ldapMembers, failNoVpn);
 
-        csvService.writeLdapMembersCsv(output, foundMembers, ldapMembers.isEmpty());
+        removeFromLdapOrSupplementaryIfNotGitHubMember(githubMembers, ldapMembers, supplementaryMembers);
+        removeLdapFromSupplementary(ldapMembers, supplementaryMembers);
+
+        csvService.writeLdapMembersCsv(output, new ArrayList<>(ldapMembers.values()));
+        csvService.writeSupplementaryMembersCsv(supplementaryCsv, new ArrayList<>(supplementaryMembers.values()));
+
         ldapGuessService.attemptToGuess(ldapMembers, attemptToGuess, shouldGuess, failNoVpn, org);
-
-        removeFoundFromSupplementary(ldapMembers, foundMembers, supplementaryCsv);
 
         logger.info("Finished.");
     }
 
-    private Pair<List<Members>, List<GHUser>> collectMembers(List<GHUser> githubMembers, Map<String, Members> ldapMembers, boolean failNoVpn) throws IOException, LdapException {
-        List<Members> foundMembers = new ArrayList<>();
+    private List<GHUser> collectMembersAndBuildGuessList(List<GHUser> githubMembers, Map<String, Members> ldapMembers, boolean failNoVpn) throws IOException, LdapException {
         List<GHUser> attemptToGuess = new ArrayList<>();
 
         if (ldapService.canConnect()) {
             try (LdapConnection connection = ldapService.open()) {
-                String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+                String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
                 if (!ldapMembers.containsKey("redhat-cop-ci-bot")) {
-                    foundMembers.add(new Members(date, "ablock@redhat.com", "redhat-cop-ci-bot"));
+                    ldapMembers.put("redhat-cop-ci-bot", new Members(date, "ablock@redhat.com", "redhat-cop-ci-bot"));
                 }
 
                 for (GHUser user : githubMembers) {
@@ -77,7 +78,7 @@ public class CollectMembersFromRedHatLdapService {
                         if (rhEmail.isEmpty()) {
                             attemptToGuess.add(user);
                         } else {
-                            foundMembers.add(new Members(date, rhEmail, user.getLogin()));
+                            ldapMembers.put(user.getLogin(), new Members(date, rhEmail, user.getLogin()));
                         }
                     }
                 }
@@ -90,31 +91,37 @@ public class CollectMembersFromRedHatLdapService {
 
         logger.info("--> Collect DONE");
 
-        return Pair.of(foundMembers, attemptToGuess);
+        return attemptToGuess;
     }
 
-    private void removeFoundFromSupplementary(Map<String, Members> ldapMembers, List<Members> foundMembers, String supplementaryCsv) throws IOException {
-        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
-        int oldSize = supplementaryMembers.size();
+    private void removeFromLdapOrSupplementaryIfNotGitHubMember(List<GHUser> githubMembers, Map<String, Members> ldapMembers, Map<String, Members> supplementaryMembers) {
+        removeFromIfNotGitHubMember(githubMembers, ldapMembers);
+        removeFromIfNotGitHubMember(githubMembers, supplementaryMembers);
+    }
 
+    private void removeFromIfNotGitHubMember(List<GHUser> githubMembers, Map<String, Members> foundMembers) {
+        List<String> ldapKeysToRemove = new ArrayList<>();
+        for (Map.Entry<String, Members> member : foundMembers.entrySet()) {
+            Optional<GHUser> found = githubMembers.stream().filter((e) -> e.getLogin().equals(member.getKey())).findFirst();
+            if (found.isEmpty()) {
+                ldapKeysToRemove.add(member.getKey());
+            }
+        }
+
+        for (String remove : ldapKeysToRemove) {
+            logger.infof("%s is in a CSV but no-longer a GitHub member", remove);
+
+            foundMembers.remove(remove);
+        }
+    }
+
+    private void removeLdapFromSupplementary(Map<String, Members> ldapMembers, Map<String, Members> supplementaryMembers) {
         for (Members current : ldapMembers.values()) {
             if (supplementaryMembers.containsKey(current.getWhatIsYourGitHubUsername())) {
-                logger.infof("%s is in supplementary from LDAP", current.getEmailAddress());
+                logger.infof("%s is in LDAP and Supplementary CSV, removing from Supplementary", current.getEmailAddress());
 
                 supplementaryMembers.remove(current.getWhatIsYourGitHubUsername());
             }
-        }
-
-        for (Members current : foundMembers) {
-            if (supplementaryMembers.containsKey(current.getWhatIsYourGitHubUsername())) {
-                logger.infof("%s is in supplementary from newly found", current.getEmailAddress());
-
-                supplementaryMembers.remove(current.getWhatIsYourGitHubUsername());
-            }
-        }
-
-        if (supplementaryMembers.size() != oldSize) {
-            csvService.writeSupplementaryMembersCsv(supplementaryCsv, new ArrayList<>(supplementaryMembers.values()));
         }
     }
 }

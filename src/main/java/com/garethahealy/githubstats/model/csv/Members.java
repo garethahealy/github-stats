@@ -52,6 +52,8 @@ public class Members implements Comparable<Members> {
 
     @Override
     public int compareTo(Members o) {
-        return new CompareToBuilder().append(getRedHatUserId(), o.getRedHatUserId()).toComparison();
+        return new CompareToBuilder()
+                .append(getRedHatUserId(), o.getRedHatUserId())
+                .append(getTimestamp(), o.getTimestamp()).toComparison();
     }
 }

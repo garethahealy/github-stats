@@ -46,14 +46,10 @@ public class CsvService {
         return answer;
     }
 
-    public void writeLdapMembersCsv(String output, List<Members> members, boolean isCsvEmpty) throws IOException {
+    public void writeLdapMembersCsv(String output, List<Members> members) throws IOException {
         if (!members.isEmpty()) {
-            CSVFormat.Builder csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT);
-            if (isCsvEmpty) {
-                csvFormat.setHeader(Members.Headers.class);
-            }
-
-            try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output), StandardOpenOption.APPEND), csvFormat.build())) {
+            CSVFormat.Builder csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader(Members.Headers.class);
+            try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output), StandardOpenOption.TRUNCATE_EXISTING), csvFormat.build())) {
                 for (Members current : members) {
                     csvPrinter.printRecord(current.toArray());
                 }
