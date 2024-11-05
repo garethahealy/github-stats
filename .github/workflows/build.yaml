@@ -33,7 +33,7 @@ jobs:
         run: |
           ./mvnw dependency:go-offline --batch-mode
           ./mvnw verify --fail-never --batch-mode
-          ./mvnw dependency:resolve-sources dependency:resolve -Dclassifier=javadoc
+          ./mvnw dependency:resolve-sources dependency:resolve -Dclassifier=javadoc --batch-mode
 
       - name: Build
         run: ./mvnw clean install --batch-mode
