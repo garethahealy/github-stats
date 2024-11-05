@@ -23,22 +23,17 @@ jobs:
         with:
           distribution: "temurin"
           java-version: 21
+          cache: "maven"
 
       - name: Dependency Review
         if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@4081bf99e2866ebe428fc0477b69eb4fcda7220a # v4
 
-      - uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven
-          restore-keys: |
-            ${{ runner.os }}-maven
-
       - name: Collect dependencies
         run: |
           ./mvnw dependency:go-offline --batch-mode
           ./mvnw verify --fail-never --batch-mode
+          ./mvnw dependency:resolve-sources dependency:resolve -Dclassifier=javadoc
 
       - name: Build
         run: ./mvnw clean install --batch-mode
