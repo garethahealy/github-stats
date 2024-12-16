@@ -37,6 +37,7 @@ public class LabelPullRequestForNewMembersService {
     private final GitHubService gitHubService;
     private final ConfigYamlMemberInRedHatLdapService configYamlMemberInRedHatLdapService;
     private final Set<String> ignoreLabelKeys = new HashSet<>(List.of("merge-ok/user-in-ldap", "merge-ok/requires-manual-ldap"));
+    private final Set<String> cantFindUserLabelKeys = new HashSet<>(List.of("dont-merge/cant-find-user-in-ldap"));
 
     @Inject
     public LabelPullRequestForNewMembersService(GitHubService gitHubService, ConfigYamlMemberInRedHatLdapService configYamlMemberInRedHatLdapService) {
@@ -152,20 +153,25 @@ public class LabelPullRequestForNewMembersService {
                             logger.infof("Labeled (merge-ok/user-in-ldap) and commented: %s", pullRequest.getNumber());
                         }
                     } else {
-                        Map<String, Object> root = new HashMap<>();
-                        root.put("users", unknownMembers);
-
-                        StringWriter stringWriter = new StringWriter();
-                        createWhoAreYouIssueRead.process(root, stringWriter);
-
-                        if (isDryRun) {
-                            logger.warnf("DRY-RUN: Would have labeled 'dont-merge/cant-find-user-in-ldap' pull request %s and added below comment", pullRequest.getNumber());
-                            logger.warnf(stringWriter.toString());
+                        Optional<GHLabel> isLabeledCantFindUser = getLabel(pullRequest.getLabels(), cantFindUserLabelKeys);
+                        if (isLabeledCantFindUser.isPresent()) {
+                            logger.infof("%s has 'dont-merge/cant-find-user-in-ldap' so wont label/comment again, ignoring", pullRequest.getNumber());
                         } else {
-                            pullRequest.addLabels("dont-merge/cant-find-user-in-ldap");
-                            pullRequest.comment(stringWriter.toString());
+                            Map<String, Object> root = new HashMap<>();
+                            root.put("users", unknownMembers);
 
-                            logger.infof("Labeled (dont-merge/cant-find-user-in-ldap) and commented: %s", pullRequest.getNumber());
+                            StringWriter stringWriter = new StringWriter();
+                            createWhoAreYouIssueRead.process(root, stringWriter);
+
+                            if (isDryRun) {
+                                logger.warnf("DRY-RUN: Would have labeled 'dont-merge/cant-find-user-in-ldap' pull request %s and added below comment", pullRequest.getNumber());
+                                logger.warnf(stringWriter.toString());
+                            } else {
+                                pullRequest.addLabels("dont-merge/cant-find-user-in-ldap");
+                                pullRequest.comment(stringWriter.toString());
+
+                                logger.infof("Labeled (dont-merge/cant-find-user-in-ldap) and commented: %s", pullRequest.getNumber());
+                            }
                         }
                     }
                 }
