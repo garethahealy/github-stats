@@ -14,8 +14,8 @@ Both JVM and Native mode are supported.
 Which allows you to run via:
 
 ```bash
-./target/github-stats-1.0.0-SNAPSHOT-runner
-java -jar target/quarkus-app/quarkus-run.jar
+./target/github-stats-*-runner help
+java -jar target/quarkus-app/quarkus-run.jar help
 ```
 
 ## GitHub Auth
