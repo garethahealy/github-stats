@@ -4,9 +4,7 @@ import com.garethahealy.githubstats.model.csv.Members;
 import com.garethahealy.githubstats.services.CsvService;
 import com.garethahealy.githubstats.services.GitHubService;
 import com.garethahealy.githubstats.services.LdapService;
-import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import io.quarkiverse.freemarker.TemplatePath;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -26,10 +24,6 @@ public class ConfigYamlMemberInRedHatLdapService {
     @Inject
     Logger logger;
 
-    @Inject
-    @TemplatePath("GitHubMemberInRedHatLdap.ftl")
-    Template issue;
-
     private final GitHubService gitHubService;
     private final LdapService ldapService;
     private final CsvService csvService;
@@ -43,8 +37,17 @@ public class ConfigYamlMemberInRedHatLdapService {
 
     public List<Members> run(String sourceOrg, String sourceRepo, String sourceBranch, String ldapMembersCsv, String supplementaryCsv, boolean failNoVpn) throws IOException, LdapException, TemplateException {
         GHRepository orgRepo = gitHubService.getRepository(sourceOrg, sourceRepo);
+        return run(orgRepo, sourceBranch, ldapMembersCsv, supplementaryCsv, failNoVpn);
+    }
+
+    public List<Members> run(GHRepository orgRepo, String sourceBranch, String ldapMembersCsv, String supplementaryCsv, boolean failNoVpn) throws IOException, LdapException, TemplateException {
+        logger.infof("Looking up %s/%s on %s", orgRepo.getOwnerName(), orgRepo.getName(), sourceBranch);
 
         String configContent = gitHubService.getOrgConfigYaml(orgRepo, sourceBranch);
+        if (configContent == null || configContent.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<String> members = gitHubService.getConfigMembers(configContent);
 
         List<String> ldapCheck = collectMembersToCheck(members, ldapMembersCsv, supplementaryCsv);

@@ -77,15 +77,6 @@ public class GitHubService {
         return org.listMembers().toList();
     }
 
-    public Map<String, GHUser> mapMembers(GHOrganization org) throws IOException {
-        Map<String, GHUser> answer = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        for (GHUser current : listMembers(org)) {
-            answer.put(current.getLogin(), current);
-        }
-
-        return answer;
-    }
-
     public List<GHRepository.Contributor> listContributors(GHRepository repo) throws IOException {
         logger.debugf("-> listContributors", repo.getName());
         return repo.listContributors().toList();
@@ -116,6 +107,10 @@ public class GitHubService {
             logger.debug(ex);
         }
         return commits;
+    }
+
+    public List<GHPullRequest> getOpenPullRequests(GHRepository repo) throws IOException {
+        return repo.getPullRequests(GHIssueState.OPEN);
     }
 
     public GHRepositoryCloneTraffic cloneTraffic(GHRepository repo) {
@@ -189,13 +184,22 @@ public class GitHubService {
     }
 
     public String getOrgConfigYaml(GHRepository coreOrg, String branch) throws IOException {
-        logger.info("Downloading org/config.yaml");
+        logger.infof("Downloading %s/%s/config.yaml from %s", coreOrg.getOwnerName(), coreOrg.getName(), branch);
 
-        GHContent orgConfig = coreOrg.getFileContent("config.yaml", branch);
-        File configOutputFile = new File("target/core-config.yaml");
-        FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
+        String answer = null;
 
-        return FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
+        try {
+            GHContent orgConfig = coreOrg.getFileContent("config.yaml", branch);
+            File configOutputFile = new File("target/core-config.yaml");
+            FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
+
+            answer = FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
+        } catch (GHFileNotFoundException ex) {
+            logger.warnf("Did not find %s/%s/config.yaml from %s - maybe branch has been deleted", coreOrg.getOwnerName(), coreOrg.getName(), branch);
+            logger.warn("Failure", ex);
+        }
+
+        return answer;
     }
 
     public JsonNode getArchivedRepos(String configContent) throws JsonProcessingException {
@@ -206,13 +210,14 @@ public class GitHubService {
     }
 
     public List<String> getConfigMembers(String configContent) throws JsonProcessingException {
+        List<String> allMembers = new ArrayList<>();
+
         YAMLMapper mapper = new YAMLMapper();
         JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
 
         JsonNode admins = configMap.get("orgs").get("redhat-cop").get("admins");
         JsonNode members = configMap.get("orgs").get("redhat-cop").get("members");
 
-        List<String> allMembers = new ArrayList<>();
         for (JsonNode current : admins) {
             allMembers.add(current.asText());
         }

@@ -45,6 +45,8 @@ public class CollectMembersFromRedHatLdapService {
     public void run(String organization, String output, String ldapMembersCsv, String supplementaryCsv, boolean shouldGuess, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException {
         GHOrganization org = gitHubService.getOrganization(gitHubService.getGitHub(), organization);
 
+        logger.infof("Looking up %s", org.getName());
+
         List<GHUser> githubMembers = gitHubService.listMembers(org);
         Map<String, Members> ldapMembers = csvService.getKnownMembers(ldapMembersCsv);
         Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);

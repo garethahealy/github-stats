@@ -5,10 +5,7 @@ import com.garethahealy.githubstats.commands.ListenCommand;
 import com.garethahealy.githubstats.commands.StatsCommand;
 import com.garethahealy.githubstats.commands.UsersCommand;
 import com.garethahealy.githubstats.commands.stats.CollectStatsCommand;
-import com.garethahealy.githubstats.commands.users.CollectMembersFromRedHatLdapCommand;
-import com.garethahealy.githubstats.commands.users.ConfigYamlMemberInRedHatLdapCommand;
-import com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand;
-import com.garethahealy.githubstats.commands.users.GitHubMemberInRedHatLdapCommand;
+import com.garethahealy.githubstats.commands.users.*;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
@@ -36,6 +33,9 @@ public class GitHubStatsApplication implements QuarkusApplication {
     @Inject
     ConfigYamlMemberInRedHatLdapCommand configYamlMemberInRedHatLdapCommand;
 
+    @Inject
+    LabelPullRequestForNewMembersCommand labelPullRequestForNewMembersCommand;
+
     public static void main(String[] args) {
         Quarkus.run(GitHubStatsApplication.class, args);
     }
@@ -49,7 +49,8 @@ public class GitHubStatsApplication implements QuarkusApplication {
                         .addSubcommand(createWhoAreYouIssueCommand)
                         .addSubcommand(gitHubMemberInRedHatLdapCommand)
                         .addSubcommand(collectMembersFromRedHatLdapCommand)
-                        .addSubcommand(configYamlMemberInRedHatLdapCommand))
+                        .addSubcommand(configYamlMemberInRedHatLdapCommand)
+                        .addSubcommand(labelPullRequestForNewMembersCommand))
                 .addSubcommand(listenCommand)
                 .execute(args);
     }

@@ -47,6 +47,8 @@ public class GitHubMemberInRedHatLdapService {
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
         List<GHUser> members = gitHubService.listMembers(org);
 
+        logger.infof("Looking up %s/%s", orgRepo.getOwnerName(), orgRepo.getName());
+
         List<Members> ldapCheck = collectMembersToCheck(members, ldapMembersCsv, supplementaryCsv);
         List<Members> usersToRemove = searchViaLdapFor(ldapCheck, failNoVpn);
 

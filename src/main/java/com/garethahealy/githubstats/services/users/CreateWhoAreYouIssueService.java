@@ -49,6 +49,8 @@ public class CreateWhoAreYouIssueService {
         GHOrganization org = gitHubService.getOrganization(gitHub, organization);
         GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
 
+        logger.infof("Looking up %s/%s", orgRepo.getOwnerName(), orgRepo.getName());
+
         List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, membersCsv, supplementaryCsv, perms, orgRepo);
         ldapGuessService.attemptToGuess(usersToInform.stream().map(WhoAreYou::ghUser).toList(), shouldGuess, failNoVpn, org);
         String issueContent = createIssue(usersToInform, orgRepo, perms, isDryRun);
@@ -119,7 +121,7 @@ public class CreateWhoAreYouIssueService {
                                 if (hasPermission) {
                                     logger.warnf("Member %s has %s on %s - but we don't know who they are", member.getLogin(), perms, repository.getName());
 
-                                    usersToInform.put(member.getLogin(), new WhoAreYou(member.getName(), member.getLogin(), repository.getHtmlUrl().toString(), member));
+                                    usersToInform.put(member.getLogin(), WhoAreYou.from(member, repository.getHtmlUrl().toString()));
                                     changed++;
 
                                     break;

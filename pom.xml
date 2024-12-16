@@ -168,6 +168,7 @@
             <argument>com.garethahealy.githubstats.commands.users.GitHubMemberInRedHatLdapCommand</argument>
             <argument>com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand</argument>
             <argument>com.garethahealy.githubstats.commands.users.ConfigYamlMemberInRedHatLdapCommand</argument>
+            <argument>com.garethahealy.githubstats.commands.users.LabelPullRequestForNewMembersCommand</argument>
           </arguments>
         </configuration>
         <dependencies>
