@@ -149,6 +149,9 @@ public class LabelPullRequestForNewMembersService {
                             pullRequest.removeLabels("dont-merge/cant-find-user-in-ldap");
                             pullRequest.addLabels("merge-ok/user-in-ldap");
                             pullRequest.comment(stringWriter.toString());
+                            pullRequest.createReview()
+                                    .event(GHPullRequestReviewEvent.APPROVE)
+                                    .create();
 
                             logger.infof("Labeled (merge-ok/user-in-ldap) and commented: %s", pullRequest.getNumber());
                         }
