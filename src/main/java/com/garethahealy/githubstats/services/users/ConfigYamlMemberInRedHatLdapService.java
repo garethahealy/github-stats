@@ -13,10 +13,7 @@ import org.jboss.logging.Logger;
 import org.kohsuke.github.GHRepository;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ApplicationScoped
 public class ConfigYamlMemberInRedHatLdapService {
@@ -48,7 +45,7 @@ public class ConfigYamlMemberInRedHatLdapService {
             return Collections.emptyList();
         }
 
-        List<String> members = gitHubService.getConfigMembers(configContent);
+        Set<String> members = gitHubService.getConfigMembers(configContent);
 
         List<String> ldapCheck = collectMembersToCheck(members, ldapMembersCsv, supplementaryCsv);
         List<Members> usersFoundOrNot = searchViaLdapFor(ldapCheck, failNoVpn);
@@ -57,7 +54,7 @@ public class ConfigYamlMemberInRedHatLdapService {
         return usersFoundOrNot;
     }
 
-    private List<String> collectMembersToCheck(List<String> members, String ldapMembersCsv, String supplementaryCsv) throws IOException {
+    private List<String> collectMembersToCheck(Set<String> members, String ldapMembersCsv, String supplementaryCsv) throws IOException {
         List<String> answer = new ArrayList<>();
 
         Map<String, Members> ldapMembers = csvService.getKnownMembers(ldapMembersCsv);

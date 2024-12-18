@@ -209,8 +209,8 @@ public class GitHubService {
         return configMap.get("orgs").get("redhat-cop").get("teams").get("aarchived").get("repos");
     }
 
-    public List<String> getConfigMembers(String configContent) throws JsonProcessingException {
-        List<String> allMembers = new ArrayList<>();
+    public Set<String> getConfigMembers(String configContent) throws JsonProcessingException {
+        Set<String> allMembers = new TreeSet<>(Comparator.naturalOrder());
 
         YAMLMapper mapper = new YAMLMapper();
         JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
@@ -226,8 +226,30 @@ public class GitHubService {
             allMembers.add(current.asText());
         }
 
-        Collections.sort(allMembers);
+        recursiveGetConfigMembers(allMembers, configMap.get("orgs").get("redhat-cop"));
+
         return allMembers;
+    }
+
+    private void recursiveGetConfigMembers(Set<String> allMembers, JsonNode parent) {
+        for (JsonNode child : parent) {
+            JsonNode maintainers = child.get("maintainers");
+            JsonNode members = child.get("members");
+
+            if (maintainers != null) {
+                for (JsonNode current : maintainers) {
+                    allMembers.add(current.asText());
+                }
+            }
+
+            if (members != null) {
+                for (JsonNode current : members) {
+                    allMembers.add(current.asText());
+                }
+            }
+
+            recursiveGetConfigMembers(allMembers, child);
+        }
     }
 
     public Map<GHUser, String> getContributedTo(GHOrganization org, Set<GHUser> unknown, Set<GHUser> unknownWorksForRH) throws IOException, ExecutionException, InterruptedException {
