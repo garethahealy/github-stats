@@ -36,7 +36,7 @@ public class LabelPullRequestForNewMembersService {
 
     private final GitHubService gitHubService;
     private final ConfigYamlMemberInRedHatLdapService configYamlMemberInRedHatLdapService;
-    private final Set<String> ignoreLabelKeys = new HashSet<>(List.of("merge-ok/user-in-ldap", "merge-ok/requires-manual-ldap"));
+    private final Set<String> ignoreLabelKeys = new HashSet<>(List.of("merge-ok/user-in-ldap", "dont-merge/requires-manual-ldap"));
     private final Set<String> cantFindUserLabelKeys = new HashSet<>(List.of("dont-merge/cant-find-user-in-ldap"));
 
     @Inject
@@ -68,14 +68,18 @@ public class LabelPullRequestForNewMembersService {
                 if (isLabeledToIgnore.isPresent()) {
                     logger.infof("%s has 'merge-ok/user-in-ldap' or 'dont-merge/requires-manual-ldap', ignoring", current.getNumber());
                 } else {
-                    try {
-                        List<WhoAreYou> allMembers = convertMembersToWhoAreYou(configYamlMemberInRedHatLdapService.run(current.getHead().getRepository(), current.getHead().getCommit().getSHA1(), ldapMembersCsv, supplementaryCsv, failNoVpn));
-                        answer.put(current, allMembers);
-                    } catch (Exception ex) {
-                        logger.warnf("Did not find commit from %s - maybe branch has been deleted", current.getNumber());
-                        logger.warn("Failure", ex);
+                    if (current.getDeletions() > 0 && current.getAdditions() == 0) {
+                        logger.warnf("%s PR contains only deletions. Think it is removing members, ignoring", current.getNumber());
+                    } else {
+                        try {
+                            List<WhoAreYou> allMembers = convertMembersToWhoAreYou(configYamlMemberInRedHatLdapService.run(current.getHead().getRepository(), current.getHead().getCommit().getSHA1(), ldapMembersCsv, supplementaryCsv, failNoVpn));
+                            answer.put(current, allMembers);
+                        } catch (Exception ex) {
+                            logger.warnf("Did not find commit from %s - maybe branch has been deleted", current.getNumber());
+                            logger.warn("Failure", ex);
 
-                        answer.put(current, Collections.emptyList());
+                            answer.put(current, Collections.emptyList());
+                        }
                     }
                 }
             } else {
@@ -83,6 +87,7 @@ public class LabelPullRequestForNewMembersService {
             }
         }
 
+        logger.info("--> Filter pull requests DONE");
         return answer;
     }
 

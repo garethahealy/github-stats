@@ -9,7 +9,7 @@ ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com -s sub 'rhatSocialURL=
 If you are unsure how to set your GitHub ID within LDAP, see:
 - https://source.redhat.com/departments/it/it-information-security/wiki/details_about_rover_github_information_security_and_scanning
 
-Please add your GitHub handle to Rover.
+Please add your GitHub handle to Rover:
 
 <#list users as user>
 - [ ] @${user.username()}

@@ -11,7 +11,7 @@ If you are unsure how to set your GitHub ID within LDAP, see:
 
 The below list of members have *${permissions}* and cannot be found using the above method.
 
-Please add your GitHub handle to Rover.
+Please add your GitHub handle to Rover:
 
 <#list users as user>
 - [ ] @${user.username()} - has *${permissions}* on ${user.repo()}
