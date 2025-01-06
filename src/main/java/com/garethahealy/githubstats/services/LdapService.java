@@ -86,6 +86,11 @@ public class LdapService {
         return search(connection, filter, "rhatPrimaryMail");
     }
 
+    public String searchOnQuaySocial(LdapConnection connection, String quayId) throws LdapException, IOException {
+        String filter = "(rhatSocialURL=Quay->*" + quayId + "*)";
+        return search(connection, filter, "rhatPrimaryMail");
+    }
+
     public String searchOnEmail(LdapConnection connection, String email) throws LdapException, IOException {
         String filter = "(rhatPrimaryMail=" + email + ")";
         return search(connection, filter, "rhatPrimaryMail");

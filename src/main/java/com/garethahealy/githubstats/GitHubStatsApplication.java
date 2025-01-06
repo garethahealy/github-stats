@@ -36,6 +36,9 @@ public class GitHubStatsApplication implements QuarkusApplication {
     @Inject
     LabelPullRequestForNewMembersCommand labelPullRequestForNewMembersCommand;
 
+    @Inject
+    QuayStillCorrectCommand quayStillCorrectCommand;
+
     public static void main(String[] args) {
         Quarkus.run(GitHubStatsApplication.class, args);
     }
@@ -50,7 +53,8 @@ public class GitHubStatsApplication implements QuarkusApplication {
                         .addSubcommand(gitHubMemberInRedHatLdapCommand)
                         .addSubcommand(collectMembersFromRedHatLdapCommand)
                         .addSubcommand(configYamlMemberInRedHatLdapCommand)
-                        .addSubcommand(labelPullRequestForNewMembersCommand))
+                        .addSubcommand(labelPullRequestForNewMembersCommand)
+                        .addSubcommand(quayStillCorrectCommand))
                 .addSubcommand(listenCommand)
                 .execute(args);
     }

@@ -169,6 +169,7 @@
             <argument>com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand</argument>
             <argument>com.garethahealy.githubstats.commands.users.ConfigYamlMemberInRedHatLdapCommand</argument>
             <argument>com.garethahealy.githubstats.commands.users.LabelPullRequestForNewMembersCommand</argument>
+            <argument>com.garethahealy.githubstats.commands.users.QuayStillCorrectCommand</argument>
           </arguments>
         </configuration>
         <dependencies>

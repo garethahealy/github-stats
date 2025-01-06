@@ -184,18 +184,26 @@ public class GitHubService {
     }
 
     public String getOrgConfigYaml(GHRepository coreOrg, String branch) throws IOException {
-        logger.infof("Downloading %s/%s/config.yaml from %s", coreOrg.getOwnerName(), coreOrg.getName(), branch);
+        return getFileYaml("config.yaml", coreOrg, branch);
+    }
+
+    public String getOrgAnsibleGroupVarsYaml(GHRepository coreOrg) throws IOException {
+        return getFileYaml("ansible/inventory/group_vars/all.yml", coreOrg, "main");
+    }
+
+    private String getFileYaml(String fileName, GHRepository coreOrg, String branch) throws IOException {
+        logger.infof("Downloading %s/%s/%s from %s", coreOrg.getOwnerName(), coreOrg.getName(), fileName, branch);
 
         String answer = null;
 
         try {
-            GHContent orgConfig = coreOrg.getFileContent("config.yaml", branch);
-            File configOutputFile = new File("target/core-config.yaml");
+            GHContent orgConfig = coreOrg.getFileContent(fileName, branch);
+            File configOutputFile = new File("target/" + coreOrg.getName() + "-" + fileName);
             FileUtils.copyInputStreamToFile(orgConfig.read(), configOutputFile);
 
             answer = FileUtils.readFileToString(configOutputFile, Charset.defaultCharset());
         } catch (GHFileNotFoundException ex) {
-            logger.warnf("Did not find %s/%s/config.yaml from %s - maybe branch has been deleted", coreOrg.getOwnerName(), coreOrg.getName(), branch);
+            logger.warnf("Did not find %s/%s/%s from %s - maybe branch has been deleted", coreOrg.getOwnerName(), coreOrg.getName(), fileName, branch);
             logger.warn("Failure", ex);
         }
 
@@ -203,30 +211,58 @@ public class GitHubService {
     }
 
     public JsonNode getArchivedRepos(String configContent) throws JsonProcessingException {
-        YAMLMapper mapper = new YAMLMapper();
-        JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
-
+        JsonNode configMap = convertToJsonNode(configContent);
         return configMap.get("orgs").get("redhat-cop").get("teams").get("aarchived").get("repos");
     }
 
     public Set<String> getConfigMembers(String configContent) throws JsonProcessingException {
         Set<String> allMembers = new TreeSet<>(Comparator.naturalOrder());
 
-        YAMLMapper mapper = new YAMLMapper();
-        JsonNode configMap = mapper.readValue(configContent, JsonNode.class);
+        JsonNode configMap = convertToJsonNode(configContent);
 
         JsonNode admins = configMap.get("orgs").get("redhat-cop").get("admins");
-        JsonNode members = configMap.get("orgs").get("redhat-cop").get("members");
-
         for (JsonNode current : admins) {
             allMembers.add(current.asText());
         }
 
+        JsonNode members = configMap.get("orgs").get("redhat-cop").get("members");
         for (JsonNode current : members) {
             allMembers.add(current.asText());
         }
 
         recursiveGetConfigMembers(allMembers, configMap.get("orgs").get("redhat-cop"));
+
+        return allMembers;
+    }
+
+    public Set<String> getAnsibleMembers(String varsContent) throws JsonProcessingException {
+        Set<String> allMembers = new TreeSet<>(Comparator.naturalOrder());
+
+        JsonNode allVars = convertToJsonNode(varsContent);
+
+        JsonNode orgs = allVars.get("orgs");
+        for (JsonNode org : orgs) {
+            JsonNode repos = org.get("repos");
+            for (JsonNode repo : repos) {
+                JsonNode permissions = repo.get("permissions");
+                for (JsonNode inner : permissions) {
+                    String type = inner.get("type").asText();
+                    if (type.equalsIgnoreCase("user")) {
+                        allMembers.add(inner.get("name").asText());
+                    }
+                }
+            }
+
+            JsonNode teams = org.get("teams");
+            for (JsonNode team : teams) {
+                JsonNode members = team.get("members");
+                if (members != null) {
+                    for (JsonNode member : members) {
+                        allMembers.add(member.get("name").asText());
+                    }
+                }
+            }
+        }
 
         return allMembers;
     }
@@ -250,6 +286,11 @@ public class GitHubService {
 
             recursiveGetConfigMembers(allMembers, child);
         }
+    }
+
+    private JsonNode convertToJsonNode(String content) throws JsonProcessingException {
+        YAMLMapper mapper = new YAMLMapper();
+        return mapper.readValue(content, JsonNode.class);
     }
 
     public Map<GHUser, String> getContributedTo(GHOrganization org, Set<GHUser> unknown, Set<GHUser> unknownWorksForRH) throws IOException, ExecutionException, InterruptedException {

@@ -12,4 +12,6 @@ source creds.source
 
 ./target/github-stats-*-runner users github-member-in-ldap --dry-run=true --organization=redhat-cop --issue-repo=org --ldap-members-csv=ldap-members.csv --supplementary-csv=supplementary.csv --fail-if-no-vpn=true >> output.log
 
+./target/github-stats-*-runner users quay-still-correct --dry-run=true --organization=redhat-cop --issue-repo=org >> output.log
+
 cat output.log
