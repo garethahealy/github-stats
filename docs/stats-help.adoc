@@ -1,9 +1,9 @@
 // tag::picocli-generated-full-manpage[]
 // tag::picocli-generated-man-section-header[]
 :doctype: manpage
-:revnumber:
+:revnumber: 
 :manmanual: Stats Manual
-:mansource:
+:mansource: 
 :man-linkstyle: pass:[blue R < >]
 = stats-help(1)
 

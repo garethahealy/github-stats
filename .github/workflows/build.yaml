@@ -36,7 +36,7 @@ jobs:
       - name: Collect dependencies
         run: |
           ./mvnw dependency:go-offline --batch-mode
-          ./mvnw verify --fail-never --batch-mode
+          ./mvnw verify --fail-never --batch-mode -DskipTests
           ./mvnw dependency:resolve-sources dependency:resolve -Dclassifier=javadoc --batch-mode
 
       - name: Build
@@ -156,8 +156,8 @@ jobs:
 
       - name: Run 'collect-stats' for CoP
         env:
-          GITHUB_LOGIN: ${{ github.repository_owner }}
-          GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
+          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
+          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
         run: |
           touch /tmp/stats.csv
           ./${{ env.RUNNER }} stats collect-stats --organization=redhat-cop --csv-output=/tmp/redhat-cop-collect-stats.csv --validate-org-config=true --repository-limit=5 --api-limit=400

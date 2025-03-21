@@ -1,9 +1,9 @@
 // tag::picocli-generated-full-manpage[]
 // tag::picocli-generated-man-section-header[]
 :doctype: manpage
-:revnumber:
+:revnumber: 
 :manmanual: Listen-to-issues Manual
-:mansource:
+:mansource: 
 :man-linkstyle: pass:[blue R < >]
 = listen-to-issues(1)
 
