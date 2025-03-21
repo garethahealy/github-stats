@@ -40,6 +40,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
 
     /**
      * Bot account
+     *
      * @return
      */
     public static OrgMember bot() {
@@ -48,6 +49,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
 
     /**
      * When they are in the config but not a GitHub member yet
+     *
      * @param gitHubUsername
      * @return
      */
@@ -57,6 +59,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
 
     /**
      * When they are a GitHub member
+     *
      * @param ghUser
      * @return
      * @throws IOException
@@ -67,6 +70,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
 
     /**
      * When they've been stored into the CSVs
+     *
      * @param record
      * @return
      */
@@ -85,6 +89,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
 
     /**
      * When we've got them back from LDAP
+     *
      * @param githubId
      * @param ldapAttributes
      * @return
@@ -129,6 +134,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
 
     /**
      * Remove any domian names so we've just got their usernam,e
+     *
      * @param current
      * @return
      */

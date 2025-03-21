@@ -128,6 +128,7 @@ public class OrgMemberRepository {
 
     /**
      * Switch the keys around for the map to work against quay IDs
+     *
      * @return
      */
     public OrgMemberRepository convertToQuay() {

@@ -68,7 +68,7 @@ public class CollectStatsService {
         Set<String> configRepos = gitHubFileRetrievalService.getRepos(configYaml, validateOrgConfig);
         Set<String> configArchivedRepos = gitHubFileRetrievalService.getArchivedRepos(configYaml, validateOrgConfig);
 
-        try (ExecutorService executor = Executors.newWorkStealingPool()) {
+        try (ExecutorService executor = Executors.newCachedThreadPool()) {
             List<Future<Repository>> futures = new ArrayList<>();
             for (GHRepository current : repos) {
                 futures.add(executor.submit(() -> runnable(current, configRepos, configArchivedRepos)));

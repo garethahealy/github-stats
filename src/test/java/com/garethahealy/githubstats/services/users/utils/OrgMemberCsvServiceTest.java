@@ -3,7 +3,6 @@ package com.garethahealy.githubstats.services.users.utils;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.utils.OrgMemberMockData;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +10,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 class OrgMemberCsvServiceTest {

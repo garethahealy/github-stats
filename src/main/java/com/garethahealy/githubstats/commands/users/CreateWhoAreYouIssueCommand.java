@@ -35,6 +35,9 @@ public class CreateWhoAreYouIssueCommand implements Runnable {
     @CommandLine.Option(names = {"-p", "--permission"}, description = "Permission to search against; ADMIN, WRITE, READ", required = true)
     String permission;
 
+    @CommandLine.Option(names = {"-l", "--team-limit"}, description = "Number of GitHub teams to check", defaultValue = "0")
+    int limit;
+
     @CommandLine.Option(names = {"-g", "--guess"}, description = "Attempt to guess users we cant look up via InfoSec LDAP", defaultValue = "false")
     boolean shouldGuess;
 
@@ -69,7 +72,7 @@ public class CreateWhoAreYouIssueCommand implements Runnable {
                 createWhoAreYouIssueService.setLdapGuessService(noopLdapGuessService);
             }
 
-            createWhoAreYouIssueService.run(organization, orgRepo, new File(ldapMembersCsv), new File(supplementaryCsv), convert(permission), dryRun, failNoVpn);
+            createWhoAreYouIssueService.run(organization, orgRepo, new File(ldapMembersCsv), new File(supplementaryCsv), convert(permission), limit, dryRun, failNoVpn);
         } catch (IOException | TemplateException | ExecutionException | InterruptedException | LdapException e) {
             throw new RuntimeException(e);
         }
