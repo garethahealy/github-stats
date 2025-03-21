@@ -164,16 +164,16 @@ jobs:
 
       - name: Run 'collect-members-from-ldap' for CoP
         env:
-          GITHUB_LOGIN: ${{ github.repository_owner }}
-          GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
+          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
+          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
         run: |
           touch /tmp/members.csv
           ./${{ env.RUNNER }} users collect-members-from-ldap --organization=redhat-cop --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --user-limit=5 --fail-if-no-vpn=false
 
       - name: Run 'create-who-are-you-issues' for CoP
         env:
-          GITHUB_LOGIN: ${{ github.repository_owner }}
-          GITHUB_OAUTH: ${{ secrets.RHUKI_READ_PAT }}
+          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
+          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
         run: ./${{ env.RUNNER }} users create-who-are-you-issues --dry-run=true --organization=redhat-cop --issue-repo=org --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=admin --guess=false --fail-if-no-vpn=false
 
       - name: Upload /tmp/*.csv
