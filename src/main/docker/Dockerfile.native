@@ -14,7 +14,7 @@
 # docker run -i --rm -p 8080:8080 quarkus/github-stats
 #
 ###
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1130@sha256:c12e67af6a7e15113d76bc72f10bef2045c026c71ec8b7124c8a075458188a83
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1216@sha256:3544399c893a7f32d16220d22d493ae32e61379668e32bc54a74d8eb6ece80fc
 WORKDIR /work/
 RUN chown 1001 /work \
     && chmod "g+rwX" /work \
