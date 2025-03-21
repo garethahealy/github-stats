@@ -1,7 +1,6 @@
 package com.garethahealy.githubstats;
 
 import com.garethahealy.githubstats.commands.GitHubStatsCommand;
-import com.garethahealy.githubstats.commands.ListenCommand;
 import com.garethahealy.githubstats.commands.StatsCommand;
 import com.garethahealy.githubstats.commands.UsersCommand;
 import com.garethahealy.githubstats.commands.stats.CollectStatsCommand;
@@ -17,9 +16,6 @@ import picocli.CommandLine;
 
 @QuarkusMain
 public class GitHubStatsApplication implements QuarkusApplication {
-
-    @Inject
-    ListenCommand listenCommand;
 
     @Inject
     CollectStatsCommand collectStatsCommand;
@@ -50,7 +46,6 @@ public class GitHubStatsApplication implements QuarkusApplication {
                         .addSubcommand(collectMembersFromRedHatLdapCommand)
                         .addSubcommand(listenToPullRequestsCommand)
                         .addSubcommand(listenToIssuesCommand))
-                .addSubcommand(listenCommand)
                 .execute(args);
     }
 }

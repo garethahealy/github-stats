@@ -183,7 +183,6 @@
           <arguments>
             <argument>--outdir=docs</argument>
             <argument>com.garethahealy.githubstats.commands.GitHubStatsCommand</argument>
-            <argument>com.garethahealy.githubstats.commands.ListenCommand</argument>
             <argument>com.garethahealy.githubstats.commands.StatsCommand</argument>
             <argument>com.garethahealy.githubstats.commands.stats.CollectStatsCommand</argument>
             <argument>com.garethahealy.githubstats.commands.UsersCommand</argument>
