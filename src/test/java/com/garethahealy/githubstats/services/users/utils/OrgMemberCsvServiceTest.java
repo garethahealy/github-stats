@@ -17,28 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class OrgMemberCsvServiceTest {
 
     @Test
-    void parseLocalLdapMembers() throws IOException {
-        File input = new File("ldap-members.csv");
-
-        OrgMemberCsvService orgMemberCsvService = new OrgMemberCsvService(Logger.getLogger(OrgMemberCsvService.class), null);
-        OrgMemberRepository answer = orgMemberCsvService.parse(input);
-
-        assertNotNull(answer);
-        assertTrue(answer.size() > 200);
-    }
-
-    @Test
-    void parseLocalSupplementary() throws IOException {
-        File input = new File("supplementary.csv");
-
-        OrgMemberCsvService orgMemberCsvService = new OrgMemberCsvService(Logger.getLogger(OrgMemberCsvService.class), null);
-        OrgMemberRepository answer = orgMemberCsvService.parse(input);
-
-        assertNotNull(answer);
-        assertEquals(21, answer.size());
-    }
-
-    @Test
     void parseSample() throws IOException {
         File input = new File(this.getClass().getClassLoader().getResource("sample-ldap-members.csv").getFile());
 
