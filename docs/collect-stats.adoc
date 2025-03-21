@@ -1,9 +1,9 @@
 // tag::picocli-generated-full-manpage[]
 // tag::picocli-generated-man-section-header[]
 :doctype: manpage
-:revnumber: 
+:revnumber:
 :manmanual: Collect-stats Manual
-:mansource: 
+:mansource:
 :man-linkstyle: pass:[blue R < >]
 = collect-stats(1)
 
@@ -19,7 +19,8 @@ collect-stats - Collect the stats in CSV format
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*collect-stats* [*-hV*] [*-cfg*] [*-i*=_<limit>_] [*-o*=_<output>_] *-org*=_<organization>_
+*collect-stats* [*-hV*] [*-cfg*] [*-api*=_<limit>_] [*-l*=_<repoLimit>_] [*-o*=_<output>_]
+              *-org*=_<organization>_
 
 // end::picocli-generated-man-section-synopsis[]
 
@@ -33,14 +34,17 @@ Collect the stats in CSV format
 // tag::picocli-generated-man-section-options[]
 == Options
 
+*-api, --api-limit*=_<limit>_::
+  Number of API requests needed
+
 *-cfg, --validate-org-config*::
   Whether to check the 'org/config.yaml'
 
 *-h*, *--help*::
   Show this help message and exit.
 
-*-i*, *--required-limit*=_<limit>_::
-  Number of API requests needed
+*-l*, *--repository-limit*=_<repoLimit>_::
+  Number of GitHub repositories to check
 
 *-o*, *--csv-output*=_<output>_::
   Output location for CSV

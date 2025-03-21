@@ -5,7 +5,10 @@ import com.garethahealy.githubstats.commands.ListenCommand;
 import com.garethahealy.githubstats.commands.StatsCommand;
 import com.garethahealy.githubstats.commands.UsersCommand;
 import com.garethahealy.githubstats.commands.stats.CollectStatsCommand;
-import com.garethahealy.githubstats.commands.users.*;
+import com.garethahealy.githubstats.commands.users.CollectMembersFromRedHatLdapCommand;
+import com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand;
+import com.garethahealy.githubstats.commands.users.ListenToIssuesCommand;
+import com.garethahealy.githubstats.commands.users.ListenToPullRequestsCommand;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
@@ -25,19 +28,13 @@ public class GitHubStatsApplication implements QuarkusApplication {
     CreateWhoAreYouIssueCommand createWhoAreYouIssueCommand;
 
     @Inject
-    GitHubMemberInRedHatLdapCommand gitHubMemberInRedHatLdapCommand;
-
-    @Inject
     CollectMembersFromRedHatLdapCommand collectMembersFromRedHatLdapCommand;
 
     @Inject
-    ConfigYamlMemberInRedHatLdapCommand configYamlMemberInRedHatLdapCommand;
+    ListenToPullRequestsCommand listenToPullRequestsCommand;
 
     @Inject
-    LabelPullRequestForNewMembersCommand labelPullRequestForNewMembersCommand;
-
-    @Inject
-    QuayStillCorrectCommand quayStillCorrectCommand;
+    ListenToIssuesCommand listenToIssuesCommand;
 
     public static void main(String[] args) {
         Quarkus.run(GitHubStatsApplication.class, args);
@@ -50,11 +47,9 @@ public class GitHubStatsApplication implements QuarkusApplication {
                         .addSubcommand(collectStatsCommand))
                 .addSubcommand(new CommandLine(new UsersCommand())
                         .addSubcommand(createWhoAreYouIssueCommand)
-                        .addSubcommand(gitHubMemberInRedHatLdapCommand)
                         .addSubcommand(collectMembersFromRedHatLdapCommand)
-                        .addSubcommand(configYamlMemberInRedHatLdapCommand)
-                        .addSubcommand(labelPullRequestForNewMembersCommand)
-                        .addSubcommand(quayStillCorrectCommand))
+                        .addSubcommand(listenToPullRequestsCommand)
+                        .addSubcommand(listenToIssuesCommand))
                 .addSubcommand(listenCommand)
                 .execute(args);
     }

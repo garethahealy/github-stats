@@ -5,7 +5,7 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,8 +21,11 @@ public class CollectStatsCommand implements Runnable {
     @CommandLine.Option(names = {"-cfg", "--validate-org-config"}, description = "Whether to check the 'org/config.yaml'", defaultValue = "true")
     boolean validateOrgConfig;
 
-    @CommandLine.Option(names = {"-i", "--required-limit"}, description = "Number of API requests needed", defaultValue = "3000")
+    @CommandLine.Option(names = {"-api", "--api-limit"}, description = "Number of API requests needed", defaultValue = "3000")
     int limit;
+
+    @CommandLine.Option(names = {"-l", "--repository-limit"}, description = "Number of GitHub repositories to check", defaultValue = "0")
+    int repoLimit;
 
     @CommandLine.Option(names = {"-o", "--csv-output"}, description = "Output location for CSV", defaultValue = "github-output.csv")
     String output;
@@ -34,10 +37,10 @@ public class CollectStatsCommand implements Runnable {
     public void run() {
         try {
             if (!Files.exists(Path.of(output))) {
-                throw new FileNotFoundException("--csv-output=" + output + " not found.");
+                new File(output).createNewFile();
             }
 
-            collectStatsService.run(organization, validateOrgConfig, limit, output);
+            collectStatsService.run(organization, validateOrgConfig, repoLimit, limit, new File(output));
         } catch (IOException | InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

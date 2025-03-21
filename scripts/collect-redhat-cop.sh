@@ -4,7 +4,7 @@ pushd ~/Documents/Git/github.com/garethahealy/github-stats
 
 source creds.source
 
-./target/github-stats-*-runner users collect-members-from-ldap --organization=redhat-cop --csv-output=ldap-members.csv --ldap-members-csv=ldap-members.csv --fail-if-no-vpn=true --guess=false
+./target/github-stats-*-runner users collect-members-from-ldap --organization=redhat-cop --ldap-members-csv=ldap-members.csv --supplementary-csv=supplementary.csv --validate-csv=false --fail-if-no-vpn=true
 
 rm -rf member-mapping || true
 git clone git@github.com:redhat-cop-dev/member-mapping.git

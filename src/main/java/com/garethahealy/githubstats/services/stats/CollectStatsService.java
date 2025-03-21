@@ -1,9 +1,9 @@
 package com.garethahealy.githubstats.services.stats;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.garethahealy.githubstats.model.EmptyJsonNode;
-import com.garethahealy.githubstats.model.csv.Repository;
-import com.garethahealy.githubstats.services.GitHubService;
+import com.garethahealy.githubstats.model.stats.Repository;
+import com.garethahealy.githubstats.services.github.GitHubFileRetrievalService;
+import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
+import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
@@ -11,112 +11,127 @@ import org.apache.commons.csv.CSVPrinter;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+/**
+ * Collect stats on an organization and write the data to CSV file
+ */
 @ApplicationScoped
 public class CollectStatsService {
 
     @Inject
     Logger logger;
 
-    private final GitHubService gitHubService;
+    private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
+    private final GitHubRepositoryLookupService gitHubRepositoryLookupService;
+    private final GitHubFileRetrievalService gitHubFileRetrievalService;
 
     @Inject
-    public CollectStatsService(GitHubService gitHubService) {
-        this.gitHubService = gitHubService;
+    public CollectStatsService(GitHubOrganizationLookupService gitHubOrganizationLookupService, GitHubRepositoryLookupService gitHubRepositoryLookupService, GitHubFileRetrievalService gitHubFileRetrievalService) {
+        this.gitHubOrganizationLookupService = gitHubOrganizationLookupService;
+        this.gitHubRepositoryLookupService = gitHubRepositoryLookupService;
+        this.gitHubFileRetrievalService = gitHubFileRetrievalService;
     }
 
-    public void run(String organization, boolean validateOrgConfig, int limit, String output) throws IOException, ExecutionException, InterruptedException {
-        GitHub gitHub = gitHubService.getGitHub();
-        GHOrganization org = gitHubService.getOrganization(gitHub, organization);
-        GHRepository coreOrg = gitHubService.getRepository(org, "org");
-        Map<String, GHRepository> repos = gitHubService.getRepositories(org);
+    public void run(String organization, boolean validateOrgConfig, int repoLimit, int limit, File output) throws IOException, ExecutionException, InterruptedException {
+        GHOrganization org = gitHubOrganizationLookupService.getOrganization(organization);
+        GHRepository coreOrg = gitHubOrganizationLookupService.getRepository(org, "org");
+        List<GHRepository> repos = gitHubOrganizationLookupService.listRepositories(org);
+        List<GHRepository> reposLimit = limit <= 0 ? repos : repos.stream().limit(repoLimit).toList();
 
-        gitHubService.hasRateLimit(gitHub, limit);
+        gitHubOrganizationLookupService.hasRateLimit(limit);
 
-        logger.infof("Found %s repos.", repos.size());
+        List<Repository> repositories = collect(org, coreOrg, reposLimit, validateOrgConfig);
+        write(repositories, output);
 
-        String configContent = validateOrgConfig ? gitHubService.getOrgConfigYaml(coreOrg) : "";
-        JsonNode archivedRepos = validateOrgConfig ? gitHubService.getArchivedRepos(configContent) : new EmptyJsonNode();
+        logger.infof("Output written to %s", output);
+    }
 
+    private List<Repository> collect(GHOrganization org, GHRepository coreOrg, List<GHRepository> repos, boolean validateOrgConfig) throws IOException, ExecutionException, InterruptedException {
+        List<Repository> answer = new ArrayList<>();
+
+        logger.infof("Found %s repos in %s", repos.size(), org.getName());
+
+        GHContent configYaml = gitHubRepositoryLookupService.getConfigYaml(coreOrg, validateOrgConfig);
+        Set<String> configRepos = gitHubFileRetrievalService.getRepos(configYaml, validateOrgConfig);
+        Set<String> configArchivedRepos = gitHubFileRetrievalService.getArchivedRepos(configYaml, validateOrgConfig);
+
+        try (ExecutorService executor = Executors.newWorkStealingPool()) {
+            List<Future<Repository>> futures = new ArrayList<>();
+            for (GHRepository current : repos) {
+                futures.add(executor.submit(() -> runnable(current, configRepos, configArchivedRepos)));
+            }
+
+            for (Future<Repository> future : futures) {
+                answer.add(future.get());
+            }
+        }
+
+        return answer;
+    }
+
+    private Repository runnable(GHRepository repo, Set<String> configRepos, Set<String> configArchivedRepos) throws IOException {
+        logger.infof("Working on: %s", repo.getName());
+
+        String repoName = repo.getName();
+        boolean isArchived = repo.isArchived();
+        boolean inConfig = configRepos.contains(repoName);
+        boolean inArchivedTeam = isArchived && configArchivedRepos.contains(repoName);
+
+        List<String> topics = gitHubRepositoryLookupService.listTopics(repo);
+        List<GHRepository.Contributor> contributors = null;
+        List<GHCommit> commits = null;
+        List<GHIssue> issues = null;
+        List<GHPullRequest> pullRequests = null;
+        GHRepositoryCloneTraffic cloneTraffic = null;
+        GHRepositoryViewTraffic viewTraffic = null;
+        boolean hasOwners = false;
+        boolean hasCodeOwners = false;
+        boolean hasWorkflows = false;
+        boolean hasTravis = false;
+        boolean hasRenovate = false;
+
+        if (!isArchived) {
+            contributors = gitHubRepositoryLookupService.listContributors(repo);
+            issues = gitHubRepositoryLookupService.listOpenIssues(repo);
+            pullRequests = gitHubRepositoryLookupService.listOpenPullRequests(repo);
+            commits = gitHubRepositoryLookupService.listCommits(repo);
+            cloneTraffic = gitHubRepositoryLookupService.cloneTraffic(repo);
+            viewTraffic = gitHubRepositoryLookupService.viewTraffic(repo);
+            hasOwners = gitHubRepositoryLookupService.hasOwners(repo);
+            hasCodeOwners = gitHubRepositoryLookupService.hasCodeOwners(repo);
+            hasWorkflows = gitHubRepositoryLookupService.hasWorkflows(repo);
+            hasTravis = gitHubRepositoryLookupService.hasTravis(repo);
+            hasRenovate = gitHubRepositoryLookupService.hasRenovate(repo);
+        }
+
+        return Repository.from(repoName, contributors, commits, issues, pullRequests, topics, cloneTraffic, viewTraffic,
+                hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived, inArchivedTeam);
+    }
+
+    private void write(List<Repository> repositories, File output) throws IOException {
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader((Repository.Headers.class))
                 .build();
 
-        int cores = Runtime.getRuntime().availableProcessors() * 2;
-        try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(Paths.get(output)), csvFormat)) {
-            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-                List<Future<Repository>> futures = new ArrayList<>();
-                for (Map.Entry<String, GHRepository> current : repos.entrySet()) {
-                    futures.add(executor.submit(() -> {
-                        logger.infof("Working on: %s", current.getValue().getName());
-
-                        GHRepository repo = current.getValue();
-                        String repoName = repo.getName();
-                        boolean isArchived = repo.isArchived();
-                        boolean inConfig = configContent.contains(" " + repoName + ":");
-                        boolean inArchivedTeam = isArchived && archivedRepos.get(repoName) != null;
-
-                        List<String> topics = gitHubService.listTopics(repo);
-                        List<GHRepository.Contributor> contributors = null;
-                        List<GHCommit> commits = null;
-                        List<GHIssue> issues = null;
-                        List<GHPullRequest> pullRequests = null;
-                        GHRepositoryCloneTraffic cloneTraffic = null;
-                        GHRepositoryViewTraffic viewTraffic = null;
-                        boolean hasOwners = false;
-                        boolean hasCodeOwners = false;
-                        boolean hasWorkflows = false;
-                        boolean hasTravis = false;
-                        boolean hasRenovate = false;
-
-                        if (!isArchived) {
-                            contributors = gitHubService.listContributors(repo);
-                            issues = gitHubService.listOpenIssues(repo);
-                            pullRequests = gitHubService.listOpenPullRequests(repo);
-                            commits = gitHubService.listCommits(repo);
-                            cloneTraffic = gitHubService.cloneTraffic(repo);
-                            viewTraffic = gitHubService.viewTraffic(repo);
-                            hasOwners = gitHubService.hasOwners(repo);
-                            hasCodeOwners = gitHubService.hasCodeOwners(repo);
-                            hasWorkflows = gitHubService.hasWorkflows(repo);
-                            hasTravis = gitHubService.hasTravis(repo);
-                            hasRenovate = gitHubService.hasRenovate(repo);
-                        }
-
-                        return new Repository(repoName, contributors, commits, issues, pullRequests, topics, cloneTraffic, viewTraffic,
-                                hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived, inArchivedTeam);
-                    }));
-
-                    if (futures.size() == cores) {
-                        for (Future<Repository> future : futures) {
-                            csvPrinter.printRecord(future.get().toArray());
-                        }
-
-                        csvPrinter.flush();
-                        futures.clear();
-
-                        gitHubService.logRateLimit(gitHub);
-                    }
-                }
-
-                //Incase there are any leftover calls to be made
-                for (Future<Repository> future : futures) {
-                    csvPrinter.printRecord(future.get().toArray());
+        try (Writer writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING)) {
+            try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {
+                for (Repository current : repositories) {
+                    csvPrinter.printRecord(current.toArray());
                 }
             }
         }
-
-        gitHubService.logRateLimit(gitHub);
-        logger.infof("Output written to %s", output);
     }
 }

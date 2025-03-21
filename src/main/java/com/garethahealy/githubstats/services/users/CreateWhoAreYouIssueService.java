@@ -1,10 +1,16 @@
 package com.garethahealy.githubstats.services.users;
 
-import com.garethahealy.githubstats.model.WhoAreYou;
-import com.garethahealy.githubstats.model.csv.Members;
-import com.garethahealy.githubstats.services.CsvService;
-import com.garethahealy.githubstats.services.GitHubService;
-import com.garethahealy.githubstats.services.LdapGuessService;
+import com.garethahealy.githubstats.model.users.OrgMember;
+import com.garethahealy.githubstats.model.users.OrgMemberRepository;
+import com.garethahealy.githubstats.predicates.GHIssueFilters;
+import com.garethahealy.githubstats.predicates.GHRepositoryFilters;
+import com.garethahealy.githubstats.predicates.GHUserFilters;
+import com.garethahealy.githubstats.predicates.OrgMemberFilters;
+import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
+import com.garethahealy.githubstats.services.github.GitHubOrganizationWriterService;
+import com.garethahealy.githubstats.services.ldap.DefaultLdapGuessService;
+import com.garethahealy.githubstats.services.ldap.LdapGuessService;
+import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.quarkiverse.freemarker.TemplatePath;
@@ -14,11 +20,17 @@ import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ * Check the GitHub members are in the CSVs, collected via `CollectMembersFromRedHatLdapService`
+ * If not, raise an issue
+ */
 @ApplicationScoped
 public class CreateWhoAreYouIssueService {
 
@@ -26,125 +38,120 @@ public class CreateWhoAreYouIssueService {
     Logger logger;
 
     @Inject
-    @TemplatePath("CreateWhoAreYouIssue.ftl")
-    Template issue;
+    @TemplatePath("LinkSocialToLDAPComment.ftl")
+    Template linkSocialToLDAPComment;
 
     @Inject
-    @TemplatePath("CreateWhoAreYouIssueRead.ftl")
-    Template issueRead;
+    @TemplatePath("GitHubMemberNotFoundInLdap.ftl")
+    Template gitHubMemberNotFoundInLdap;
 
-    private final GitHubService gitHubService;
-    private final CsvService csvService;
-    private final LdapGuessService ldapGuessService;
+    private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
+    private final GitHubOrganizationWriterService gitHubOrganizationWriterService;
+    private final OrgMemberCsvService orgMemberCsvService;
+    private LdapGuessService ldapGuessService;
 
-    @Inject
-    public CreateWhoAreYouIssueService(GitHubService gitHubService, CsvService csvService, LdapGuessService ldapGuessService) {
-        this.gitHubService = gitHubService;
-        this.csvService = csvService;
+    public void setLdapGuessService(LdapGuessService ldapGuessService) {
         this.ldapGuessService = ldapGuessService;
     }
 
-    public String run(String organization, String issueRepo, boolean isDryRun, String membersCsv, String supplementaryCsv, GHPermissionType perms, boolean shouldGuess, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException, TemplateException, LdapException {
-        GitHub gitHub = gitHubService.getGitHub();
-        GHOrganization org = gitHubService.getOrganization(gitHub, organization);
-        GHRepository orgRepo = gitHubService.getRepository(org, issueRepo);
-
-        logger.infof("Looking up %s/%s", orgRepo.getOwnerName(), orgRepo.getName());
-
-        List<WhoAreYou> usersToInform = collectUnknownUsers(gitHub, org, membersCsv, supplementaryCsv, perms, orgRepo);
-        ldapGuessService.attemptToGuess(usersToInform.stream().map(WhoAreYou::ghUser).toList(), shouldGuess, failNoVpn, org);
-        String issueContent = createIssue(usersToInform, orgRepo, perms, isDryRun);
-
-        logger.info("Finished.");
-        return issueContent;
+    @Inject
+    public CreateWhoAreYouIssueService(GitHubOrganizationLookupService gitHubOrganizationLookupService, GitHubOrganizationWriterService gitHubOrganizationWriterService, OrgMemberCsvService orgMemberCsvService, DefaultLdapGuessService ldapGuessService) {
+        this.gitHubOrganizationLookupService = gitHubOrganizationLookupService;
+        this.gitHubOrganizationWriterService = gitHubOrganizationWriterService;
+        this.orgMemberCsvService = orgMemberCsvService;
+        this.ldapGuessService = ldapGuessService;
     }
 
-    private List<WhoAreYou> collectUnknownUsers(GitHub gitHub, GHOrganization org, String membersCsv, String supplementaryCsv, GHPermissionType perms, GHRepository orgRepo) throws IOException, ExecutionException, InterruptedException {
-        List<WhoAreYou> usersToInform;
+    public void run(String organization, String issueRepo, File membersCsv, File supplementaryCsv, GHPermissionType perms, boolean isDryRun, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException, TemplateException, LdapException {
+        OrgMemberRepository ldapMembers = orgMemberCsvService.parse(membersCsv);
+        OrgMemberRepository supplementaryMembers = orgMemberCsvService.parse(supplementaryCsv);
 
-        Map<String, Members> ldapMembers = csvService.getKnownMembers(membersCsv);
-        Map<String, Members> supplementaryMembers = csvService.getKnownMembers(supplementaryCsv);
+        GHOrganization org = gitHubOrganizationLookupService.getOrganization(organization);
+        GHRepository orgRepo = gitHubOrganizationLookupService.getRepository(org, issueRepo);
 
-        logger.infof("There are %s GitHub members", gitHubService.listMembers(org).size());
+        run(org, orgRepo, ldapMembers, supplementaryMembers, perms, isDryRun, failNoVpn);
+    }
+
+    public void run(GHOrganization org, GHRepository orgRepo, OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, GHPermissionType perms, boolean isDryRun, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException, TemplateException, LdapException {
+        logger.infof("Looking up %s/%s", orgRepo.getOwner().getLogin(), orgRepo.getName());
+
+        List<GHUser> githubMembers = gitHubOrganizationLookupService.listMembers(org);
+
+        logger.infof("There are %s GitHub members", githubMembers.size());
         logger.infof("There are %s known members and %s supplementary members in the CSVs, total %s", ldapMembers.size(), supplementaryMembers.size(), (ldapMembers.size() + supplementaryMembers.size()));
 
+        List<OrgMember> usersToInform = collectUnknownUsers(org, githubMembers, ldapMembers, supplementaryMembers, perms, failNoVpn);
+        createLinkUsersIssue(usersToInform, orgRepo, perms, isDryRun);
+
+        List<OrgMember> toBeDeleted = collectedMembersMarkedForDeletion(ldapMembers, supplementaryMembers);
+        createRemoveNonRHIssue(toBeDeleted, orgRepo, isDryRun);
+
+        removeMarkedForDeletion(ldapMembers);
+        removeMarkedForDeletion(supplementaryMembers);
+
+        orgMemberCsvService.write(ldapMembers);
+        orgMemberCsvService.write(supplementaryMembers);
+    }
+
+    private List<OrgMember> collectUnknownUsers(GHOrganization org, List<GHUser> githubMembers, OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, GHPermissionType perms, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException, LdapException {
+        List<OrgMember> usersToInform;
         if (GHPermissionType.READ == perms) {
-            usersToInform = collectUnknownUsersWithRead(org, ldapMembers, supplementaryMembers);
+            usersToInform = collectUnknownUsersWithRead(githubMembers, ldapMembers, supplementaryMembers, failNoVpn);
         } else {
-            usersToInform = collectUnknownUsersWithAdminOrWrite(gitHub, org, ldapMembers, supplementaryMembers, perms);
+            usersToInform = collectUnknownUsersWithAdminOrWrite(org, ldapMembers, supplementaryMembers, perms, failNoVpn);
         }
 
-        Collections.sort(usersToInform);
-
-        logger.info("--> Members collected DONE");
         return usersToInform;
     }
 
-    private List<WhoAreYou> collectUnknownUsersWithRead(GHOrganization org, Map<String, Members> ldapMembers, Map<String, Members> supplementaryMembers) throws IOException {
-        List<WhoAreYou> usersToInform = new ArrayList<>();
+    /**
+     * Collect anyone who is a member of the GitHub org not in a OrgMemberRepository
+     *
+     * @param members
+     * @param ldapMembers
+     * @param supplementaryMembers
+     * @param failNoVpn
+     * @return
+     * @throws IOException
+     * @throws LdapException
+     */
+    private List<OrgMember> collectUnknownUsersWithRead(List<GHUser> members, OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, boolean failNoVpn) throws IOException, LdapException {
+        List<OrgMember> usersToInform = new ArrayList<>();
 
-        List<GHUser> members = gitHubService.listMembers(org);
-        for (GHUser member : members) {
-            if (ldapMembers.containsKey(member.getLogin()) || supplementaryMembers.containsKey(member.getLogin())) {
-                logger.debugf("Ignoring: %s", member.getLogin());
-            } else {
-                usersToInform.add(new WhoAreYou(member.getName(), member.getLogin(), "https://github.com/redhat-cop", member));
+        List<GHUser> unknownUsers = members.stream().filter(GHUserFilters.notContains(ldapMembers, supplementaryMembers)).toList();
+        if (!unknownUsers.isEmpty()) {
+            logger.infof("Collecting %s unknown members with %s", unknownUsers.size(), GHPermissionType.READ);
+
+            for (GHUser member : unknownUsers) {
+                usersToInform.add(guessWho(OrgMember.from(member), failNoVpn));
             }
         }
 
         return usersToInform;
     }
 
-    private List<WhoAreYou> collectUnknownUsersWithAdminOrWrite(GitHub gitHub, GHOrganization org, Map<String, Members> knownMembers, Map<String, Members> supplementaryMembers, GHPermissionType perms) throws IOException, ExecutionException, InterruptedException {
-        Map<String, WhoAreYou> usersToInform = new ConcurrentHashMap<>();
+    /**
+     * Collect anyone with ADMIN or WRITE access who is a member of the GitHub org not in a OrgMemberRepository
+     *
+     * @param org
+     * @param ldapMembers
+     * @param supplementaryMembers
+     * @param perms
+     * @param failNoVpn
+     * @return
+     * @throws IOException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    private List<OrgMember> collectUnknownUsersWithAdminOrWrite(GHOrganization org, OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, GHPermissionType perms, boolean failNoVpn) throws IOException, ExecutionException, InterruptedException {
+        Map<String, OrgMember> usersToInform = new ConcurrentHashMap<>();
 
         List<Future<Integer>> futures = new ArrayList<>();
-        int cores = Runtime.getRuntime().availableProcessors() * 2;
-
-        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            for (GHTeam team : gitHubService.listTeams(org)) {
-                futures.add(executor.submit(() -> {
-                    logger.infof("Working on team %s", team.getName());
-
-                    int changed = 0;
-                    for (GHUser member : team.getMembers()) {
-                        if (knownMembers.containsKey(member.getLogin()) || supplementaryMembers.containsKey(member.getLogin()) || usersToInform.containsKey(member.getLogin())) {
-                            logger.debugf("Ignoring: %s", member.getLogin());
-                        } else {
-                            for (GHRepository repository : team.listRepositories()) {
-                                //Another thread added this user as they are in multiple teams, so break out
-                                if (usersToInform.containsKey(member.getLogin())) {
-                                    break;
-                                }
-
-                                boolean hasPermission = repository.hasPermission(member, perms);
-                                if (hasPermission) {
-                                    logger.warnf("Member %s has %s on %s - but we don't know who they are", member.getLogin(), perms, repository.getName());
-
-                                    usersToInform.put(member.getLogin(), WhoAreYou.from(member, repository.getHtmlUrl().toString()));
-                                    changed++;
-
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    return changed;
-                }));
-
-                if (futures.size() == cores) {
-                    for (Future<Integer> future : futures) {
-                        future.get();
-                    }
-
-                    futures.clear();
-
-                    gitHubService.logRateLimit(gitHub);
-                }
+        try (ExecutorService executor = Executors.newWorkStealingPool()) {
+            for (GHTeam team : gitHubOrganizationLookupService.listTeams(org)) {
+                futures.add(executor.submit(() -> runnable(usersToInform, team, ldapMembers, supplementaryMembers, perms, failNoVpn)));
             }
 
-            //Incase there are any leftover calls to be made
             for (Future<Integer> future : futures) {
                 future.get();
             }
@@ -153,36 +160,139 @@ public class CreateWhoAreYouIssueService {
         return new ArrayList<>(usersToInform.values());
     }
 
-    private String createIssue(List<WhoAreYou> usersToInform, GHRepository orgRepo, GHPermissionType permissions, boolean isDryRun) throws TemplateException, IOException {
-        String issueContent = "";
+    private Integer runnable(Map<String, OrgMember> usersToInform, GHTeam team, OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, GHPermissionType perms, boolean failNoVpn) throws LdapException {
+        Integer count = 0;
+
+        try {
+            List<GHRepository> teamRepository = team.listRepositories().toList();
+            List<GHUser> unknownUsers = team.getMembers().stream().filter(GHUserFilters.notContains(ldapMembers, supplementaryMembers)).toList();
+
+            if (!unknownUsers.isEmpty()) {
+                logger.infof("Collecting %s unknown members in %s team with %s", unknownUsers.size(), team.getName(), perms);
+
+                for (GHUser member : unknownUsers) {
+                    List<String> hasPermissionOn = teamRepository.stream().filter(GHRepositoryFilters.hasPermission(member, perms)).map(GHRepository::getName).toList();
+
+                    logger.warnf("Member %s has %s on %s - but we don't know who they are", member.getLogin(), perms, String.join(", ", hasPermissionOn));
+
+                    usersToInform.put(member.getLogin(), guessWho(OrgMember.from(member), failNoVpn));
+                    count++;
+                }
+            }
+        } catch (IOException ex) {
+            logger.error(ex);
+        }
+
+        return count;
+    }
+
+    /**
+     * Attempt to guess who someone is via LDAP
+     *
+     * @param userToGuess
+     * @param failNoVpn
+     * @return
+     * @throws IOException
+     * @throws LdapException
+     */
+    private OrgMember guessWho(OrgMember userToGuess, boolean failNoVpn) throws IOException, LdapException {
+        OrgMember answer;
+
+        OrgMember guessed = ldapGuessService.attempt(userToGuess, failNoVpn);
+        if (guessed == null) {
+            logger.infof("Unable to guess %s", userToGuess.gitHubUsername());
+            answer = userToGuess;
+        } else {
+            logger.infof("Guessed %s / %s via LDAP", guessed.gitHubUsername(), guessed.redhatEmailAddress());
+
+            answer = guessed;
+        }
+
+        return answer;
+    }
+
+    /**
+     * Collect anyone who has been marked for deletion - as they've left RH
+     *
+     * @param ldapMembers
+     * @param supplementaryMembers
+     * @return
+     */
+    private List<OrgMember> collectedMembersMarkedForDeletion(OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers) {
+        List<OrgMember> toBeDeleted = new ArrayList<>();
+        toBeDeleted.addAll(ldapMembers.filter(OrgMemberFilters.deleteAfter(LocalDate.now())));
+        toBeDeleted.addAll(supplementaryMembers.filter(OrgMemberFilters.deleteAfter(LocalDate.now())));
+
+        return toBeDeleted;
+    }
+
+    private void createLinkUsersIssue(List<OrgMember> usersToInform, GHRepository orgRepo, GHPermissionType permissions, boolean isDryRun) throws TemplateException, IOException {
         if (!usersToInform.isEmpty()) {
+            usersToInform.sort(Comparator.comparing(OrgMember::gitHubUsername));
+
             Map<String, Object> root = new HashMap<>();
             root.put("users", usersToInform);
             root.put("permissions", permissions.toString());
+            root.put("system", "GitHub");
 
             StringWriter stringWriter = new StringWriter();
-            if (permissions == GHPermissionType.READ) {
-                issueRead.process(root, stringWriter);
-            } else {
-                issue.process(root, stringWriter);
-            }
+            linkSocialToLDAPComment.process(root, stringWriter);
 
             if (isDryRun) {
-                logger.warnf("DRY-RUN: Would have created issue in %s", orgRepo.getName());
+                logger.warnf("DRY-RUN: Would have created issue in %s/%s for %s", orgRepo.getOwner().getLogin(), orgRepo.getName(), linkSocialToLDAPComment.getName());
 
-                issueContent = stringWriter.toString();
-                logger.warnf(issueContent);
+                logger.warnf(stringWriter.toString());
             } else {
-                GHIssue createdIssue = orgRepo.createIssue("Request GitHub to Red Hat ID linkage for users with " + permissions)
-                        .label("admin")
-                        .body(stringWriter.toString())
-                        .create();
+                GHOrganization orgWrite = gitHubOrganizationWriterService.getOrganization(orgRepo.getOwner().getLogin());
+                GHRepository orgRepoWrite = gitHubOrganizationWriterService.getRepository(orgWrite, orgRepo.getName());
 
-                logger.infof("Created issue: %s", createdIssue.getUrl());
+                List<GHIssue> openIssues = orgRepoWrite.getIssues(GHIssueState.OPEN).stream().filter(GHIssueFilters.isLinkUsersWith(permissions)).toList();
+                if (openIssues.isEmpty()) {
+                    GHIssue createdIssue = orgRepoWrite.createIssue("Request GitHub to Red Hat ID linkage for users with " + permissions)
+                            .label("admin")
+                            .body(stringWriter.toString())
+                            .create();
+
+                    logger.infof("Created issue: %s", createdIssue.getUrl());
+                } else {
+                    logger.warnf("There are %s open issues for %s, ignoring", openIssues.size(), linkSocialToLDAPComment.getName());
+                }
             }
         }
+    }
 
-        logger.info("--> Issue creation DONE");
-        return issueContent;
+    private void createRemoveNonRHIssue(List<OrgMember> usersToRemove, GHRepository orgRepo, boolean isDryRun) throws TemplateException, IOException {
+        if (!usersToRemove.isEmpty()) {
+            Map<String, Object> root = new HashMap<>();
+            root.put("users", usersToRemove);
+
+            StringWriter stringWriter = new StringWriter();
+            gitHubMemberNotFoundInLdap.process(root, stringWriter);
+
+            if (isDryRun) {
+                logger.warnf("DRY-RUN: Would have created issue in %s/%s for %s", orgRepo.getOwner().getLogin(), orgRepo.getName(), gitHubMemberNotFoundInLdap.getName());
+
+                logger.warnf(stringWriter.toString());
+            } else {
+                GHOrganization orgWrite = gitHubOrganizationWriterService.getOrganization(orgRepo.getOwner().getLogin());
+                GHRepository orgRepoWrite = gitHubOrganizationWriterService.getRepository(orgWrite, orgRepo.getName());
+
+                List<GHIssue> openIssues = orgRepoWrite.getIssues(GHIssueState.OPEN).stream().filter(GHIssueFilters.isRemoveNonRH()).toList();
+                if (openIssues.isEmpty()) {
+                    GHIssue createdIssue = orgRepo.createIssue("Remove users - Not in RH LDAP")
+                            .label("admin")
+                            .body(stringWriter.toString())
+                            .create();
+
+                    logger.infof("Created issue: %s", createdIssue.getUrl());
+                } else {
+                    logger.warnf("There are %s open issues for %s, ignoring", openIssues.size(), gitHubMemberNotFoundInLdap.getName());
+                }
+            }
+        }
+    }
+
+    private void removeMarkedForDeletion(OrgMemberRepository members) {
+        members.remove(LocalDate.now());
     }
 }
