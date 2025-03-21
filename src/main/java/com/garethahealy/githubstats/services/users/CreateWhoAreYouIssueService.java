@@ -237,8 +237,6 @@ public class CreateWhoAreYouIssueService {
 
     private void createLinkUsersIssue(List<OrgMember> usersToInform, GHRepository orgRepo, GHPermissionType permissions, boolean isDryRun) throws TemplateException, IOException {
         if (!usersToInform.isEmpty()) {
-            logger.infof("Created issue: for users %s", usersToInform.size());
-
             usersToInform.sort(Comparator.comparing(OrgMember::gitHubUsername));
 
             Map<String, Object> root = new HashMap<>();
@@ -274,7 +272,7 @@ public class CreateWhoAreYouIssueService {
 
     private void createRemoveNonRHIssue(List<OrgMember> usersToRemove, GHRepository orgRepo, boolean isDryRun) throws TemplateException, IOException {
         if (!usersToRemove.isEmpty()) {
-            logger.infof("Created issue: for users %s", usersToRemove.size());
+            usersToRemove.sort(Comparator.comparing(OrgMember::gitHubUsername, String.CASE_INSENSITIVE_ORDER));
 
             Map<String, Object> root = new HashMap<>();
             root.put("users", usersToRemove);

@@ -192,6 +192,8 @@ public class MembersChangeInAnsibleVarsYamlProcessor implements Processor {
     }
 
     private void labelCantFindUserInLdap(GHPullRequest pullRequest, List<OrgMember> unknownMembers, boolean isDryRun) throws TemplateException, IOException {
+        unknownMembers.sort(Comparator.comparing(OrgMember::gitHubUsername, String.CASE_INSENSITIVE_ORDER));
+
         Map<String, Object> root = new HashMap<>();
         root.put("users", unknownMembers);
         root.put("system", "Quay");
