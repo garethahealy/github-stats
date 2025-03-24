@@ -89,7 +89,7 @@ jobs:
           tags: "${{ steps.image_tags.outputs.IMAGE_TAGS }}"
 
       - name: Run docker image
-        run: docker run ghcr.io/garethahealy/github-stats/github-stats:latest help
+        run: docker run localhost/github-stats:latest help
 
       - name: Push to ghcr.io
         if: startsWith(github.ref, 'refs/tags/')
