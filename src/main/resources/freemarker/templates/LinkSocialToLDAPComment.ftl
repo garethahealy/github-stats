@@ -10,8 +10,8 @@ If you are unsure how to set your ${system} ID within LDAP, see:
 <#if permissions??>
 
 The below list of members have *${permissions}* on a repository and cannot be found using the above method.
-
 </#if>
+
 Please add your ${system} handle to Rover:
 
 <#list users as user>

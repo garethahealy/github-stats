@@ -83,8 +83,6 @@ public class ListenToPullRequestsService {
                 logger.warnf("Processor %s is not active, ignoring", processor.id());
             }
         }
-
-        logger.info("--> process DONE");
     }
 
     private Set<String> getMainConfigMembers() throws IOException {

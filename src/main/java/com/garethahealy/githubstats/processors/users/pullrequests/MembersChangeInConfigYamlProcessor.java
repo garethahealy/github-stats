@@ -106,6 +106,8 @@ public class MembersChangeInConfigYamlProcessor implements Processor {
             List<OrgMember> searchedForMembers = searchViaLdapFor(unknownSourceMembers, failNoVpn);
 
             labelPullRequests(current, searchedForMembers, isDryRun);
+
+            current.refresh();
         } catch (IOException ex) {
             logger.warn(ex.getMessage());
             logger.debug(ex);
@@ -210,6 +212,7 @@ public class MembersChangeInConfigYamlProcessor implements Processor {
             pullRequest.comment(stringWriter.toString());
             pullRequest.createReview()
                     .event(GHPullRequestReviewEvent.REQUEST_CHANGES)
+                    .comment("LDAP Link", "config.yaml", 1)
                     .create();
 
             logger.infof("Labeled (%s) and commented: %s", WIP_LABEL, pullRequest.getNumber());
