@@ -45,7 +45,7 @@ jobs:
       - name: Test
         run: ./mvnw test --batch-mode
 
-      - name: Run help
+      - name: Run help command
         id: runner
         run: |
           runners=(target/github-stats-*-runner)
@@ -88,8 +88,8 @@ jobs:
           oci: true
           tags: "${{ steps.image_tags.outputs.IMAGE_TAGS }}"
 
-      - name: Run docker image
-        run: docker run localhost/github-stats:latest help
+      - name: Run image
+        run: podman run localhost/github-stats:latest help
 
       - name: Push to ghcr.io
         if: startsWith(github.ref, 'refs/tags/')

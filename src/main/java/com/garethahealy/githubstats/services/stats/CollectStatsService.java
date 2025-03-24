@@ -124,7 +124,7 @@ public class CollectStatsService {
     private void write(List<Repository> repositories, File output) throws IOException {
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader((Repository.Headers.class))
-                .build();
+                .get();
 
         try (Writer writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING)) {
             try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {

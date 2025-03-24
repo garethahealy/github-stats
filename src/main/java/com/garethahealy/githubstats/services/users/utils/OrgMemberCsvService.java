@@ -53,7 +53,7 @@ public class OrgMemberCsvService {
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader(OrgMember.Headers.class)
                 .setSkipHeaderRecord(true)
-                .build();
+                .get();
 
         try (Reader reader = new BufferedReader(new FileReader(input, StandardCharsets.UTF_8))) {
             Iterable<CSVRecord> records = csvFormat.parse(reader);
@@ -99,7 +99,7 @@ public class OrgMemberCsvService {
 
             CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                     .setHeader(OrgMember.Headers.class)
-                    .build();
+                    .get();
 
             try (Writer writer = Files.newBufferedWriter(output, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING)) {
                 try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {
