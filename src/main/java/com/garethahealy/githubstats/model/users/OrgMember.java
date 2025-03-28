@@ -141,6 +141,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
     private static String removeDomainName(String current) {
         String value = current.replace("quay.io/user/", "")
                 .replace("quay.io/repository/", "")
+                .replace("quay.io/organization/", "")
                 .replace("quay.io/", "")
                 .replace("github.com/", "")
                 .replace("www", "")
