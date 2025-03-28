@@ -119,12 +119,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
             List<String> values = ldapAttributes.get(key);
             if (!values.isEmpty()) {
                 for (String current : values) {
-                    String value = removeDomainName(current);
-
-                    //If it still contains a slash, it's an org
-                    if (!value.contains("/")) {
-                        answer.add(value);
-                    }
+                    answer.add(removeDomainName(current));
                 }
             }
         }

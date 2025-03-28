@@ -4,10 +4,8 @@ import com.garethahealy.githubstats.commands.BaseCommand;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.predicates.OrgMemberFilters;
-import com.garethahealy.githubstats.services.github.GitHubClient;
 import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
 import org.apache.commons.io.FileUtils;
-import org.jboss.logging.Logger;
 import org.junit.jupiter.api.Test;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
@@ -38,8 +36,7 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
         FileUtils.copyFile(new File("ldap-members.csv"), runReadWithoutMe.LDAP);
         FileUtils.copyFile(new File("supplementary.csv"), runReadWithoutMe.SUPPLEMENTARY);
 
-        GitHubClient client = new GitHubClient();
-        OrgMemberCsvService csvService = new OrgMemberCsvService(Logger.getLogger(OrgMemberCsvService.class), client.getClient());
+        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository members = csvService.parse(runReadWithoutMe.LDAP);
         members.remove("garethahealy");
 
@@ -88,8 +85,7 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
         FileUtils.copyFile(new File("ldap-members.csv"), runUserMarkedForDeletion.LDAP);
         FileUtils.copyFile(new File("supplementary.csv"), runUserMarkedForDeletion.SUPPLEMENTARY);
 
-        GitHubClient client = new GitHubClient();
-        OrgMemberCsvService csvService = new OrgMemberCsvService(Logger.getLogger(OrgMemberCsvService.class), client.getClient());
+        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository members = csvService.parse(runUserMarkedForDeletion.LDAP);
         OrgMember me = members.filter(member -> member.gitHubUsername().equalsIgnoreCase("garethahealy")).getFirst();
         members.replace(List.of(me.withDeleteAfter(LocalDate.now().minusDays(1))));
@@ -124,8 +120,7 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
     void postRunUserMarkedForDeletion() throws IOException {
         System.out.println("-> postRunUserMarkedForDeletion");
 
-        GitHubClient client = new GitHubClient();
-        OrgMemberCsvService csvService = new OrgMemberCsvService(Logger.getLogger(OrgMemberCsvService.class), client.getClient());
+        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository members = csvService.parse(runUserMarkedForDeletion.LDAP);
         List<OrgMember> markedWithDelete = members.filter(OrgMemberFilters.deleteAfterIsNotNull());
 

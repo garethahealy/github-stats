@@ -2,16 +2,14 @@ package com.garethahealy.githubstats.services.users.utils;
 
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
-import com.garethahealy.githubstats.rest.QuayUsersRestClient;
+import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
+import com.garethahealy.githubstats.services.quay.QuayUserService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
-import org.kohsuke.github.GitHub;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -28,16 +26,19 @@ import java.util.TreeMap;
 @ApplicationScoped
 public class OrgMemberCsvService {
 
-    @RestClient
-    QuayUsersRestClient quayUsersRestClient;
-
     private final Logger logger;
-    private final GitHub gitHub;
+    private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
+    private final QuayUserService quayUserService;
+
+    public OrgMemberCsvService() {
+        this(Logger.getLogger(OrgMemberCsvService.class), null, null);
+    }
 
     @Inject
-    public OrgMemberCsvService(Logger logger, @Named("read") GitHub gitHub) {
+    public OrgMemberCsvService(Logger logger, GitHubOrganizationLookupService gitHubOrganizationLookupService, QuayUserService quayUserService) {
         this.logger = logger;
-        this.gitHub = gitHub;
+        this.gitHubOrganizationLookupService = gitHubOrganizationLookupService;
+        this.quayUserService = quayUserService;
     }
 
     /**
@@ -73,7 +74,7 @@ public class OrgMemberCsvService {
             }
         }
 
-        return new OrgMemberRepository(input, answer, gitHub, quayUsersRestClient);
+        return new OrgMemberRepository(input, answer, gitHubOrganizationLookupService, quayUserService);
     }
 
     /**

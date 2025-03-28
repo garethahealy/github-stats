@@ -36,6 +36,17 @@ public class GitHubOrganizationLookupService {
         }
     }
 
+    public GHUser getUser(String user) {
+        GHUser answer = null;
+        try {
+            answer = client.getUser(user);
+        } catch (IOException ex) {
+            logger.error(ex);
+        }
+
+        return answer;
+    }
+
     public GHOrganization getOrganization(String organization) throws IOException {
         return client.getOrganization(organization);
     }
@@ -46,6 +57,10 @@ public class GitHubOrganizationLookupService {
 
     public List<GHRepository> listRepositories(GHOrganization org) throws IOException {
         return new ArrayList<>(org.getRepositories().values());
+    }
+
+    public GHRepository getRepository(String ownerRepo) throws IOException {
+        return client.getRepository(ownerRepo);
     }
 
     public GHRepository getRepository(String owner, String repo) throws IOException {
