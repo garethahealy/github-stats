@@ -34,7 +34,8 @@ class OrgMemberTest {
         OrgMember member = OrgMember.from("garethahealy", entries);
 
         assertNotNull(member.linkedGitHubUsernames());
-        assertTrue(member.linkedGitHubUsernames().isEmpty());
+        assertFalse(member.linkedGitHubUsernames().isEmpty());
+        assertEquals("redhat-gpe/agnosticv", member.linkedGitHubUsernames().getFirst());
     }
 
     @Test
@@ -46,7 +47,8 @@ class OrgMemberTest {
         OrgMember member = OrgMember.from("garethahealy", entries);
 
         assertNotNull(member.linkedGitHubUsernames());
-        assertTrue(member.linkedGitHubUsernames().isEmpty());
+        assertFalse(member.linkedGitHubUsernames().isEmpty());
+        assertEquals("redhat-gpe/agnosticv", member.linkedGitHubUsernames().getFirst());
     }
 
     @Test
@@ -67,6 +69,19 @@ class OrgMemberTest {
         Map<String, List<String>> entries = new HashMap<>();
         entries.put(LdapSearchService.AttributeKeys.PrimaryMail, List.of("gahealy@redhat.com"));
         entries.put(LdapSearchService.AttributeKeys.SocialURLQuay, List.of("https://quay.io/repository/garethahealy"));
+
+        OrgMember member = OrgMember.from("garethahealy", entries);
+
+        assertNotNull(member.linkedQuayUsernames());
+        assertFalse(member.linkedQuayUsernames().isEmpty());
+        assertEquals("garethahealy", member.linkedQuayUsernames().getFirst());
+    }
+
+    @Test
+    void handlesQuayOrganization() {
+        Map<String, List<String>> entries = new HashMap<>();
+        entries.put(LdapSearchService.AttributeKeys.PrimaryMail, List.of("gahealy@redhat.com"));
+        entries.put(LdapSearchService.AttributeKeys.SocialURLQuay, List.of("https://quay.io/organization/garethahealy"));
 
         OrgMember member = OrgMember.from("garethahealy", entries);
 

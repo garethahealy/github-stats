@@ -109,7 +109,6 @@ public class CollectMembersFromRedHatLdapService {
     private void searchViaLdapForLdapCsvMembers(OrgMemberRepository ldapMembers, boolean failNoVpn) throws IOException, LdapException {
         if (ldapSearchService.canConnect()) {
             try (LdapConnection connection = ldapSearchService.open()) {
-
                 LocalDate deleteAfter = LocalDate.now().plusWeeks(1);
 
                 List<OrgMember> replace = new ArrayList<>();
@@ -118,11 +117,14 @@ public class CollectMembersFromRedHatLdapService {
                 logger.infof("Searching LDAP for %s ldap members from %s", filteredMembers.size(), ldapMembers.name());
 
                 for (OrgMember current : filteredMembers) {
-                    String primaryMail = ldapSearchService.searchOnPrimaryMailAndGitHubSocial(connection, current.redhatEmailAddress(), current.gitHubUsername());
-                    if (primaryMail.isEmpty()) {
+                    OrgMember found = ldapSearchService.retrieve(connection, current);
+                    if (found == null) {
                         logger.warnf("%s cannot be found in LDAP via PrimaryMail and GitHub social for %s CSV", current.gitHubUsername(), ldapMembers.name());
 
                         replace.add(current.withDeleteAfter(deleteAfter));
+                    } else {
+                        // Maybe they've added their quay or extra details we didn't get the first time
+                        replace.add(found);
                     }
                 }
 
@@ -148,7 +150,6 @@ public class CollectMembersFromRedHatLdapService {
     private void searchViaLdapForSupplementaryCsvMembers(OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, boolean failNoVpn) throws IOException, LdapException, URISyntaxException {
         if (ldapSearchService.canConnect()) {
             try (LdapConnection connection = ldapSearchService.open()) {
-
                 LocalDate deleteAfter = LocalDate.now().plusWeeks(1);
 
                 List<OrgMember> replace = new ArrayList<>();
@@ -163,14 +164,11 @@ public class CollectMembersFromRedHatLdapService {
 
                         replace.add(current.withDeleteAfter(deleteAfter));
                     } else {
-                        primaryMail = ldapSearchService.searchOnPrimaryMailAndGitHubSocial(connection, current.redhatEmailAddress(), current.gitHubUsername());
-                        if (!primaryMail.isEmpty()) {
-                            logger.infof("Adding %s to %s CSV", current.gitHubUsername(), ldapMembers.name());
+                        OrgMember found = ldapSearchService.retrieve(connection, current);
+                        if (found != null) {
+                            logger.infof("%s has linked their account, adding to %s CSV", current.gitHubUsername(), ldapMembers.name());
 
-                            OrgMember orgMember = ldapSearchService.retrieve(connection, current.gitHubUsername(), primaryMail);
-
-                            ldapMembers.validate(orgMember, current.gitHubUsername());
-                            ldapMembers.put(orgMember);
+                            ldapMembers.put(found);
                         }
                     }
                 }
@@ -213,8 +211,6 @@ public class CollectMembersFromRedHatLdapService {
                             logger.infof("Adding %s to %s CSV", user.getLogin(), ldapMembers.name());
 
                             OrgMember orgMember = ldapSearchService.retrieve(connection, user.getLogin(), rhEmail);
-
-                            ldapMembers.validate(orgMember, user.getLogin());
                             ldapMembers.put(orgMember);
                         }
                     }

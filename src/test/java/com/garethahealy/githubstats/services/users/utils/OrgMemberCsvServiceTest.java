@@ -3,7 +3,6 @@ package com.garethahealy.githubstats.services.users.utils;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.utils.OrgMemberMockData;
 import io.quarkus.test.junit.QuarkusTest;
-import org.jboss.logging.Logger;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -20,7 +19,7 @@ class OrgMemberCsvServiceTest {
     void parseSample() throws IOException {
         File input = new File(this.getClass().getClassLoader().getResource("sample-ldap-members.csv").getFile());
 
-        OrgMemberCsvService orgMemberCsvService = new OrgMemberCsvService(Logger.getLogger(OrgMemberCsvService.class), null);
+        OrgMemberCsvService orgMemberCsvService = new OrgMemberCsvService();
         OrgMemberRepository answer = orgMemberCsvService.parse(input);
 
         assertNotNull(answer);
@@ -31,7 +30,7 @@ class OrgMemberCsvServiceTest {
     void writeSample() throws IOException {
         File output = new File("target/OrgMemberCsvServiceTest/sample-ldap-members.csv");
 
-        OrgMemberCsvService orgMemberCsvService = new OrgMemberCsvService(Logger.getLogger(OrgMemberCsvService.class), null);
+        OrgMemberCsvService orgMemberCsvService = new OrgMemberCsvService();
         orgMemberCsvService.write(new OrgMemberRepository(output, OrgMemberMockData.getOrgMembersMap()));
     }
 
@@ -39,7 +38,7 @@ class OrgMemberCsvServiceTest {
     void writeHandlesEmptyMembers() throws IOException {
         File output = new File("target/OrgMemberCsvServiceTest/empty-ldap-members.csv");
 
-        OrgMemberCsvService orgMemberCsvService = new OrgMemberCsvService(Logger.getLogger(OrgMemberCsvService.class), null);
+        OrgMemberCsvService orgMemberCsvService = new OrgMemberCsvService();
         orgMemberCsvService.write(new OrgMemberRepository(output, new HashMap<>()));
     }
 }

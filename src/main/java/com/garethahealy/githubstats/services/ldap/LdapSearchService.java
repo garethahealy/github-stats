@@ -211,21 +211,6 @@ public class LdapSearchService {
     }
 
     /**
-     * Search based on ${AttributeKeys.PrimaryMail}=${email} and ${AttributeKeys.SocialURL}=Github->${githubId}
-     *
-     * @param connection
-     * @param email
-     * @param githubId
-     * @return
-     * @throws LdapException
-     * @throws IOException
-     */
-    public String searchOnPrimaryMailAndGitHubSocial(LdapConnection connection, String email, String githubId) throws LdapException, IOException {
-        String filter = "(&(" + AttributeKeys.PrimaryMail + "=" + email + ")(" + AttributeKeys.SocialURL + "=Github->*" + githubId + "*))";
-        return searchPrimaryMail(connection, filter);
-    }
-
-    /**
      * Search based on PrimaryMail
      *
      * @param connection
@@ -251,6 +236,21 @@ public class LdapSearchService {
         }
 
         return answer;
+    }
+
+    /**
+     * Retrieve OrgMember based on ${AttributeKeys.PrimaryMail}=${email} and ${AttributeKeys.SocialURL}=Github->${githubId}
+     *
+     * @param connection
+     * @param member
+     * @return
+     * @throws LdapException
+     * @throws IOException
+     */
+    public OrgMember retrieve(LdapConnection connection, OrgMember member) throws LdapException, IOException {
+        String filter = "(&(" + AttributeKeys.PrimaryMail + "=" + member.redhatEmailAddress() + ")(" + AttributeKeys.SocialURL + "=Github->*" + member.gitHubUsername() + "*))";
+        OrgMember found = OrgMember.from(member.gitHubUsername(), search(connection, filter, AttributeKeys.PrimaryMail, AttributeKeys.SocialURL));
+        return found.redhatEmailAddress() == null || found.redhatEmailAddress().isEmpty() ? null : found;
     }
 
     /**
