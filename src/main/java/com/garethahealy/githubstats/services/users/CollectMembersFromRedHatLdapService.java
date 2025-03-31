@@ -123,8 +123,10 @@ public class CollectMembersFromRedHatLdapService {
 
                         replace.add(current.withDeleteAfter(deleteAfter));
                     } else {
-                        // Maybe they've added their quay or extra details we didn't get the first time
-                        replace.add(found);
+                        if (current != found) {
+                            // Maybe they've added their quay or extra details we didn't get the first time
+                            replace.add(found);
+                        }
                     }
                 }
 

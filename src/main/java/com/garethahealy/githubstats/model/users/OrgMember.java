@@ -4,6 +4,8 @@ import com.garethahealy.githubstats.services.ldap.LdapSearchService;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
@@ -156,13 +158,36 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
     }
 
     @Override
-    public int compareTo(OrgMember o) {
+    public int compareTo(OrgMember orgMember) {
         return new CompareToBuilder()
-                .append(redhatEmailAddress(), o.redhatEmailAddress())
-                .append(gitHubUsername(), o.gitHubUsername())
-                .append(linkedGitHubUsernames(), o.linkedGitHubUsernames())
-                .append(linkedQuayUsernames(), o.linkedQuayUsernames())
-                .append(source(), o.source())
+                .append(redhatEmailAddress, orgMember.redhatEmailAddress())
+                .append(gitHubUsername, orgMember.gitHubUsername())
+                .append(linkedGitHubUsernames, orgMember.linkedGitHubUsernames())
+                .append(linkedQuayUsernames, orgMember.linkedQuayUsernames())
+                .append(source, orgMember.source())
                 .toComparison();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OrgMember orgMember = (OrgMember) o;
+
+        return new EqualsBuilder().append(source, orgMember.source)
+                .append(gitHubUsername, orgMember.gitHubUsername)
+                .append(redhatEmailAddress, orgMember.redhatEmailAddress)
+                .append(linkedQuayUsernames, orgMember.linkedQuayUsernames)
+                .append(linkedGitHubUsernames, orgMember.linkedGitHubUsernames).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(redhatEmailAddress)
+                .append(gitHubUsername)
+                .append(linkedGitHubUsernames)
+                .append(linkedQuayUsernames)
+                .append(source).toHashCode();
     }
 }

@@ -102,4 +102,33 @@ class OrgMemberTest {
         assertFalse(member.linkedQuayUsernames().isEmpty());
         assertEquals("garethahealy", member.linkedQuayUsernames().getFirst());
     }
+
+    @Test
+    void equalsSame() {
+        Map<String, List<String>> entries = new HashMap<>();
+        entries.put(LdapSearchService.AttributeKeys.PrimaryMail, List.of("gahealy@redhat.com"));
+        entries.put(LdapSearchService.AttributeKeys.SocialURLQuay, List.of("https://quay.io/garethahealy"));
+
+        OrgMember one = OrgMember.from("garethahealy", entries);
+        OrgMember two = OrgMember.from("garethahealy", entries);
+
+        assertEquals(one, two);
+    }
+
+    @Test
+    void equalsDifferent() {
+        Map<String, List<String>> entriesOne = new HashMap<>();
+        entriesOne.put(LdapSearchService.AttributeKeys.PrimaryMail, List.of("gahealy@redhat.com"));
+        entriesOne.put(LdapSearchService.AttributeKeys.SocialURLQuay, List.of("https://quay.io/garethahealy"));
+
+        Map<String, List<String>> entriesTwo = new HashMap<>();
+        entriesTwo.put(LdapSearchService.AttributeKeys.PrimaryMail, List.of("gahealy@redhat.com"));
+        entriesTwo.put(LdapSearchService.AttributeKeys.SocialURLGitHub, List.of("https://github.com/garethahealy"));
+        entriesTwo.put(LdapSearchService.AttributeKeys.SocialURLQuay, List.of("https://quay.io/garethahealy"));
+
+        OrgMember one = OrgMember.from("garethahealy", entriesOne);
+        OrgMember two = OrgMember.from("garethahealy", entriesTwo);
+
+        assertNotEquals(one, two);
+    }
 }
