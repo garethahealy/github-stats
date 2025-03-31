@@ -12,7 +12,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.version>3.19.4</quarkus.platform.version>
     <skipITs>false</skipITs>
-    <surefire-plugin.version>3.5.2</surefire-plugin.version>
+    <surefire-plugin.version>3.5.3</surefire-plugin.version>
     <zt-exec.version>1.12</zt-exec.version>
   </properties>
 
