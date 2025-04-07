@@ -138,7 +138,7 @@ jobs:
           category: "/language:java"
 
       - name: Submit Dependency Snapshot
-        uses: advanced-security/maven-dependency-submission-action@4f64ddab9d742a4806eeb588d238e4c311a8397d # v4
+        uses: advanced-security/maven-dependency-submission-action@aeab9f885293af501bae8bdfe88c589528ea5e25 # v4
 
   test:
     needs: [ build ]
