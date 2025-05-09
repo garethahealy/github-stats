@@ -31,7 +31,7 @@ jobs:
 
       - name: Dependency Review
         if: github.event_name == 'pull_request'
-        uses: actions/dependency-review-action@67d4f4bd7a9b17a0db54d2a7519187c65e339de8 # v4
+        uses: actions/dependency-review-action@38ecb5b593bf0eb19e335c03f97670f792489a8b # v4
 
       - name: Collect dependencies
         run: |
