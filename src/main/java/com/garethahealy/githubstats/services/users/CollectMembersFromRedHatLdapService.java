@@ -66,7 +66,7 @@ public class CollectMembersFromRedHatLdapService {
         removeFromIfNotGitHubMember(githubMembers, supplementaryMembers);
 
         if (validateCsv) {
-            searchViaLdapForLdapCsvMembers(ldapMembers, failNoVpn);
+            searchViaLdapForLdapCsvMembers(ldapMembers, supplementaryMembers, failNoVpn);
             searchViaLdapForSupplementaryCsvMembers(ldapMembers, supplementaryMembers, failNoVpn);
         }
 
@@ -102,11 +102,12 @@ public class CollectMembersFromRedHatLdapService {
      * Search LDAP for everyone that is in the OrgMemberRepository to validate it is still correct
      *
      * @param ldapMembers
+     * @param supplementaryMembers
      * @param failNoVpn
      * @throws IOException
      * @throws LdapException
      */
-    private void searchViaLdapForLdapCsvMembers(OrgMemberRepository ldapMembers, boolean failNoVpn) throws IOException, LdapException {
+    private void searchViaLdapForLdapCsvMembers(OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, boolean failNoVpn) throws IOException, LdapException {
         if (ldapSearchService.canConnect()) {
             try (LdapConnection connection = ldapSearchService.open()) {
                 LocalDate deleteAfter = LocalDate.now().plusWeeks(1);
@@ -121,7 +122,15 @@ public class CollectMembersFromRedHatLdapService {
                     if (found == null) {
                         logger.warnf("%s cannot be found in LDAP via PrimaryMail and GitHub social for %s CSV", current.gitHubUsername(), ldapMembers.name());
 
-                        replace.add(current.withDeleteAfter(deleteAfter));
+                        String email = ldapSearchService.searchOnPrimaryMail(connection, current.redhatEmailAddress());
+                        if (email.isEmpty()) {
+                            replace.add(current.withDeleteAfter(deleteAfter));
+                        } else {
+                            logger.warnf("-> but found %s in LDAP - have they unlinked their GitHub social? moving to %s", current.redhatEmailAddress(), supplementaryMembers.name());
+
+                            ldapMembers.remove(current);
+                            supplementaryMembers.put(current);
+                        }
                     } else {
                         if (current != found) {
                             // Maybe they've added their quay or extra details we didn't get the first time
