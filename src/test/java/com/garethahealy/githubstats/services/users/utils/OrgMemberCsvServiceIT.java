@@ -29,6 +29,6 @@ class OrgMemberCsvServiceIT {
         OrgMemberRepository answer = orgMemberCsvService.parse(input);
 
         assertNotNull(answer);
-        assertEquals(21, answer.size());
+        assertEquals(20, answer.size());
     }
 }

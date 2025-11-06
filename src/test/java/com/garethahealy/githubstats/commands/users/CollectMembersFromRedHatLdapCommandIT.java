@@ -80,7 +80,7 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
         assertTrue(ldapOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
 
         assertNotNull(supplementaryOutput);
-        assertEquals(21, supplementaryOutput.size());
+        assertEquals(20, supplementaryOutput.size());
         assertTrue(supplementaryOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
     }
 
@@ -144,7 +144,7 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
         assertTrue(ldapOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
 
         assertNotNull(supplementaryOutput);
-        assertEquals(21, supplementaryOutput.size());
+        assertEquals(20, supplementaryOutput.size());
         assertTrue(supplementaryOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
     }
 
@@ -194,7 +194,7 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
         assertTrue(ldapOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
 
         assertNotNull(supplementaryOutput);
-        assertEquals(21, supplementaryOutput.size());
+        assertEquals(20, supplementaryOutput.size());
         assertTrue(supplementaryOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
     }
 }
