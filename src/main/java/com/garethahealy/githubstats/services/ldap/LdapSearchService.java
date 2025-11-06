@@ -151,7 +151,7 @@ public class LdapSearchService {
      */
     public String searchOnName(LdapConnection connection, String name) throws LdapException, IOException {
         String filter = "(cn=" + name + ")";
-        return searchPrimaryMail(connection, filter);
+        return searchAndGetPrimaryMail(connection, filter);
     }
 
     /**
@@ -165,7 +165,7 @@ public class LdapSearchService {
      */
     public String searchOnGitHubLogin(LdapConnection connection, String githubId) throws LdapException, IOException {
         String filter = "(uid=" + githubId + ")";
-        return searchPrimaryMail(connection, filter);
+        return searchAndGetPrimaryMail(connection, filter);
     }
 
     /**
@@ -178,8 +178,22 @@ public class LdapSearchService {
      * @throws IOException
      */
     public String searchOnGitHubSocial(LdapConnection connection, String githubId) throws LdapException, IOException {
+        String found = searchOnGitHubSocialExact(connection, githubId);
+        if (found.isEmpty()) {
+            found = searchOnGitHubSocialFuzzy(connection, githubId);
+        }
+
+        return found;
+    }
+
+    private String searchOnGitHubSocialExact(LdapConnection connection, String githubId) throws LdapException, IOException {
+        String filter = "(" + AttributeKeys.SocialURL + "=Github->https://github.com/" + githubId + ")";
+        return searchAndGetPrimaryMail(connection, filter);
+    }
+
+    private String searchOnGitHubSocialFuzzy(LdapConnection connection, String githubId) throws LdapException, IOException {
         String filter = "(" + AttributeKeys.SocialURL + "=Github->*" + githubId + "*)";
-        return searchPrimaryMail(connection, filter);
+        return searchAndGetPrimaryMail(connection, filter);
     }
 
     /**
@@ -193,7 +207,7 @@ public class LdapSearchService {
      */
     public String searchOnQuaySocial(LdapConnection connection, String quayId) throws LdapException, IOException {
         String filter = "(" + AttributeKeys.SocialURL + "=Quay->*" + quayId + "*)";
-        return searchPrimaryMail(connection, filter);
+        return searchAndGetPrimaryMail(connection, filter);
     }
 
     /**
@@ -207,11 +221,11 @@ public class LdapSearchService {
      */
     public String searchOnPrimaryMail(LdapConnection connection, String email) throws LdapException, IOException {
         String filter = "(" + AttributeKeys.PrimaryMail + "=" + email + ")";
-        return searchPrimaryMail(connection, filter);
+        return searchAndGetPrimaryMail(connection, filter);
     }
 
     /**
-     * Search based on PrimaryMail
+     * Search based on a filter and return the PrimaryMail
      *
      * @param connection
      * @param filter
@@ -219,10 +233,11 @@ public class LdapSearchService {
      * @throws LdapException
      * @throws IOException
      */
-    private String searchPrimaryMail(LdapConnection connection, String filter) throws LdapException, IOException {
+    private String searchAndGetPrimaryMail(LdapConnection connection, String filter) throws LdapException, IOException {
         String answer = "";
 
         try (EntryCursor cursor = connection.search(systemDn, filter, SearchScope.SUBTREE, AttributeKeys.PrimaryMail)) {
+            int count = 0;
             for (Entry entry : cursor) {
                 logger.debugf("Found %s", filter);
 
@@ -231,6 +246,11 @@ public class LdapSearchService {
                         logger.debugf("- returning %s == %s", AttributeKeys.PrimaryMail, found.get().toString());
                         answer = found.get().toString();
                     }
+                }
+
+                count++;
+                if (count >= 2) {
+                    throw new LdapException("cursor returned multiple entries for: " + filter);
                 }
             }
         }
