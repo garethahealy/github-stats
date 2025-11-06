@@ -83,8 +83,8 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
 
         return new OrgMember(record.get(OrgMember.Headers.RedHatEmailAddress),
                 record.get(OrgMember.Headers.GitHubUsername),
-                List.of(linkedGithub.split(":")),
-                List.of(linkedQuay.split(":")),
+                new ArrayList<>(List.of(linkedGithub.split(":"))),
+                new ArrayList<>(List.of(linkedQuay.split(":"))),
                 Source.valueOf(record.get(OrgMember.Headers.Source)),
                 deleteAfter == null || deleteAfter.isEmpty() ? null : LocalDate.parse(deleteAfter), null);
     }
