@@ -156,7 +156,7 @@ public class OrgMemberRepository {
         }
 
         if (!remove.isEmpty()) {
-            logger.infof("Removing %s from linkedGitHubUsernames", remove.size());
+            logger.infof("-> Removing %s from linkedGitHubUsernames for %s", remove.size(), member.gitHubUsername());
 
             member.linkedGitHubUsernames().removeAll(remove);
         }
@@ -175,7 +175,7 @@ public class OrgMemberRepository {
         }
 
         if (!remove.isEmpty()) {
-            logger.infof("Removing %s from linkedQuayUsernames", remove.size());
+            logger.infof("-> Removing %s from linkedQuayUsernames for %s", remove.size(), member.gitHubUsername());
 
             member.linkedQuayUsernames().removeAll(remove);
         }
