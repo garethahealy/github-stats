@@ -7,6 +7,7 @@ import com.garethahealy.githubstats.predicates.OrgMemberFilters;
 import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -44,6 +45,7 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
     }
 
     @Test
+    @EnabledIf(value = "isRunnerSet")
     void runReadWithoutMe() throws IOException, InterruptedException, TimeoutException {
         preRunReadWithoutMe();
 
@@ -63,6 +65,7 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
     }
 
     @Test
+    @EnabledIf(value = "isRunnerSet")
     void runAdmin() throws IOException, InterruptedException, TimeoutException {
         System.out.println("-> runAdmin");
 
@@ -97,6 +100,7 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
     }
 
     @Test
+    @EnabledIf(value = "isRunnerSet")
     void runUserMarkedForDeletion() throws IOException, InterruptedException, TimeoutException {
         preRunUserMarkedForDeletion();
 

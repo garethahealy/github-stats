@@ -40,7 +40,9 @@ jobs:
           ./mvnw dependency:resolve-sources dependency:resolve -Dclassifier=javadoc --batch-mode
 
       - name: Build
-        run: ./mvnw clean install -Pnative --batch-mode -DskipTests
+        run: |
+          ./mvnw clean install --batch-mode -DskipTests
+          ./mvnw clean install -Pnative --batch-mode -DskipTests
 
       - name: Test
         run: ./mvnw test --batch-mode

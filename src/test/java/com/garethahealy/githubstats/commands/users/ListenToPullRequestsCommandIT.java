@@ -2,6 +2,7 @@ package com.garethahealy.githubstats.commands.users;
 
 import com.garethahealy.githubstats.commands.BaseCommand;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ListenToPullRequestsCommandIT extends BaseCommand {
 
     @Test
+    @EnabledIf(value = "isRunnerSet")
     void run() throws IOException, InterruptedException, TimeoutException {
         ProcessExecutor executor = new ProcessExecutor()
                 .command(getRunner(), "users", "listen-to-pullrequests", "--dry-run=true", "--organization=redhat-cop", "--issue-repo=org", "--processors=MembersChangeInConfigYaml,MembersChangeInAnsibleVarsYaml", "--ldap-members-csv=ldap-members.csv", "--supplementary-csv=supplementary.csv", "--fail-if-no-vpn=true")

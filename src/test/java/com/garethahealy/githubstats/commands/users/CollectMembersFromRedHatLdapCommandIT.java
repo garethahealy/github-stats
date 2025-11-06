@@ -7,6 +7,7 @@ import com.garethahealy.githubstats.predicates.OrgMemberFilters;
 import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -43,6 +44,7 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
      * Collect only 5 members but using an empty LDAP input to start from and validate CSVs
      */
     @Test
+    @EnabledIf(value = "isRunnerSet")
     void runWithLimit() throws IOException, InterruptedException, TimeoutException {
         preRunWithLimit();
 
@@ -107,6 +109,7 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
      * Validate a member in the supplementary can be moved to the LDAP CSV
      */
     @Test
+    @EnabledIf(value = "isRunnerSet")
     void runValidateMovingMembers() throws IOException, InterruptedException, TimeoutException {
         OrgMemberRepository ldapInput = preRunValidateMovingMembers();
 
@@ -156,6 +159,7 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
      * Collect with the current CSVs - tests the daily run
      */
     @Test
+    @EnabledIf(value = "isRunnerSet")
     void run() throws IOException, InterruptedException, TimeoutException {
         preRun();
 
