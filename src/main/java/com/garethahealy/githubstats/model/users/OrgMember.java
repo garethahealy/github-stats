@@ -130,7 +130,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
     }
 
     /**
-     * Remove any domian names so we've just got their usernam,e
+     * Remove any domain names so we've just got their username
      *
      * @param current
      * @return
