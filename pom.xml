@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.garethahealy</groupId>
   <artifactId>github-stats</artifactId>
-  <version>3.0.4</version>
+  <version>3.0.5-SNAPSHOT</version>
   <properties>
     <compiler-plugin.version>3.14.1</compiler-plugin.version>
     <maven.compiler.release>21</maven.compiler.release>
