@@ -51,8 +51,8 @@ public class CollectMembersFromRedHatLdapCommand implements Runnable {
             }
 
             collectMembersFromRedHatLdapService.run(organization, new File(ldapMembersCsv), new File(supplementaryCsv), validateCsv, limit, failNoVpn);
-        } catch (IOException | LdapException | TemplateException | ExecutionException | InterruptedException |
-                 URISyntaxException e) {
+        } catch (IOException | LdapException | TemplateException |
+                ExecutionException | InterruptedException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }

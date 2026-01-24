@@ -177,13 +177,13 @@ jobs:
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
         run: |
           touch /tmp/members.csv
-          ./${{ env.RUNNER }} users collect-members-from-ldap --organization=redhat-cop --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --user-limit=5 --fail-if-no-vpn=false
+          ./${{ env.RUNNER }} users collect-members-from-ldap --organization=redhat-cop --ldap-members-csv=test-data/ldap-members.csv --supplementary-csv=test-data/supplementary.csv --user-limit=5 --fail-if-no-vpn=false
 
       - name: Run 'create-who-are-you-issues' for CoP
         env:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-        run: ./${{ env.RUNNER }} users create-who-are-you-issues --dry-run=true --organization=redhat-cop --issue-repo=org --ldap-members-csv=tests/ldap-members.csv --supplementary-csv=tests/supplementary.csv --permission=admin --team-limit=5 --guess=false --fail-if-no-vpn=false
+        run: ./${{ env.RUNNER }} users create-who-are-you-issues --dry-run=true --organization=redhat-cop --issue-repo=org --ldap-members-csv=test-data/ldap-members.csv --supplementary-csv=test-data/supplementary.csv --permission=admin --team-limit=5 --guess=false --fail-if-no-vpn=false
 
       - name: Upload /tmp/*.csv
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
