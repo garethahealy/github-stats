@@ -8,8 +8,23 @@ repos:
       - id: check-yaml
       - id: check-shebang-scripts-are-executable
       - id: check-json
+      - id: detect-private-key
       - id: end-of-file-fixer
       - id: trailing-whitespace
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker
+    rev: 'v3.6.0'  # pick a git hash / tag to point to
+    hooks:
+      - id: editorconfig-checker
+        alias: ec
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 42.84.0
+    hooks:
+      - id: renovate-config-validator
+        args: [ --strict ]
   - repo: https://gitlab.cee.redhat.com/infosec-public/developer-workbench/tools.git
     rev: rh-pre-commit-2.3.2
     hooks:
