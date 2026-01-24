@@ -8,7 +8,6 @@ import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.kohsuke.github.GHPermissionType;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,11 +53,13 @@ public class CreateWhoAreYouIssueCommand implements Runnable {
     @Override
     public void run() {
         try {
-            if (!Files.exists(Path.of(ldapMembersCsv))) {
+            Path ldapMembersPath = Path.of(ldapMembersCsv);
+            if (!Files.exists(ldapMembersPath)) {
                 throw new FileNotFoundException("--ldap-members-csv=" + ldapMembersCsv + " not found.");
             }
 
-            if (!Files.exists(Path.of(supplementaryCsv))) {
+            Path supplementaryPath = Path.of(supplementaryCsv);
+            if (!Files.exists(supplementaryPath)) {
                 throw new FileNotFoundException("--supplementary-csv=" + supplementaryCsv + " not found.");
             }
 
@@ -70,7 +71,7 @@ public class CreateWhoAreYouIssueCommand implements Runnable {
                 createWhoAreYouIssueService.setLdapGuessService(noopLdapGuessService);
             }
 
-            createWhoAreYouIssueService.run(organization, orgRepo, new File(ldapMembersCsv), new File(supplementaryCsv), convert(permission), limit, dryRun, failNoVpn);
+            createWhoAreYouIssueService.run(organization, orgRepo, ldapMembersPath.toFile(), supplementaryPath.toFile(), convert(permission), limit, dryRun, failNoVpn);
         } catch (IOException | TemplateException | ExecutionException | InterruptedException | LdapException e) {
             throw new RuntimeException(e);
         }

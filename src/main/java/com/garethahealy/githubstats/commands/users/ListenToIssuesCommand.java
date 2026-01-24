@@ -6,7 +6,6 @@ import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,11 +42,13 @@ public class ListenToIssuesCommand implements Runnable {
     @Override
     public void run() {
         try {
-            if (!Files.exists(Path.of(ldapMembersCsv))) {
+            Path ldapMembersPath = Path.of(ldapMembersCsv);
+            if (!Files.exists(ldapMembersPath)) {
                 throw new FileNotFoundException("--ldap-members-csv=" + ldapMembersCsv + " not found.");
             }
 
-            if (!Files.exists(Path.of(supplementaryCsv))) {
+            Path supplementaryPath = Path.of(supplementaryCsv);
+            if (!Files.exists(supplementaryPath)) {
                 throw new FileNotFoundException("--supplementary-csv=" + supplementaryCsv + " not found.");
             }
 
@@ -56,7 +57,7 @@ public class ListenToIssuesCommand implements Runnable {
                 throw new IllegalArgumentException("--processors is empty");
             }
 
-            listenToIssuesService.run(organization, orgRepo, activeProcessors, new File(ldapMembersCsv), new File(supplementaryCsv), dryRun, failNoVpn);
+            listenToIssuesService.run(organization, orgRepo, activeProcessors, ldapMembersPath.toFile(), supplementaryPath.toFile(), dryRun, failNoVpn);
         } catch (IOException | LdapException | TemplateException e) {
             throw new RuntimeException(e);
         }

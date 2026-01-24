@@ -4,7 +4,6 @@ import com.garethahealy.githubstats.services.stats.CollectStatsService;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,11 +33,12 @@ public class CollectStatsCommand implements Runnable {
     @Override
     public void run() {
         try {
-            if (!Files.exists(Path.of(output))) {
-                new File(output).createNewFile();
+            Path outputPath = Path.of(output);
+            if (!Files.exists(outputPath)) {
+                Files.createFile(outputPath);
             }
 
-            collectStatsService.run(organization, validateOrgConfig, repoLimit, limit, new File(output));
+            collectStatsService.run(organization, validateOrgConfig, repoLimit, limit, outputPath.toFile());
         } catch (IOException | InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

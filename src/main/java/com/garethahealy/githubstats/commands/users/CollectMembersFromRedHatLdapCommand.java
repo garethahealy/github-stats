@@ -6,7 +6,6 @@ import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -40,15 +39,17 @@ public class CollectMembersFromRedHatLdapCommand implements Runnable {
     @Override
     public void run() {
         try {
-            if (!Files.exists(Path.of(ldapMembersCsv))) {
-                new File(ldapMembersCsv).createNewFile();
+            Path ldapMembersPath = Path.of(ldapMembersCsv);
+            if (!Files.exists(ldapMembersPath)) {
+                Files.createFile(ldapMembersPath);
             }
 
-            if (!Files.exists(Path.of(supplementaryCsv))) {
-                new File(supplementaryCsv).createNewFile();
+            Path supplementaryPath = Path.of(supplementaryCsv);
+            if (!Files.exists(supplementaryPath)) {
+                Files.createFile(supplementaryPath);
             }
 
-            collectMembersFromRedHatLdapService.run(organization, new File(ldapMembersCsv), new File(supplementaryCsv), validateCsv, limit, failNoVpn);
+            collectMembersFromRedHatLdapService.run(organization, ldapMembersPath.toFile(), supplementaryPath.toFile(), validateCsv, limit, failNoVpn);
         } catch (IOException | LdapException | TemplateException |
                     ExecutionException | InterruptedException | URISyntaxException e) {
             throw new RuntimeException(e);
