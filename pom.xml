@@ -185,14 +185,6 @@
                     <arguments>
                         <argument>--outdir=docs</argument>
                         <argument>com.garethahealy.githubstats.commands.GitHubStatsCommand</argument>
-                        <argument>com.garethahealy.githubstats.commands.StatsCommand</argument>
-                        <argument>com.garethahealy.githubstats.commands.stats.CollectStatsCommand</argument>
-                        <argument>com.garethahealy.githubstats.commands.UsersCommand</argument>
-                        <argument>com.garethahealy.githubstats.commands.users.CollectMembersFromRedHatLdapCommand
-                        </argument>
-                        <argument>com.garethahealy.githubstats.commands.users.CreateWhoAreYouIssueCommand</argument>
-                        <argument>com.garethahealy.githubstats.commands.users.ListenToPullRequestsCommand</argument>
-                        <argument>com.garethahealy.githubstats.commands.users.ListenToIssuesCommand</argument>
                     </arguments>
                 </configuration>
                 <dependencies>

@@ -1,7 +1,6 @@
 package com.garethahealy.githubstats.commands.stats;
 
 import com.garethahealy.githubstats.services.stats.CollectStatsService;
-import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
@@ -11,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
-@Dependent
 @CommandLine.Command(name = "collect-stats", mixinStandardHelpOptions = true, description = "Collect the stats in CSV format")
 public class CollectStatsCommand implements Runnable {
 

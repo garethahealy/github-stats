@@ -2,24 +2,24 @@
 // tag::picocli-generated-man-section-header[]
 :doctype: manpage
 :revnumber: 
-:manmanual: Users Manual
+:manmanual: Github-stats Manual
 :mansource: 
 :man-linkstyle: pass:[blue R < >]
-= users-help(1)
+= github-stats-stats-help(1)
 
 // end::picocli-generated-man-section-header[]
 
 // tag::picocli-generated-man-section-name[]
 == Name
 
-users-help - Display help information about the specified command.
+github-stats-stats-help - Display help information about the specified command.
 
 // end::picocli-generated-man-section-name[]
 
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*users help* [*-h*] [_COMMAND_]
+*github-stats stats help* [*-h*] [_COMMAND_]
 
 // end::picocli-generated-man-section-synopsis[]
 

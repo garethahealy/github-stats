@@ -2,7 +2,6 @@ package com.garethahealy.githubstats.commands.users;
 
 import com.garethahealy.githubstats.services.users.ListenToPullRequestsService;
 import freemarker.template.TemplateException;
-import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import picocli.CommandLine;
@@ -15,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
-@Dependent
 @CommandLine.Command(name = "listen-to-pullrequests", mixinStandardHelpOptions = true, description = "Searches for pull-requests and runs the specified processors")
 public class ListenToPullRequestsCommand implements Runnable {
 

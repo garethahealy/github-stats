@@ -2,25 +2,25 @@
 // tag::picocli-generated-man-section-header[]
 :doctype: manpage
 :revnumber: 
-:manmanual: Collect-members-from-ldap Manual
+:manmanual: Github-stats Manual
 :mansource: 
 :man-linkstyle: pass:[blue R < >]
-= collect-members-from-ldap(1)
+= github-stats-users-collect-members-from-ldap(1)
 
 // end::picocli-generated-man-section-header[]
 
 // tag::picocli-generated-man-section-name[]
 == Name
 
-collect-members-from-ldap - Creates a CSV containing members who have added their GitHub ID to LDAP so we can map who someone is from GitHub to Red Hat
+github-stats-users-collect-members-from-ldap - Creates a CSV containing members who have added their GitHub ID to LDAP so we can map who someone is from GitHub to Red Hat
 
 // end::picocli-generated-man-section-name[]
 
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*collect-members-from-ldap* [*-hvV*] [*-vpn*] [*-i*=_<ldapMembersCsv>_] [*-l*=_<limit>_]
-                          *-org*=_<organization>_ [*-s*=_<supplementaryCsv>_]
+*github-stats users collect-members-from-ldap* [*-hvV*] [*-vpn*]
+[*-i*=_<ldapMembersCsv>_] [*-l*=_<limit>_] *-org*=_<organization>_ [*-s*=_<supplementaryCsv>_]
 
 // end::picocli-generated-man-section-synopsis[]
 

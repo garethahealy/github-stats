@@ -3,7 +3,6 @@ package com.garethahealy.githubstats.commands.users;
 import com.garethahealy.githubstats.services.ldap.NoopLdapGuessService;
 import com.garethahealy.githubstats.services.users.CreateWhoAreYouIssueService;
 import freemarker.template.TemplateException;
-import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.kohsuke.github.GHPermissionType;
@@ -16,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
-@Dependent
 @CommandLine.Command(name = "create-who-are-you-issues", mixinStandardHelpOptions = true, description = "Creates a single issue in the org config for users that are not known")
 public class CreateWhoAreYouIssueCommand implements Runnable {
 

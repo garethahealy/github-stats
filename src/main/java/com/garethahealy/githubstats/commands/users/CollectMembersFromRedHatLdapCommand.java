@@ -2,7 +2,6 @@ package com.garethahealy.githubstats.commands.users;
 
 import com.garethahealy.githubstats.services.users.CollectMembersFromRedHatLdapService;
 import freemarker.template.TemplateException;
-import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import picocli.CommandLine;
@@ -14,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
-@Dependent
 @CommandLine.Command(name = "collect-members-from-ldap", mixinStandardHelpOptions = true, description = "Creates a CSV containing members who have added their GitHub ID to LDAP so we can map who someone is from GitHub to Red Hat")
 public class CollectMembersFromRedHatLdapCommand implements Runnable {
 
@@ -52,7 +50,7 @@ public class CollectMembersFromRedHatLdapCommand implements Runnable {
 
             collectMembersFromRedHatLdapService.run(organization, new File(ldapMembersCsv), new File(supplementaryCsv), validateCsv, limit, failNoVpn);
         } catch (IOException | LdapException | TemplateException |
-                ExecutionException | InterruptedException | URISyntaxException e) {
+                    ExecutionException | InterruptedException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }

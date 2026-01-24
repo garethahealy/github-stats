@@ -2,7 +2,6 @@ package com.garethahealy.githubstats.commands.users;
 
 import com.garethahealy.githubstats.services.users.ListenToIssuesService;
 import freemarker.template.TemplateException;
-import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import picocli.CommandLine;
@@ -14,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
-@Dependent
 @CommandLine.Command(name = "listen-to-issues", mixinStandardHelpOptions = true, description = "Searches for issues and runs the specified processors")
 public class ListenToIssuesCommand implements Runnable {
 

@@ -2,47 +2,54 @@
 // tag::picocli-generated-man-section-header[]
 :doctype: manpage
 :revnumber: 
-:manmanual: Stats Manual
+:manmanual: Github-stats Manual
 :mansource: 
 :man-linkstyle: pass:[blue R < >]
-= stats(1)
+= github-stats-users-help(1)
 
 // end::picocli-generated-man-section-header[]
 
 // tag::picocli-generated-man-section-name[]
 == Name
 
-stats - Stats collection
+github-stats-users-help - Display help information about the specified command.
 
 // end::picocli-generated-man-section-name[]
 
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*stats* [COMMAND]
+*github-stats users help* [*-h*] [_COMMAND_]
 
 // end::picocli-generated-man-section-synopsis[]
 
 // tag::picocli-generated-man-section-description[]
 == Description
 
-Stats collection
+
+When no COMMAND is given, the usage help for the main command is displayed.
+If a COMMAND is specified, the help for that command is shown.
+
 
 // end::picocli-generated-man-section-description[]
 
 // tag::picocli-generated-man-section-options[]
+== Options
+
+*-h*, *--help*::
+  Show usage help for the help command and exit.
 
 // end::picocli-generated-man-section-options[]
 
 // tag::picocli-generated-man-section-arguments[]
+== Arguments
+
+[_COMMAND_]::
+  The COMMAND to display the usage help message for.
+
 // end::picocli-generated-man-section-arguments[]
 
 // tag::picocli-generated-man-section-commands[]
-== Commands
-
-xref:stats-help.adoc[*help*]::
-  Display help information about the specified command.
-
 // end::picocli-generated-man-section-commands[]
 
 // tag::picocli-generated-man-section-exit-status[]
