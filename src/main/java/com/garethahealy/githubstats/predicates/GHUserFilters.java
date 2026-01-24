@@ -6,7 +6,10 @@ import org.kohsuke.github.GHUser;
 
 import java.util.function.Predicate;
 
-public class GHUserFilters {
+public final class GHUserFilters {
+
+    private GHUserFilters() {
+    }
 
     /**
      * Filter the GitHub user to this member
@@ -15,7 +18,8 @@ public class GHUserFilters {
      * @return
      */
     public static Predicate<GHUser> equals(OrgMember member) {
-        return user -> user.getLogin().equalsIgnoreCase(member.gitHubUsername());
+        String memberLogin = member.gitHubUsername();
+        return user -> user.getLogin().equalsIgnoreCase(memberLogin);
     }
 
     /**
@@ -26,6 +30,9 @@ public class GHUserFilters {
      * @return
      */
     public static Predicate<GHUser> notContains(OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers) {
-        return user -> !ldapMembers.containsKey(user.getLogin()) && !supplementaryMembers.containsKey(user.getLogin());
+        return user -> {
+            String login = user.getLogin();
+            return !ldapMembers.containsKey(login) && !supplementaryMembers.containsKey(login);
+        };
     }
 }

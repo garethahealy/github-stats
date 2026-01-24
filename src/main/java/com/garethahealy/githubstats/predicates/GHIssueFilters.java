@@ -5,7 +5,13 @@ import org.kohsuke.github.GHPermissionType;
 
 import java.util.function.Predicate;
 
-public class GHIssueFilters {
+public final class GHIssueFilters {
+
+    private static final String LINK_USERS_TITLE_PREFIX = "Request GitHub to Red Hat ID linkage for users with ";
+    private static final String REMOVE_NON_RH_TITLE = "Remove users - Not in RH LDAP";
+
+    private GHIssueFilters() {
+    }
 
     /**
      * Is the issue a request to link their GitHub to rover created by this tool
@@ -14,7 +20,7 @@ public class GHIssueFilters {
      * @return
      */
     public static Predicate<GHIssue> isLinkUsersWith(GHPermissionType permissions) {
-        return issue -> !issue.isPullRequest() && issue.getTitle().equalsIgnoreCase("Request GitHub to Red Hat ID linkage for users with " + permissions);
+        return issue -> !issue.isPullRequest() && issue.getTitle().equalsIgnoreCase(LINK_USERS_TITLE_PREFIX + permissions);
     }
 
     /**
@@ -23,6 +29,6 @@ public class GHIssueFilters {
      * @return
      */
     public static Predicate<GHIssue> isRemoveNonRH() {
-        return issue -> !issue.isPullRequest() && issue.getTitle().equalsIgnoreCase("Remove users - Not in RH LDAP");
+        return issue -> !issue.isPullRequest() && issue.getTitle().equalsIgnoreCase(REMOVE_NON_RH_TITLE);
     }
 }

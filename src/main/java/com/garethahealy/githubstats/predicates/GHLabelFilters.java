@@ -4,7 +4,10 @@ import org.kohsuke.github.GHLabel;
 
 import java.util.function.Predicate;
 
-public class GHLabelFilters {
+public final class GHLabelFilters {
+
+    private GHLabelFilters() {
+    }
 
     /**
      * Filter by the name

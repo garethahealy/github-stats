@@ -5,7 +5,10 @@ import com.garethahealy.githubstats.model.users.OrgMember;
 import java.time.LocalDate;
 import java.util.function.Predicate;
 
-public class OrgMemberFilters {
+public final class OrgMemberFilters {
+
+    private OrgMemberFilters() {
+    }
 
     /**
      * Filter members where the 'date' is after the members.deleteAfter
