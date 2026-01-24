@@ -17,10 +17,10 @@ public record BasicGHUser(String name, String company, String login, String emai
     @Override
     public int compareTo(BasicGHUser o) {
         return new CompareToBuilder()
-                .append(name(), o.name())
-                .append(company(), o.company())
-                .append(login(), o.login())
-                .append(email(), o.email())
-                .toComparison();
+            .append(name(), o.name())
+            .append(company(), o.company())
+            .append(login(), o.login())
+            .append(email(), o.email())
+            .toComparison();
     }
 }

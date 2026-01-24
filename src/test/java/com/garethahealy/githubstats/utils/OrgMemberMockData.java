@@ -29,8 +29,7 @@ public class OrgMemberMockData {
         return answer;
     }
 
-    public static OrgMember getMe() throws IOException {
-        GitHubClient client = new GitHubClient();
+    public static OrgMember getMe(GitHubClient client) throws IOException {
         GHUser me = client.getClient().getUser("garethahealy");
         return new OrgMember("gahealy@redhat.com", "garethahealy", List.of("garethahealy"), List.of("garethahealy"), OrgMember.Source.Manual, null, BasicGHUser.from(me));
     }

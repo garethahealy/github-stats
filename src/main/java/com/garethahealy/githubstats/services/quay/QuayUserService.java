@@ -25,8 +25,8 @@ public class QuayUserService {
             logger.error(ex);
 
             answer = RestResponse.ResponseBuilder.create(ex.getResponse().getStatusInfo().toEnum(), "")
-                    .location(ex.getResponse().getLocation())
-                    .build();
+                .location(ex.getResponse().getLocation())
+                .build();
         }
 
         return answer;

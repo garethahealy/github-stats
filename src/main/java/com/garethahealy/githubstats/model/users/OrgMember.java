@@ -82,11 +82,11 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
         String deleteAfter = record.get(Headers.DeleteAfter);
 
         return new OrgMember(record.get(OrgMember.Headers.RedHatEmailAddress),
-                record.get(OrgMember.Headers.GitHubUsername),
-                new ArrayList<>(List.of(linkedGithub.split(":"))),
-                new ArrayList<>(List.of(linkedQuay.split(":"))),
-                Source.valueOf(record.get(OrgMember.Headers.Source)),
-                deleteAfter == null || deleteAfter.isEmpty() ? null : LocalDate.parse(deleteAfter), null);
+            record.get(OrgMember.Headers.GitHubUsername),
+            new ArrayList<>(List.of(linkedGithub.split(":"))),
+            new ArrayList<>(List.of(linkedQuay.split(":"))),
+            Source.valueOf(record.get(OrgMember.Headers.Source)),
+            deleteAfter == null || deleteAfter.isEmpty() ? null : LocalDate.parse(deleteAfter), null);
     }
 
     /**
@@ -99,11 +99,11 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
     public static OrgMember from(String githubId, Map<String, List<String>> ldapAttributes) {
         String email = ldapAttributes.containsKey(LdapSearchService.AttributeKeys.PrimaryMail) ? ldapAttributes.get(LdapSearchService.AttributeKeys.PrimaryMail).getFirst() : "";
         return new OrgMember(email,
-                githubId,
-                cleanupValues(ldapAttributes, LdapSearchService.AttributeKeys.SocialURLGitHub),
-                cleanupValues(ldapAttributes, LdapSearchService.AttributeKeys.SocialURLQuay),
-                Source.Automated,
-                null, null);
+            githubId,
+            cleanupValues(ldapAttributes, LdapSearchService.AttributeKeys.SocialURLGitHub),
+            cleanupValues(ldapAttributes, LdapSearchService.AttributeKeys.SocialURLQuay),
+            Source.Automated,
+            null, null);
     }
 
     public OrgMember withDeleteAfter(LocalDate deleteAfter) {
@@ -137,14 +137,14 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
      */
     private static String removeDomainName(String current) {
         String value = current.replace("quay.io/user/", "")
-                .replace("quay.io/repository/", "")
-                .replace("quay.io/organization/", "")
-                .replace("quay.io/", "")
-                .replace("github.com/", "")
-                .replace("www", "")
-                .replace("https://", "")
-                .replace("http://", "")
-                .replace(".", "");
+            .replace("quay.io/repository/", "")
+            .replace("quay.io/organization/", "")
+            .replace("quay.io/", "")
+            .replace("github.com/", "")
+            .replace("www", "")
+            .replace("https://", "")
+            .replace("http://", "")
+            .replace(".", "");
 
         if (value.endsWith("/")) {
             value = value.substring(0, value.length() - 1);
@@ -160,12 +160,12 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
     @Override
     public int compareTo(OrgMember orgMember) {
         return new CompareToBuilder()
-                .append(redhatEmailAddress, orgMember.redhatEmailAddress())
-                .append(gitHubUsername, orgMember.gitHubUsername())
-                .append(linkedGitHubUsernames, orgMember.linkedGitHubUsernames())
-                .append(linkedQuayUsernames, orgMember.linkedQuayUsernames())
-                .append(source, orgMember.source())
-                .toComparison();
+            .append(redhatEmailAddress, orgMember.redhatEmailAddress())
+            .append(gitHubUsername, orgMember.gitHubUsername())
+            .append(linkedGitHubUsernames, orgMember.linkedGitHubUsernames())
+            .append(linkedQuayUsernames, orgMember.linkedQuayUsernames())
+            .append(source, orgMember.source())
+            .toComparison();
     }
 
     @Override
@@ -175,19 +175,19 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
         OrgMember orgMember = (OrgMember) o;
 
         return new EqualsBuilder().append(source, orgMember.source)
-                .append(gitHubUsername, orgMember.gitHubUsername)
-                .append(redhatEmailAddress, orgMember.redhatEmailAddress)
-                .append(linkedQuayUsernames, orgMember.linkedQuayUsernames)
-                .append(linkedGitHubUsernames, orgMember.linkedGitHubUsernames).isEquals();
+            .append(gitHubUsername, orgMember.gitHubUsername)
+            .append(redhatEmailAddress, orgMember.redhatEmailAddress)
+            .append(linkedQuayUsernames, orgMember.linkedQuayUsernames)
+            .append(linkedGitHubUsernames, orgMember.linkedGitHubUsernames).isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(redhatEmailAddress)
-                .append(gitHubUsername)
-                .append(linkedGitHubUsernames)
-                .append(linkedQuayUsernames)
-                .append(source).toHashCode();
+            .append(redhatEmailAddress)
+            .append(gitHubUsername)
+            .append(linkedGitHubUsernames)
+            .append(linkedQuayUsernames)
+            .append(source).toHashCode();
     }
 }

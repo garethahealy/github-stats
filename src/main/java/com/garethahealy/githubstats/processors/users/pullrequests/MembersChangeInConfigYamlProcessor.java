@@ -186,8 +186,8 @@ public class MembersChangeInConfigYamlProcessor implements Processor {
             pullRequest.removeLabels(pullRequest.getLabels());
             pullRequest.addLabels(LGTM_LABEL);
             pullRequest.createReview()
-                    .event(GHPullRequestReviewEvent.APPROVE)
-                    .create();
+                .event(GHPullRequestReviewEvent.APPROVE)
+                .create();
 
             logger.infof("Labeled (%s) and commented: %s", LGTM_LABEL, pullRequest.getNumber());
         }
@@ -211,9 +211,9 @@ public class MembersChangeInConfigYamlProcessor implements Processor {
             pullRequest.addLabels(WIP_LABEL);
             pullRequest.comment(stringWriter.toString());
             pullRequest.createReview()
-                    .event(GHPullRequestReviewEvent.REQUEST_CHANGES)
-                    .comment("LDAP Link", "config.yaml", 1)
-                    .create();
+                .event(GHPullRequestReviewEvent.REQUEST_CHANGES)
+                .comment("LDAP Link", "config.yaml", 1)
+                .create();
 
             logger.infof("Labeled (%s) and commented: %s", WIP_LABEL, pullRequest.getNumber());
         }

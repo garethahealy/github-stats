@@ -118,13 +118,13 @@ public class CollectStatsService {
         }
 
         return Repository.from(repoName, contributors, commits, issues, pullRequests, topics, cloneTraffic, viewTraffic,
-                hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived, inArchivedTeam);
+            hasOwners, hasCodeOwners, hasWorkflows, hasTravis, hasRenovate, inConfig, isArchived, inArchivedTeam);
     }
 
     private void write(List<Repository> repositories, File output) throws IOException {
         CSVFormat csvFormat = CSVFormat.Builder.create(CSVFormat.DEFAULT)
-                .setHeader((Repository.Headers.class))
-                .get();
+            .setHeader((Repository.Headers.class))
+            .get();
 
         try (Writer writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING)) {
             try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {

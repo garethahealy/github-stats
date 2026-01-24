@@ -258,9 +258,9 @@ public class CreateWhoAreYouIssueService {
                 List<GHIssue> openIssues = orgRepoWrite.getIssues(GHIssueState.OPEN).stream().filter(GHIssueFilters.isLinkUsersWith(permissions)).toList();
                 if (openIssues.isEmpty()) {
                     GHIssue createdIssue = orgRepoWrite.createIssue("Request GitHub to Red Hat ID linkage for users with " + permissions)
-                            .label("admin")
-                            .body(stringWriter.toString())
-                            .create();
+                        .label("admin")
+                        .body(stringWriter.toString())
+                        .create();
 
                     logger.infof("Created issue: %s", createdIssue.getUrl());
                 } else {
@@ -291,9 +291,9 @@ public class CreateWhoAreYouIssueService {
                 List<GHIssue> openIssues = orgRepoWrite.getIssues(GHIssueState.OPEN).stream().filter(GHIssueFilters.isRemoveNonRH()).toList();
                 if (openIssues.isEmpty()) {
                     GHIssue createdIssue = orgRepo.createIssue("Remove users - Not in RH LDAP")
-                            .label("admin")
-                            .body(stringWriter.toString())
-                            .create();
+                        .label("admin")
+                        .body(stringWriter.toString())
+                        .create();
 
                     logger.infof("Created issue: %s", createdIssue.getUrl());
                 } else {
