@@ -1,13 +1,29 @@
 package com.garethahealy.githubstats.config;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@QuarkusTest
 class YAMLMapperConfigTest {
 
+    @Inject
+    YAMLMapperConfig yamlMapperConfig;
+
+    @Inject
+    YAMLMapper mapper;
+
     @Test
-    void mapper() {
-        assertNotNull(new YAMLMapperConfig().mapper());
+    void configGetsMapper() {
+        assertNotNull(yamlMapperConfig.mapper());
+    }
+
+    @Test
+    void mapperInjected() {
+        assertNotNull(mapper);
     }
 }
