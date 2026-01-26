@@ -1,6 +1,5 @@
 package com.garethahealy.githubstats.clients.rest;
 
-import com.garethahealy.githubstats.clients.rest.GitHubDiffRestClient;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
