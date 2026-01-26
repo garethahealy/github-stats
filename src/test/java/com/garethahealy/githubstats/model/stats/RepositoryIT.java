@@ -1,8 +1,10 @@
 package com.garethahealy.githubstats.model.stats;
 
-import com.garethahealy.githubstats.services.github.GitHubClient;
+import com.garethahealy.githubstats.clients.GitHubClient;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 import org.junit.jupiter.api.Test;
 import org.kohsuke.github.*;
@@ -12,11 +14,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@QuarkusTest
 class RepositoryIT {
+
+    @Inject
+    GitHubClient client;
 
     @Test
     void canConstruct() throws IOException {
-        GitHubClient client = new GitHubClient();
         GitHubOrganizationLookupService gitHubOrganizationLookupService = new GitHubOrganizationLookupService(Logger.getLogger(GitHubOrganizationLookupService.class), client.getClient());
         GitHubRepositoryLookupService gitHubRepositoryLookupService = new GitHubRepositoryLookupService(Logger.getLogger(GitHubRepositoryLookupService.class));
 

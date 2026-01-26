@@ -2,7 +2,7 @@ package com.garethahealy.githubstats.utils;
 
 import com.garethahealy.githubstats.model.users.BasicGHUser;
 import com.garethahealy.githubstats.model.users.OrgMember;
-import com.garethahealy.githubstats.services.github.GitHubClient;
+import com.garethahealy.githubstats.clients.GitHubClient;
 import org.kohsuke.github.GHUser;
 
 import java.io.IOException;

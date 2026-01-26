@@ -1,7 +1,9 @@
 package com.garethahealy.githubstats.model.users;
 
-import com.garethahealy.githubstats.services.github.GitHubClient;
+import com.garethahealy.githubstats.clients.GitHubClient;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 import org.junit.jupiter.api.Test;
 import org.kohsuke.github.GHOrganization;
@@ -12,11 +14,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@QuarkusTest
 class BasicGHUserIT {
+
+    @Inject
+    GitHubClient client;
 
     @Test
     void from() throws IOException {
-        GitHubClient client = new GitHubClient();
         GitHubOrganizationLookupService gitHubOrganizationLookupService = new GitHubOrganizationLookupService(Logger.getLogger(GitHubOrganizationLookupService.class), client.getClient());
 
         GHOrganization org = gitHubOrganizationLookupService.getOrganization("redhat-cop");
