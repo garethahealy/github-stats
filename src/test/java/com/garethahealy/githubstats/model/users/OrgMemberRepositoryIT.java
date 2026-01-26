@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.model.users;
 
-import com.garethahealy.githubstats.clients.GitHubClient;
+import com.garethahealy.githubstats.config.GitHubClientConfig;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import com.garethahealy.githubstats.services.quay.QuayUserService;
 import com.garethahealy.githubstats.utils.OrgMemberMockData;
@@ -24,7 +24,7 @@ class OrgMemberRepositoryIT {
     QuayUserService quayUserService;
 
     @Inject
-    GitHubClient client;
+    GitHubClientConfig client;
 
     @Test
     void validate() throws IOException {

@@ -1,8 +1,8 @@
 package com.garethahealy.githubstats.utils;
 
+import com.garethahealy.githubstats.config.GitHubClientConfig;
 import com.garethahealy.githubstats.model.users.BasicGHUser;
 import com.garethahealy.githubstats.model.users.OrgMember;
-import com.garethahealy.githubstats.clients.GitHubClient;
 import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
@@ -29,7 +29,7 @@ public class OrgMemberMockData {
         return answer;
     }
 
-    public static OrgMember getMe(GitHubClient client) throws IOException {
+    public static OrgMember getMe(GitHubClientConfig client) throws IOException {
         GHUser me = client.getClient().getUser("garethahealy");
         return new OrgMember("gahealy@redhat.com", "garethahealy", List.of("garethahealy"), List.of("garethahealy"), OrgMember.Source.Manual, null, BasicGHUser.from(me));
     }

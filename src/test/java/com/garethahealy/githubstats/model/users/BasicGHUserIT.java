@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.model.users;
 
-import com.garethahealy.githubstats.clients.GitHubClient;
+import com.garethahealy.githubstats.config.GitHubClientConfig;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class BasicGHUserIT {
 
     @Inject
-    GitHubClient client;
+    GitHubClientConfig client;
 
     @Test
     void from() throws IOException {

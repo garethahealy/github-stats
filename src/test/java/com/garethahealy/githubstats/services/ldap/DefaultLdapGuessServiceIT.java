@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.services.ldap;
 
-import com.garethahealy.githubstats.clients.GitHubClient;
+import com.garethahealy.githubstats.config.GitHubClientConfig;
 import com.garethahealy.githubstats.utils.OrgMemberMockData;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -16,7 +16,7 @@ class DefaultLdapGuessServiceIT {
     DefaultLdapGuessService defaultLdapGuessService;
 
     @Inject
-    GitHubClient client;
+    GitHubClientConfig client;
 
     @Test
     void attempt() throws IOException, LdapException {

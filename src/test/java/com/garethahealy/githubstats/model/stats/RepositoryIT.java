@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.model.stats;
 
-import com.garethahealy.githubstats.clients.GitHubClient;
+import com.garethahealy.githubstats.config.GitHubClientConfig;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
 import io.quarkus.test.junit.QuarkusTest;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class RepositoryIT {
 
     @Inject
-    GitHubClient client;
+    GitHubClientConfig client;
 
     @Test
     void canConstruct() throws IOException {

@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.clients;
+package com.garethahealy.githubstats.config;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -7,17 +7,17 @@ import org.kohsuke.github.GitHub;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
-class GitHubClientTest {
+class GitHubClientConfigTest {
 
     @Inject
-    GitHubClient client;
+    GitHubClientConfig config;
 
     @Test
     void getWriteClient() throws IOException {
-        GitHub github = client.getWriteClient();
+        GitHub github = config.getWriteClient();
 
         assertNotNull(github);
         assertNotNull(github.getRateLimit());
@@ -25,7 +25,7 @@ class GitHubClientTest {
 
     @Test
     void getClient() throws IOException {
-        GitHub github = client.getClient();
+        GitHub github = config.getClient();
 
         assertNotNull(github);
         assertNotNull(github.getRateLimit());

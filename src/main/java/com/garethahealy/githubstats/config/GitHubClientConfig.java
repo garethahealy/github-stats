@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.clients;
+package com.garethahealy.githubstats.config;
 
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Named;
@@ -10,13 +10,13 @@ import org.kohsuke.github.GitHubBuilder;
 import java.io.IOException;
 
 @Singleton
-public class GitHubClient {
+public class GitHubClientConfig {
 
     private final String githubLogin;
     private final String githubOauth;
     private final String githubWriteOauth;
 
-    public GitHubClient(@ConfigProperty(name = "github.login", defaultValue = "") String githubLogin, @ConfigProperty(name = "github.oauth", defaultValue = "") String githubOauth, @ConfigProperty(name = "github.write-oauth", defaultValue = "") String githubWriteOauth) {
+    public GitHubClientConfig(@ConfigProperty(name = "github.login", defaultValue = "") String githubLogin, @ConfigProperty(name = "github.oauth", defaultValue = "") String githubOauth, @ConfigProperty(name = "github.write-oauth", defaultValue = "") String githubWriteOauth) {
         this.githubLogin = githubLogin;
         this.githubOauth = githubOauth;
         this.githubWriteOauth = githubWriteOauth;
