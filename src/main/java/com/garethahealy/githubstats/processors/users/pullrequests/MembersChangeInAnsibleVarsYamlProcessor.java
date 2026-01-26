@@ -3,7 +3,7 @@ package com.garethahealy.githubstats.processors.users.pullrequests;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.predicates.GHLabelFilters;
-import com.garethahealy.githubstats.rest.GitHubDiffRestClient;
+import com.garethahealy.githubstats.clients.rest.GitHubDiffRestClient;
 import com.garethahealy.githubstats.services.github.GitHubFileRetrievalService;
 import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
 import com.garethahealy.githubstats.services.ldap.LdapSearchService;

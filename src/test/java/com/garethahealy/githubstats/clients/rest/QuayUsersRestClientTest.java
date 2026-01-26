@@ -1,8 +1,9 @@
-package com.garethahealy.githubstats.rest;
+package com.garethahealy.githubstats.clients.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garethahealy.githubstats.clients.rest.QuayUsersRestClient;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;

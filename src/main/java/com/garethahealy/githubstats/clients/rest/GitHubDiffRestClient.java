@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.rest;
+package com.garethahealy.githubstats.clients.rest;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

@@ -1,8 +1,9 @@
-package com.garethahealy.githubstats.services.github;
+package com.garethahealy.githubstats.clients;
 
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 
@@ -11,19 +12,28 @@ import java.io.IOException;
 @Singleton
 public class GitHubClient {
 
+    private final String githubLogin;
+    private final String githubOauth;
+    private final String githubWriteOauth;
+
+    public GitHubClient(@ConfigProperty(name = "github.login", defaultValue = "") String githubLogin, @ConfigProperty(name = "github.oauth", defaultValue = "") String githubOauth, @ConfigProperty(name = "github.write-oauth", defaultValue = "") String githubWriteOauth) {
+        this.githubLogin = githubLogin;
+        this.githubOauth = githubOauth;
+        this.githubWriteOauth = githubWriteOauth;
+    }
+
     @Singleton
     @Produces
     @Named(value = "write")
     public GitHub getWriteClient() throws IOException {
-        String githubOAuth = System.getenv("WRITE_GITHUB_OAUTH");
-        return getClientVia(GitHubBuilder.fromEnvironment().withOAuthToken(githubOAuth));
+        return getClientVia(new GitHubBuilder().withOAuthToken(githubWriteOauth, githubLogin));
     }
 
     @Singleton
     @Produces
     @Named(value = "read")
     public GitHub getClient() throws IOException {
-        return getClientVia(GitHubBuilder.fromEnvironment());
+        return getClientVia(new GitHubBuilder().withOAuthToken(githubOauth, githubLogin));
     }
 
     private GitHub getClientVia(GitHubBuilder builder) throws IOException {

@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.services.quay;
 
-import com.garethahealy.githubstats.rest.QuayUsersRestClient;
+import com.garethahealy.githubstats.clients.rest.QuayUsersRestClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;

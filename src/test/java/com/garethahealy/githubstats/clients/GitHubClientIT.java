@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.services.github;
+package com.garethahealy.githubstats.clients;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
