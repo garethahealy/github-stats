@@ -15,12 +15,12 @@ public record BasicGHUser(String name, String company, String login, String emai
     }
 
     @Override
-    public int compareTo(BasicGHUser o) {
+    public int compareTo(BasicGHUser other) {
         return new CompareToBuilder()
-            .append(name(), o.name())
-            .append(company(), o.company())
-            .append(login(), o.login())
-            .append(email(), o.email())
+            .append(name(), other.name())
+            .append(company(), other.company())
+            .append(login(), other.login())
+            .append(email(), other.email())
             .toComparison();
     }
 }

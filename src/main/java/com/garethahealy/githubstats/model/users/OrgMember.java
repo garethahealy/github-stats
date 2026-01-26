@@ -11,7 +11,11 @@ import org.kohsuke.github.GHUser;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Holds data about members that are part of the GitHub Org and have had their data collected from LDAP
@@ -20,6 +24,8 @@ import java.util.*;
 public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<String> linkedGitHubUsernames,
                         List<String> linkedQuayUsernames, Source source, LocalDate deleteAfter,
                         BasicGHUser basicGHUser) implements Comparable<OrgMember> {
+
+    private static final String BOT_GITHUB_USERNAME = "redhat-cop-ci-bot";
 
     public enum Headers {
         RedHatEmailAddress,
@@ -37,7 +43,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
     }
 
     public static String botGithubUsername() {
-        return "redhat-cop-ci-bot";
+        return BOT_GITHUB_USERNAME;
     }
 
     /**
@@ -46,7 +52,7 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
      * @return
      */
     public static OrgMember bot() {
-        return new OrgMember("ablock@redhat.com", "redhat-cop-ci-bot", Collections.emptyList(), Collections.emptyList(), Source.Manual, null, null);
+        return new OrgMember("ablock@redhat.com", BOT_GITHUB_USERNAME, Collections.emptyList(), Collections.emptyList(), Source.Manual, null, null);
     }
 
     /**
@@ -97,7 +103,9 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
      * @return
      */
     public static OrgMember from(String githubId, Map<String, List<String>> ldapAttributes) {
-        String email = ldapAttributes.containsKey(LdapSearchService.AttributeKeys.PrimaryMail) ? ldapAttributes.get(LdapSearchService.AttributeKeys.PrimaryMail).getFirst() : "";
+        String email = ldapAttributes.containsKey(LdapSearchService.AttributeKeys.PrimaryMail)
+            ? ldapAttributes.get(LdapSearchService.AttributeKeys.PrimaryMail).getFirst()
+            : "";
         return new OrgMember(email,
             githubId,
             cleanupValues(ldapAttributes, LdapSearchService.AttributeKeys.SocialURLGitHub),
@@ -115,15 +123,18 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
     }
 
     private static List<String> cleanupValues(Map<String, List<String>> ldapAttributes, String key) {
-        List<String> answer = new ArrayList<>();
+        if (!ldapAttributes.containsKey(key)) {
+            return List.of();
+        }
 
-        if (ldapAttributes.containsKey(key)) {
-            List<String> values = ldapAttributes.get(key);
-            if (!values.isEmpty()) {
-                for (String current : values) {
-                    answer.add(removeDomainName(current));
-                }
-            }
+        List<String> values = ldapAttributes.get(key);
+        if (values.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> answer = new ArrayList<>(values.size());
+        for (String current : values) {
+            answer.add(removeDomainName(current));
         }
 
         return answer;
@@ -154,17 +165,17 @@ public record OrgMember(String redhatEmailAddress, String gitHubUsername, List<S
     }
 
     public List<String> toArray() {
-        return Arrays.asList(redhatEmailAddress, gitHubUsername, String.join(":", linkedGitHubUsernames), String.join(":", linkedQuayUsernames), source.toString(), deleteAfter == null ? "" : deleteAfter.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        return List.of(redhatEmailAddress, gitHubUsername, String.join(":", linkedGitHubUsernames), String.join(":", linkedQuayUsernames), source.toString(), deleteAfter == null ? "" : deleteAfter.format(DateTimeFormatter.ISO_LOCAL_DATE));
     }
 
     @Override
-    public int compareTo(OrgMember orgMember) {
+    public int compareTo(OrgMember other) {
         return new CompareToBuilder()
-            .append(redhatEmailAddress, orgMember.redhatEmailAddress())
-            .append(gitHubUsername, orgMember.gitHubUsername())
-            .append(linkedGitHubUsernames, orgMember.linkedGitHubUsernames())
-            .append(linkedQuayUsernames, orgMember.linkedQuayUsernames())
-            .append(source, orgMember.source())
+            .append(redhatEmailAddress, other.redhatEmailAddress())
+            .append(gitHubUsername, other.gitHubUsername())
+            .append(linkedGitHubUsernames, other.linkedGitHubUsernames())
+            .append(linkedQuayUsernames, other.linkedQuayUsernames())
+            .append(source, other.source())
             .toComparison();
     }
 
