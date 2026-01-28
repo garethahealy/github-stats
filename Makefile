@@ -17,6 +17,7 @@ member-mapping:
 	@if [ ! -d "$(MEMBER_MAPPING_DIR)/.git" ]; then \
 		git clone "$(MEMBER_MAPPING_REPO)" "$(MEMBER_MAPPING_DIR)"; \
 	else \
+	    git -C "$(MEMBER_MAPPING_DIR)" reset --hard && \
 		git -C "$(MEMBER_MAPPING_DIR)" fetch --all --prune && \
 		git -C "$(MEMBER_MAPPING_DIR)" pull; \
 	fi
