@@ -30,7 +30,7 @@ public class LdapConnectionFactory {
     private final String ldapWarmupUser;
 
     private final AtomicBoolean warmedUp = new AtomicBoolean(false);
-    private volatile Dn systemDn;
+    private Dn systemDn;
 
     @Inject
     public LdapConnectionFactory(Logger logger, @ConfigProperty(name = "redhat.ldap.connection") String ldapConnection,
@@ -58,7 +58,7 @@ public class LdapConnectionFactory {
         return new LdapNetworkConnection(ldapConnection);
     }
 
-    public Dn getSystemDn() throws LdapException {
+    private Dn getSystemDn() throws LdapException {
         if (systemDn == null) {
             systemDn = new Dn(ldapDn);
         }

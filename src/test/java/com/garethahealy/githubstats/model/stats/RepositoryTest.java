@@ -5,9 +5,13 @@ import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupServic
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHCommit;
+import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHRepository;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
