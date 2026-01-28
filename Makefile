@@ -7,10 +7,8 @@ MEMBER_MAPPING_CSVS := ldap-members.csv supplementary.csv
 help:
 	@echo "Usage:"
 	@echo "  make member-mapping"
-	@echo "  eval $$(make creds)"
 	@echo ""
 	@echo "Targets:"
-	@echo "  creds           Print a command to source creds"
 	@echo "  member-mapping  Clone/update member-mapping and move CSVs"
 
 member-mapping:
@@ -28,6 +26,3 @@ member-mapping:
 			echo "Missing $(MEMBER_MAPPING_DIR)/$$csv"; \
 		fi; \
 	done
-
-creds:
-	@echo "source scripts/_creds.sh"

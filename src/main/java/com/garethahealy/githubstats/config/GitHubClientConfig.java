@@ -16,7 +16,7 @@ public class GitHubClientConfig {
     private final String githubOauth;
     private final String githubWriteOauth;
 
-    public GitHubClientConfig(@ConfigProperty(name = "github.login", defaultValue = "") String githubLogin, @ConfigProperty(name = "github.oauth", defaultValue = "") String githubOauth, @ConfigProperty(name = "github.write-oauth", defaultValue = "") String githubWriteOauth) {
+    public GitHubClientConfig(@ConfigProperty(name = "github.login") String githubLogin, @ConfigProperty(name = "github.oauth") String githubOauth, @ConfigProperty(name = "github.write-oauth") String githubWriteOauth) {
         this.githubLogin = githubLogin;
         this.githubOauth = githubOauth;
         this.githubWriteOauth = githubWriteOauth;

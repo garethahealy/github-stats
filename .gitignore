@@ -8,5 +8,6 @@ ldap-members.csv
 supplementary.csv
 
 scripts/_creds.sh
+src/test/resources/application.properties
 
 !test-data/*.csv
