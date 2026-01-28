@@ -1,20 +1,25 @@
 package com.garethahealy.githubstats.model.stats;
 
+import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
+import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.kohsuke.github.GHCommit;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.*;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 class RepositoryTest {
+
+    @Inject
+    GitHubOrganizationLookupService gitHubOrganizationLookupService;
+
+    @Inject
+    GitHubRepositoryLookupService gitHubRepositoryLookupService;
 
     @Test
     void canConstruct() throws IOException {

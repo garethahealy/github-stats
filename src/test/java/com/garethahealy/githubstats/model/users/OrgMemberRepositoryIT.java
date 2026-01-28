@@ -1,12 +1,13 @@
 package com.garethahealy.githubstats.model.users;
 
-import com.garethahealy.githubstats.config.GitHubClientConfig;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import com.garethahealy.githubstats.services.quay.QuayUserService;
 import com.garethahealy.githubstats.utils.OrgMemberMockData;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import org.kohsuke.github.GitHub;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,7 +25,8 @@ class OrgMemberRepositoryIT {
     QuayUserService quayUserService;
 
     @Inject
-    GitHubClientConfig client;
+    @Named("read")
+    GitHub client;
 
     @Test
     void validate() throws IOException {

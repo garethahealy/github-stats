@@ -1,10 +1,8 @@
 package com.garethahealy.githubstats.model.users;
 
-import com.garethahealy.githubstats.config.GitHubClientConfig;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.jboss.logging.Logger;
 import org.junit.jupiter.api.Test;
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHUser;
@@ -18,12 +16,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class BasicGHUserIT {
 
     @Inject
-    GitHubClientConfig client;
+    GitHubOrganizationLookupService gitHubOrganizationLookupService;
 
     @Test
     void from() throws IOException {
-        GitHubOrganizationLookupService gitHubOrganizationLookupService = new GitHubOrganizationLookupService(Logger.getLogger(GitHubOrganizationLookupService.class), client.getClient());
-
         GHOrganization org = gitHubOrganizationLookupService.getOrganization("redhat-cop");
         List<GHUser> users = gitHubOrganizationLookupService.listMembers(org);
         GHUser me = users.stream().filter(user -> user.getLogin().equalsIgnoreCase("garethahealy")).findFirst().get();
