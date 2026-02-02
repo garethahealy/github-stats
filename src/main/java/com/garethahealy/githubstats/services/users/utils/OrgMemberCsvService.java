@@ -30,10 +30,6 @@ public class OrgMemberCsvService {
     private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
     private final QuayUserService quayUserService;
 
-    public OrgMemberCsvService() {
-        this(Logger.getLogger(OrgMemberCsvService.class), null, null);
-    }
-
     @Inject
     public OrgMemberCsvService(Logger logger, GitHubOrganizationLookupService gitHubOrganizationLookupService, QuayUserService quayUserService) {
         this.logger = logger;

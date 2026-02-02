@@ -22,7 +22,6 @@ import java.util.function.Predicate;
 
 public class OrgMemberRepository {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(OrgMemberRepository.class);
     private final Logger logger = Logger.getLogger(OrgMemberRepository.class);
     private final Map<String, OrgMember> members;
     private final File input;

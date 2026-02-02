@@ -1,9 +1,6 @@
 package com.garethahealy.githubstats.model.stats;
 
-import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
-import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.kohsuke.github.GHCommit;
 import org.kohsuke.github.GHIssue;
@@ -19,12 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @QuarkusTest
 class RepositoryTest {
 
-    @Inject
-    GitHubOrganizationLookupService gitHubOrganizationLookupService;
-
-    @Inject
-    GitHubRepositoryLookupService gitHubRepositoryLookupService;
-
     @Test
     void canConstruct() throws IOException {
         List<String> topics = List.of("core-cop");
@@ -34,7 +25,7 @@ class RepositoryTest {
         List<GHPullRequest> pullRequests = List.of(new GHPullRequest());
 
         Repository repository = Repository.from("org", contributors, commits, issues, pullRequests, topics, null, null,
-                false, true, true, false, true, true, false, false);
+            false, true, true, false, true, true, false, false);
 
         assertNotNull(repository);
         assertNotNull(repository.repoName());

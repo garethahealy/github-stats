@@ -5,6 +5,8 @@ import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.predicates.OrgMemberFilters;
 import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -17,7 +19,11 @@ import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@QuarkusTest
 class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
+
+    @Inject
+    OrgMemberCsvService csvService;
 
     private static class runWithLimit {
         public static File LDAP = new File("target/CollectMembersFromRedHatLdap/ldap-members-runWithLimit.csv");
@@ -71,7 +77,6 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
         System.out.println("-> postRunWithLimit");
 
         // Validate outputs
-        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository ldapOutput = csvService.parse(runWithLimit.LDAP);
         OrgMemberRepository supplementaryOutput = csvService.parse(runWithLimit.SUPPLEMENTARY);
 
@@ -91,7 +96,6 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
         FileUtils.copyFile(new File("supplementary.csv"), runValidateMovingMembers.SUPPLEMENTARY);
 
         // Pre-Test Data
-        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository ldapInput = csvService.parse(runValidateMovingMembers.LDAP);
         OrgMemberRepository supplementaryInput = csvService.parse(runValidateMovingMembers.SUPPLEMENTARY);
 
@@ -135,7 +139,6 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
         System.out.println("-> postRunValidateMovingMembers");
 
         // Validate outputs
-        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository ldapOutput = csvService.parse(runValidateMovingMembers.LDAP);
         OrgMemberRepository supplementaryOutput = csvService.parse(runValidateMovingMembers.SUPPLEMENTARY);
 
@@ -185,7 +188,6 @@ class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
         System.out.println("-> postRun");
 
         // Validate outputs
-        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository ldapOutput = csvService.parse(run.LDAP);
         OrgMemberRepository supplementaryOutput = csvService.parse(run.SUPPLEMENTARY);
 

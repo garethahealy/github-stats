@@ -5,6 +5,8 @@ import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.predicates.OrgMemberFilters;
 import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -19,7 +21,11 @@ import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@QuarkusTest
 class CreateWhoAreYouIssueCommandIT extends BaseCommand {
+
+    @Inject
+    OrgMemberCsvService csvService;
 
     private static class runReadWithoutMe {
         public static File LDAP = new File("target/CreateWhoAreYouIssue/ldap-members-runReadWithoutMe.csv");
@@ -37,7 +43,6 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
         FileUtils.copyFile(new File("ldap-members.csv"), runReadWithoutMe.LDAP);
         FileUtils.copyFile(new File("supplementary.csv"), runReadWithoutMe.SUPPLEMENTARY);
 
-        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository members = csvService.parse(runReadWithoutMe.LDAP);
         members.remove("garethahealy");
 
@@ -88,7 +93,6 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
         FileUtils.copyFile(new File("ldap-members.csv"), runUserMarkedForDeletion.LDAP);
         FileUtils.copyFile(new File("supplementary.csv"), runUserMarkedForDeletion.SUPPLEMENTARY);
 
-        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository members = csvService.parse(runUserMarkedForDeletion.LDAP);
         OrgMember me = members.filter(member -> member.gitHubUsername().equalsIgnoreCase("garethahealy")).getFirst();
         members.replace(List.of(me.withDeleteAfter(LocalDate.now().minusDays(1))));
@@ -124,7 +128,6 @@ class CreateWhoAreYouIssueCommandIT extends BaseCommand {
     void postRunUserMarkedForDeletion() throws IOException {
         System.out.println("-> postRunUserMarkedForDeletion");
 
-        OrgMemberCsvService csvService = new OrgMemberCsvService();
         OrgMemberRepository members = csvService.parse(runUserMarkedForDeletion.LDAP);
         List<OrgMember> markedWithDelete = members.filter(OrgMemberFilters.deleteAfterIsNotNull());
 
