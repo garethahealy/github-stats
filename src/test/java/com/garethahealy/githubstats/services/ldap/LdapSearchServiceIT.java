@@ -1,5 +1,6 @@
 package com.garethahealy.githubstats.services.ldap;
 
+import com.garethahealy.githubstats.BaseRequiresLdapConnection;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
@@ -9,13 +10,14 @@ import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-class LdapSearchServiceIT {
+class LdapSearchServiceIT extends BaseRequiresLdapConnection {
 
     @Inject
     LdapSearchService ldapSearchService;
@@ -27,11 +29,13 @@ class LdapSearchServiceIT {
     QuayUserService quayUserService;
 
     @Test
+    @EnabledIf("canConnectVpn")
     void canConnect() {
         assertTrue(ldapSearchService.canConnect());
     }
 
     @Test
+    @EnabledIf("canConnectVpn")
     void searchOnUser() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
             assertTrue(ldapSearchService.searchOnUser(connection, "gahealy"));
@@ -39,6 +43,7 @@ class LdapSearchServiceIT {
     }
 
     @Test
+    @EnabledIf("canConnectVpn")
     void searchOnName() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
             String answer = ldapSearchService.searchOnName(connection, "Gareth Healy");
@@ -49,6 +54,7 @@ class LdapSearchServiceIT {
     }
 
     @Test
+    @EnabledIf("canConnectVpn")
     void searchOnGitHubLogin() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
             String answer = ldapSearchService.searchOnGitHubLogin(connection, "gahealy");
@@ -59,6 +65,7 @@ class LdapSearchServiceIT {
     }
 
     @Test
+    @EnabledIf("canConnectVpn")
     void searchOnQuaySocial() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
             String answer = ldapSearchService.searchOnQuaySocial(connection, "garethahealy");
@@ -69,6 +76,7 @@ class LdapSearchServiceIT {
     }
 
     @Test
+    @EnabledIf("canConnectVpn")
     void searchOnPrimaryMail() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
             String answer = ldapSearchService.searchOnPrimaryMail(connection, "gahealy@redhat.com");
@@ -79,6 +87,7 @@ class LdapSearchServiceIT {
     }
 
     @Test
+    @EnabledIf("canConnectVpn")
     void retrieve() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
             OrgMember answer = ldapSearchService.retrieve(connection, "garethahealy", "gahealy@redhat.com");
@@ -94,6 +103,7 @@ class LdapSearchServiceIT {
 
 
     @Test
+    @EnabledIf("canConnectVpn")
     void retrieveAndValidateSsulliva() throws IOException, LdapException {
         OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
 
@@ -113,6 +123,7 @@ class LdapSearchServiceIT {
     }
 
     @Test
+    @EnabledIf("canConnectVpn")
     void retrieveAndValidateClaudiol() throws IOException, LdapException {
         OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
 
@@ -132,6 +143,7 @@ class LdapSearchServiceIT {
     }
 
     @Test
+    @EnabledIf("canConnectVpn")
     void retrieveAndValidateAblock() throws IOException, LdapException {
         OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
 
