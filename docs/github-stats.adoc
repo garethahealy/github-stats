@@ -19,7 +19,7 @@ github-stats - GitHub helper utility
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*github-stats* [COMMAND]
+*github-stats* [*-hV*] [COMMAND]
 
 // end::picocli-generated-man-section-synopsis[]
 
@@ -31,6 +31,13 @@ GitHub helper utility
 // end::picocli-generated-man-section-description[]
 
 // tag::picocli-generated-man-section-options[]
+== Options
+
+*-h*, *--help*::
+  Show this help message and exit.
+
+*-V*, *--version*::
+  Print version information and exit.
 
 // end::picocli-generated-man-section-options[]
 

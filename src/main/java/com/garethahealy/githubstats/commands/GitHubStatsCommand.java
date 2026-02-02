@@ -7,6 +7,7 @@ import picocli.CommandLine;
 @CommandLine.Command(
     name = "github-stats",
     description = "GitHub helper utility",
+    mixinStandardHelpOptions = true,
     subcommands = {StatsCommand.class, UsersCommand.class, CommandLine.HelpCommand.class})
 public class GitHubStatsCommand {
 }
