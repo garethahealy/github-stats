@@ -19,7 +19,7 @@ class OrgMemberCsvServiceTest {
     OrgMemberCsvService orgMemberCsvService;
     @Test
     void parseSample() throws IOException {
-        File input = new File(this.getClass().getClassLoader().getResource("sample-ldap-members.csv").getFile());
+        File input = new File("src/test/resources/sample-ldap-members.csv");
 
         OrgMemberRepository answer = orgMemberCsvService.parse(input);
 
