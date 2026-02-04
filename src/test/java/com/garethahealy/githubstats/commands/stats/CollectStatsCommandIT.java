@@ -5,8 +5,7 @@ import io.quarkus.test.junit.main.LaunchResult;
 import io.quarkus.test.junit.main.QuarkusMainIntegrationTest;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusMainIntegrationTest
 class CollectStatsCommandIT {
@@ -18,5 +17,6 @@ class CollectStatsCommandIT {
 
         assertNotNull(result.getErrorOutput());
         assertEquals(0, result.exitCode());
+        assertTrue(result.getOutput().contains("Output written to target/redhat-cop-collect-stats.csv"));
     }
 }

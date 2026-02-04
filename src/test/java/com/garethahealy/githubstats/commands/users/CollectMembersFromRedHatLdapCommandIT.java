@@ -1,202 +1,106 @@
 package com.garethahealy.githubstats.commands.users;
 
 import com.garethahealy.githubstats.commands.BaseCommand;
+import com.garethahealy.githubstats.commands.users.setup.CollectMembersFromRedHatLdapCommandSetup;
 import com.garethahealy.githubstats.model.users.OrgMember;
-import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.predicates.OrgMemberFilters;
-import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.apache.commons.io.FileUtils;
+import com.garethahealy.githubstats.testutils.CsvParser;
+import io.quarkus.test.junit.main.Launch;
+import io.quarkus.test.junit.main.LaunchResult;
+import io.quarkus.test.junit.main.QuarkusMainIntegrationTest;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIf;
-import org.zeroturnaround.exec.ProcessExecutor;
-import org.zeroturnaround.exec.ProcessResult;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@QuarkusTest
+@QuarkusMainIntegrationTest
 class CollectMembersFromRedHatLdapCommandIT extends BaseCommand {
 
-    @Inject
-    OrgMemberCsvService csvService;
-
-    private static class runWithLimit {
-        public static File LDAP = new File("target/CollectMembersFromRedHatLdap/ldap-members-runWithLimit.csv");
-        public static File SUPPLEMENTARY = new File("target/CollectMembersFromRedHatLdap/supplementary-runWithLimit.csv");
-    }
-
-    private static class runValidateMovingMembers {
-        public static File LDAP = new File("target/CollectMembersFromRedHatLdap/ldap-members-runValidateMovingMembers.csv");
-        public static File SUPPLEMENTARY = new File("target/CollectMembersFromRedHatLdap/supplementary-runValidateMovingMembers.csv");
-    }
-
-    private static class run {
-        public static File LDAP = new File("target/CollectMembersFromRedHatLdap/ldap-members-runValidateMovingMembers.csv");
-        public static File SUPPLEMENTARY = new File("target/CollectMembersFromRedHatLdap/supplementary-runValidateMovingMembers.csv");
-    }
-
-    void preRunWithLimit() throws IOException {
-        System.out.println("-> preRunWithLimit");
-
-        FileUtils.copyFile(new File("supplementary.csv"), runWithLimit.SUPPLEMENTARY);
-    }
-
-    /**
-     * Collect only 5 members but using an empty LDAP input to start from and validate CSVs
-     */
-    @Test
-    @EnabledIf(value = "isRunnerSet")
-    void runWithLimit() throws IOException, InterruptedException, TimeoutException {
-        preRunWithLimit();
-
-        System.out.println("-> runWithLimit");
-
-        // Pre-Test Data
-        ProcessExecutor executor = new ProcessExecutor()
-                .command(getRunner(), "users", "collect-members-from-ldap", "--organization=redhat-cop", "--ldap-members-csv=" + runWithLimit.LDAP.getPath(), "--supplementary-csv=" + runWithLimit.SUPPLEMENTARY.getPath(), "--user-limit=5", "--fail-if-no-vpn=true")
-                .redirectError(System.err)
-                .redirectOutput(System.out);
-
-        // Test
-        String command = String.join(" ", executor.getCommand());
-        System.out.println("Executing \"" + command + "\"");
-
-        ProcessResult result = executor.execute();
-
-        assertEquals(0, result.getExitValue());
-
-        postRunWithLimit();
-    }
-
-    void postRunWithLimit() throws IOException {
-        System.out.println("-> postRunWithLimit");
-
-        // Validate outputs
-        OrgMemberRepository ldapOutput = csvService.parse(runWithLimit.LDAP);
-        OrgMemberRepository supplementaryOutput = csvService.parse(runWithLimit.SUPPLEMENTARY);
-
-        assertNotNull(ldapOutput);
-        assertEquals(5, ldapOutput.size());
-        assertTrue(ldapOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
-
-        assertNotNull(supplementaryOutput);
-        assertEquals(20, supplementaryOutput.size());
-        assertTrue(supplementaryOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
-    }
-
-    OrgMemberRepository preRunValidateMovingMembers() throws IOException {
-        System.out.println("-> preRunValidateMovingMembers");
-
-        FileUtils.copyFile(new File("ldap-members.csv"), runValidateMovingMembers.LDAP);
-        FileUtils.copyFile(new File("supplementary.csv"), runValidateMovingMembers.SUPPLEMENTARY);
-
-        // Pre-Test Data
-        OrgMemberRepository ldapInput = csvService.parse(runValidateMovingMembers.LDAP);
-        OrgMemberRepository supplementaryInput = csvService.parse(runValidateMovingMembers.SUPPLEMENTARY);
-
-        OrgMember me = ldapInput.filter(member -> member.gitHubUsername().equalsIgnoreCase("garethahealy")).getFirst();
-        ldapInput.remove(me);
-        supplementaryInput.put(me);
-
-        csvService.write(ldapInput);
-        csvService.write(supplementaryInput);
-
-        return ldapInput;
-    }
-
-    /**
-     * Validate a member in the supplementary can be moved to the LDAP CSV
-     */
-    @Test
-    @EnabledIf(value = "isRunnerSet")
-    void runValidateMovingMembers() throws IOException, InterruptedException, TimeoutException {
-        OrgMemberRepository ldapInput = preRunValidateMovingMembers();
-
-        System.out.println("-> runValidateMovingMembers");
-
-        // Test
-        ProcessExecutor executor = new ProcessExecutor()
-                .command(getRunner(), "users", "collect-members-from-ldap", "--organization=redhat-cop", "--ldap-members-csv=" + runValidateMovingMembers.LDAP.getPath(), "--supplementary-csv=" + runValidateMovingMembers.SUPPLEMENTARY.getPath(), "--validate-csv=true", "--fail-if-no-vpn=true")
-                .redirectError(System.err)
-                .redirectOutput(System.out);
-
-        String command = String.join(" ", executor.getCommand());
-        System.out.println("Executing \"" + command + "\"");
-
-        ProcessResult result = executor.execute();
-
-        assertEquals(0, result.getExitValue());
-
-        postRunValidateMovingMembers(ldapInput);
-    }
-
-    void postRunValidateMovingMembers(OrgMemberRepository ldapInput) throws IOException {
-        System.out.println("-> postRunValidateMovingMembers");
-
-        // Validate outputs
-        OrgMemberRepository ldapOutput = csvService.parse(runValidateMovingMembers.LDAP);
-        OrgMemberRepository supplementaryOutput = csvService.parse(runValidateMovingMembers.SUPPLEMENTARY);
-
-        assertNotNull(ldapOutput);
-        assertEquals(ldapInput.size() + 1, ldapOutput.size());
-        assertTrue(ldapOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
-
-        assertNotNull(supplementaryOutput);
-        assertEquals(20, supplementaryOutput.size());
-        assertTrue(supplementaryOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
-    }
-
-    void preRun() throws IOException {
-        System.out.println("-> run");
-
-        FileUtils.copyFile(new File("ldap-members.csv"), run.LDAP);
-        FileUtils.copyFile(new File("supplementary.csv"), run.SUPPLEMENTARY);
+    @BeforeAll
+    static void setup() throws IOException {
+        CollectMembersFromRedHatLdapCommandSetup setup = new CollectMembersFromRedHatLdapCommandSetup();
+        setup.setup();
     }
 
     /**
      * Collect with the current CSVs - tests the daily run
      */
     @Test
-    @EnabledIf(value = "isRunnerSet")
-    void run() throws IOException, InterruptedException, TimeoutException {
-        preRun();
+    @Launch(value = {"users", "collect-members-from-ldap", "--organization=redhat-cop", "--ldap-members-csv=target/CollectMembersFromRedHatLdap/ldap-members-run.csv", "--supplementary-csv=target/CollectMembersFromRedHatLdap/supplementary-run.csv", "--fail-if-no-vpn=true"})
+    void run(LaunchResult result) throws IOException {
+        result.echoSystemOut();
 
-        System.out.println("-> run");
-
-        // Test
-        ProcessExecutor executor = new ProcessExecutor()
-                .command(getRunner(), "users", "collect-members-from-ldap", "--organization=redhat-cop", "--ldap-members-csv=" + run.LDAP.getPath(), "--supplementary-csv=" + run.SUPPLEMENTARY.getPath(), "--fail-if-no-vpn=true")
-                .redirectError(System.err)
-                .redirectOutput(System.out);
-
-        String command = String.join(" ", executor.getCommand());
-        System.out.println("Executing \"" + command + "\"");
-
-        ProcessResult result = executor.execute();
-
-        assertEquals(0, result.getExitValue());
-
-        postRun();
-    }
-
-    void postRun() throws IOException {
-        System.out.println("-> postRun");
+        assertNotNull(result.getErrorOutput());
+        assertEquals(0, result.exitCode());
 
         // Validate outputs
-        OrgMemberRepository ldapOutput = csvService.parse(run.LDAP);
-        OrgMemberRepository supplementaryOutput = csvService.parse(run.SUPPLEMENTARY);
+        CsvParser csvParser = new CsvParser();
+        Map<String, OrgMember> ldapOutput = csvParser.parse(CollectMembersFromRedHatLdapCommandSetup.run.LDAP);
+        Map<String, OrgMember> supplementaryOutput = csvParser.parse(CollectMembersFromRedHatLdapCommandSetup.run.SUPPLEMENTARY);
 
         assertNotNull(ldapOutput);
         assertTrue(ldapOutput.size() > 200);
-        assertTrue(ldapOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
+        assertTrue(ldapOutput.values().stream().filter(OrgMemberFilters.deleteAfterIsNotNull()).toList().isEmpty());
 
         assertNotNull(supplementaryOutput);
         assertEquals(20, supplementaryOutput.size());
-        assertTrue(supplementaryOutput.filter(OrgMemberFilters.deleteAfterIsNotNull()).isEmpty());
+        assertTrue(supplementaryOutput.values().stream().filter(OrgMemberFilters.deleteAfterIsNotNull()).toList().isEmpty());
+    }
+
+    /**
+     * Collect only 5 members but using an empty LDAP input to start from and validate CSVs
+     */
+    @Test
+    @Launch(value = {"users", "collect-members-from-ldap", "--organization=redhat-cop", "--ldap-members-csv=target/CollectMembersFromRedHatLdap/ldap-members-runWithLimit.csv", "--supplementary-csv=target/CollectMembersFromRedHatLdap/supplementary-runWithLimit.csv", "--user-limit=5", "--fail-if-no-vpn=true"})
+    void runWithLimit(LaunchResult result) throws IOException {
+        result.echoSystemOut();
+
+        assertNotNull(result.getErrorOutput());
+        assertEquals(0, result.exitCode());
+        assertTrue(result.getOutput().contains("Adding 9strands to ldap-members-runWithLimit.csv CSV"));
+
+        // Validate outputs
+        CsvParser csvParser = new CsvParser();
+        Map<String, OrgMember> ldapOutput = csvParser.parse(CollectMembersFromRedHatLdapCommandSetup.runWithLimit.LDAP);
+        Map<String, OrgMember> supplementaryOutput = csvParser.parse(CollectMembersFromRedHatLdapCommandSetup.runWithLimit.SUPPLEMENTARY);
+
+        assertNotNull(ldapOutput);
+        assertEquals(5, ldapOutput.size());
+        assertTrue(ldapOutput.values().stream().filter(OrgMemberFilters.deleteAfterIsNotNull()).toList().isEmpty());
+
+        assertNotNull(supplementaryOutput);
+        assertEquals(20, supplementaryOutput.size());
+        assertTrue(supplementaryOutput.values().stream().filter(OrgMemberFilters.deleteAfterIsNotNull()).toList().isEmpty());
+    }
+
+    /**
+     * Validate a member in the supplementary can be moved to the LDAP CSV
+     */
+    @Test
+    @Launch(value = {"users", "collect-members-from-ldap", "--organization=redhat-cop", "--ldap-members-csv=target/CollectMembersFromRedHatLdap/ldap-members-runValidateMovingMembers.csv", "--supplementary-csv=target/CollectMembersFromRedHatLdap/supplementary-runValidateMovingMembers.csv", "--validate-csv=true", "--fail-if-no-vpn=true"})
+    void runValidateMovingMembers(LaunchResult result) throws IOException {
+        result.echoSystemOut();
+
+        assertNotNull(result.getErrorOutput());
+        assertEquals(0, result.exitCode());
+        assertTrue(result.getOutput().contains("gahealy@redhat.com is in LDAP and Supplementary CSV, removing from Supplementary"));
+
+        // Validate outputs
+        CsvParser csvParser = new CsvParser();
+        Map<String, OrgMember> ldapInput = csvParser.parse(new File("ldap-members.csv"));
+        Map<String, OrgMember> ldapOutput = csvParser.parse(CollectMembersFromRedHatLdapCommandSetup.runValidateMovingMembers.LDAP);
+        Map<String, OrgMember> supplementaryOutput = csvParser.parse(CollectMembersFromRedHatLdapCommandSetup.runValidateMovingMembers.SUPPLEMENTARY);
+
+        assertNotNull(ldapOutput);
+        assertEquals(ldapInput.size(), ldapOutput.size());
+        assertTrue(ldapOutput.values().stream().filter(OrgMemberFilters.deleteAfterIsNotNull()).toList().isEmpty());
+
+        assertNotNull(supplementaryOutput);
+        assertEquals(20, supplementaryOutput.size());
+        assertTrue(supplementaryOutput.values().stream().filter(OrgMemberFilters.deleteAfterIsNotNull()).toList().isEmpty());
     }
 }
