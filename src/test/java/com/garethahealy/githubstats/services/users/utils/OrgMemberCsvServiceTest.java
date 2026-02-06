@@ -5,6 +5,7 @@ import com.garethahealy.githubstats.utils.OrgMemberMockData;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +43,7 @@ class OrgMemberCsvServiceTest {
     }
 
     @Test
+    @EnabledIf("csvsExist")
     void parseLocalLdapMembers() throws IOException {
         File input = new File("ldap-members.csv");
 
@@ -52,6 +54,7 @@ class OrgMemberCsvServiceTest {
     }
 
     @Test
+    @EnabledIf("csvsExist")
     void parseLocalSupplementary() throws IOException {
         File input = new File("supplementary.csv");
 
@@ -59,5 +62,12 @@ class OrgMemberCsvServiceTest {
 
         assertNotNull(answer);
         assertEquals(20, answer.size());
+    }
+
+    /**
+     * Files might not exist on CI
+     */
+    private boolean csvsExist() {
+        return new File("ldap-members.csv").exists() && new File("supplementary.csv").exists();
     }
 }

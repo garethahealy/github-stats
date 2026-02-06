@@ -35,13 +35,11 @@ jobs:
 
       - name: Collect dependencies
         run: |
-          ./mvnw dependency:go-offline --batch-mode
-          ./mvnw verify --fail-never --batch-mode -DskipTests
-          ./mvnw dependency:resolve-sources dependency:resolve -Dclassifier=javadoc --batch-mode
+          ./mvnw dependency:go-offline dependency:resolve dependency:resolve-sources dependency:resolve-plugins -Dclassifier=javadoc --batch-mode
+          ./mvnw verify -DskipTests --fail-never --batch-mode
 
       - name: Build
         run: |
-          ./mvnw clean install -DskipTests --batch-mode
           ./mvnw clean install -Pnative -DskipTests --batch-mode
 
       - name: Test
