@@ -26,8 +26,7 @@ jobs:
       - name: Checkout redhat-cop-dev/member-mapping
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
-          ssh-user: garethahealy
-          ssh-key: ${{ secrets.CLONE_SSH_KEY }}
+          token: ${{ secrets.COP_GITHUB_OAUTH }}
           repository: redhat-cop-dev/member-mapping
           path: member-mapping
 
