@@ -115,7 +115,7 @@ jobs:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
           GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
-        run: podman run localhost/github-stats:latest help
+        run: podman run -e GITHUB_LOGIN=${GITHUB_LOGIN} -e GITHUB_OAUTH=${GITHUB_OAUTH} -e GITHUB_WRITE_OAUTH=${GITHUB_WRITE_OAUTH} localhost/github-stats:latest help
 
       - name: Push to ghcr.io
         if: startsWith(github.ref, 'refs/tags/')
