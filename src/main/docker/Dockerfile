@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi-micro:9.7@sha256:e9765516d74cafded50d8ef593331eeca2ef6eababdda118e5297898d99b7433
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7-1769056855@sha256:bb08f2300cb8d12a7eb91dddf28ea63692b3ec99e7f0fa71a1b300f2756ea829
 
 WORKDIR /work/
 
