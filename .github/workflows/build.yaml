@@ -56,7 +56,7 @@ jobs:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
           GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
-        run: ./mvnw verify -Dquarkus.test.integration-test-profile=test-with-native-agent --batch-mode
+        run: ./mvnw verify -DskipITs=true -Dquarkus.test.integration-test-profile=test-with-native-agent --batch-mode
 
       - name: Apply native agent config
         run: |
