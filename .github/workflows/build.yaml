@@ -23,6 +23,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
+      - name: Checkout redhat-cop-dev/member-mapping
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          ssh-key: ${{ secrets.CLONE_SSH_KEY }}
+          repository: redhat-cop-dev/member-mapping
+
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: "temurin"
@@ -33,7 +39,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
 
-      - name: Clone member-mapping
+      - name: Copy csv's from member-mapping
         run: make member-mapping
 
       - name: Collect dependencies
