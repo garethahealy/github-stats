@@ -13,7 +13,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-class GitHubFileRetrievalServiceIT {
+class GitHubFileRetrievalServiceTest {
 
     @Inject
     GitHubFileRetrievalService gitHubFileRetrievalService;

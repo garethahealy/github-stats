@@ -1,7 +1,7 @@
 package com.garethahealy.githubstats.services.ldap;
 
-import com.garethahealy.githubstats.BaseRequiresLdapConnection;
-import com.garethahealy.githubstats.utils.OrgMemberMockData;
+import com.garethahealy.githubstats.testutils.BaseRequiresLdapConnection;
+import com.garethahealy.githubstats.testutils.OrgMemberMockData;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -13,7 +13,7 @@ import org.kohsuke.github.GitHub;
 import java.io.IOException;
 
 @QuarkusTest
-class DefaultLdapGuessServiceIT extends BaseRequiresLdapConnection {
+class DefaultLdapGuessServiceTest extends BaseRequiresLdapConnection {
 
     @Inject
     DefaultLdapGuessService defaultLdapGuessService;

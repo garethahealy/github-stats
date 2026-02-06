@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats;
+package com.garethahealy.githubstats.commands;
 
 import io.quarkus.test.junit.main.Launch;
 import io.quarkus.test.junit.main.LaunchResult;
@@ -9,10 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusMainIntegrationTest
-public class GitHubStatsApplicationIT {
+public class StatsCommandIT {
 
     @Test
-    @Launch("help")
+    @Launch({"stats", "help"})
     void test(LaunchResult result) {
         result.echoSystemOut();
 

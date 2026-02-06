@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.utils;
+package com.garethahealy.githubstats.testutils;
 
 import com.garethahealy.githubstats.model.users.BasicGHUser;
 import com.garethahealy.githubstats.model.users.OrgMember;

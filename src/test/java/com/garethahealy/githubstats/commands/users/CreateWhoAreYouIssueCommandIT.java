@@ -1,6 +1,5 @@
 package com.garethahealy.githubstats.commands.users;
 
-import com.garethahealy.githubstats.commands.BaseCommand;
 import com.garethahealy.githubstats.commands.users.setup.CreateWhoAreYouIssueCommandSetup;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.predicates.OrgMemberFilters;
@@ -18,7 +17,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusMainIntegrationTest
-class CreateWhoAreYouIssueCommandIT extends BaseCommand {
+class CreateWhoAreYouIssueCommandIT {
 
     @BeforeAll
     static void setup() throws IOException {

@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats;
+package com.garethahealy.githubstats.testutils;
 
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;

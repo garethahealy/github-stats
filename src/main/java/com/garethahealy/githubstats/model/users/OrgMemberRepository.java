@@ -8,7 +8,6 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,12 +68,6 @@ public class OrgMemberRepository {
 
     public void remove(OrgMember remove) {
         members.remove(remove.gitHubUsername());
-    }
-
-    public void remove(String remove) {
-        if (containsKey(remove)) {
-            remove(members.get(remove));
-        }
     }
 
     public void remove(LocalDate date) {

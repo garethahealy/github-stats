@@ -13,7 +13,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-class GitHubOrganizationLookupServiceIT {
+class GitHubOrganizationLookupServiceTest {
 
     @Inject
     GitHubOrganizationLookupService gitHubOrganizationLookupService;

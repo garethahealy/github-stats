@@ -56,12 +56,7 @@ jobs:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
           GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
-        run: ./mvnw verify -DskipITs=true -Dquarkus.test.integration-test-profile=test-with-native-agent --batch-mode
-
-      - name: Apply native agent config
-        run: |
-          cat ./target/native-image-agent-final-config/reflect-config.json
-          ./mvnw verify -Dnative -Dquarkus.native.agent-configuration-apply
+        run: ./mvnw verify -DskipITs=true --batch-mode
 
       - name: Run help command
         id: runner

@@ -13,7 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-class BasicGHUserIT {
+class BasicGHUserTest {
 
     @Inject
     GitHubOrganizationLookupService gitHubOrganizationLookupService;

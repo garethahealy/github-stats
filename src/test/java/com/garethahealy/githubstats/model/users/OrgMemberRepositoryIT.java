@@ -1,22 +1,25 @@
 package com.garethahealy.githubstats.model.users;
 
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
+import com.garethahealy.githubstats.services.ldap.LdapSearchService;
 import com.garethahealy.githubstats.services.quay.QuayUserService;
-import com.garethahealy.githubstats.utils.OrgMemberMockData;
+import com.garethahealy.githubstats.testutils.BaseRequiresLdapConnection;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
+import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.ldap.client.api.LdapConnection;
 import org.junit.jupiter.api.Test;
-import org.kohsuke.github.GitHub;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-class OrgMemberRepositoryIT {
+class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
+
+    @Inject
+    LdapSearchService ldapSearchService;
 
     @Inject
     GitHubOrganizationLookupService gitHubOrganizationLookupService;
@@ -24,65 +27,62 @@ class OrgMemberRepositoryIT {
     @Inject
     QuayUserService quayUserService;
 
-    @Inject
-    @Named("read")
-    GitHub client;
-
     @Test
-    void validate() throws IOException {
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(OrgMemberMockData.getMe(client));
+    @EnabledIf("canConnectVpn")
+    void retrieveAndValidateSsulliva() throws IOException, LdapException {
+        try (LdapConnection connection = ldapSearchService.open()) {
+            OrgMember answer = ldapSearchService.retrieve(connection, "sean-m-sullivan", "ssulliva@redhat.com");
+            assertNotNull(answer);
 
-        assertTrue(true);
+            OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
+            orgMemberRepository.validate(answer);
+
+            assertEquals("ssulliva@redhat.com", answer.redhatEmailAddress());
+            assertEquals("sean-m-sullivan", answer.gitHubUsername());
+            assertFalse(answer.linkedGitHubUsernames().isEmpty());
+            assertTrue(answer.linkedQuayUsernames().isEmpty());
+            assertEquals(1, answer.linkedGitHubUsernames().size());
+            assertEquals("sean-m-sullivan", answer.linkedGitHubUsernames().getFirst());
+        }
     }
 
     @Test
-    void validateMissingGitHubUser() throws IOException {
-        OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", new ArrayList<>(List.of("missing-user1")), List.of("garethahealy"), OrgMember.Source.Manual, null, null);
+    @EnabledIf("canConnectVpn")
+    void retrieveAndValidateClaudiol() throws IOException, LdapException {
+        try (LdapConnection connection = ldapSearchService.open()) {
+            OrgMember answer = ldapSearchService.retrieve(connection, "claudiol", "claudiol@redhat.com");
+            assertNotNull(answer);
 
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
+            OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
+            orgMemberRepository.validate(answer);
 
-        assertTrue(invalid.linkedGitHubUsernames().isEmpty());
+            assertEquals("claudiol@redhat.com", answer.redhatEmailAddress());
+            assertEquals("claudiol", answer.gitHubUsername());
+            assertFalse(answer.linkedGitHubUsernames().isEmpty());
+            assertTrue(answer.linkedQuayUsernames().isEmpty());
+            assertEquals(1, answer.linkedGitHubUsernames().size());
+            assertEquals("claudiol", answer.linkedGitHubUsernames().getFirst());
+        }
     }
 
     @Test
-    void validateGitHubOrg() throws IOException {
-        OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", new ArrayList<>(List.of("redhat-cop/org")), List.of("garethahealy"), OrgMember.Source.Manual, null, null);
+    @EnabledIf("canConnectVpn")
+    void retrieveAndValidateAblock() throws IOException, LdapException {
+        try (LdapConnection connection = ldapSearchService.open()) {
+            OrgMember answer = ldapSearchService.retrieve(connection, "sabre1041", "ablock@redhat.com");
+            assertNotNull(answer);
 
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
+            OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
+            orgMemberRepository.validate(answer);
 
-        assertTrue(invalid.linkedGitHubUsernames().isEmpty());
-    }
-
-    @Test
-    void validateGitHubRepo() throws IOException {
-        OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", new ArrayList<>(List.of("garethahealy/org")), List.of("garethahealy"), OrgMember.Source.Manual, null, null);
-
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
-
-        assertTrue(invalid.linkedGitHubUsernames().isEmpty());
-    }
-
-    @Test
-    void validateGitHubRepoExtraSlash() throws IOException {
-        OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", new ArrayList<>(List.of("garethahealy/org/")), List.of("garethahealy"), OrgMember.Source.Manual, null, null);
-
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
-
-        assertTrue(invalid.linkedGitHubUsernames().isEmpty());
-    }
-
-    @Test
-    void validateMissingQuayUser() throws IOException {
-        OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", List.of("garethahealy"), new ArrayList<>(List.of("missing-user1")), OrgMember.Source.Manual, null, null);
-
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
-
-        assertTrue(invalid.linkedQuayUsernames().isEmpty());
+            assertEquals("ablock@redhat.com", answer.redhatEmailAddress());
+            assertEquals("sabre1041", answer.gitHubUsername());
+            assertFalse(answer.linkedGitHubUsernames().isEmpty());
+            assertFalse(answer.linkedQuayUsernames().isEmpty());
+            assertEquals(1, answer.linkedGitHubUsernames().size());
+            assertEquals(1, answer.linkedQuayUsernames().size());
+            assertEquals("sabre1041", answer.linkedGitHubUsernames().getFirst());
+            assertEquals("ablock", answer.linkedQuayUsernames().getFirst());
+        }
     }
 }
