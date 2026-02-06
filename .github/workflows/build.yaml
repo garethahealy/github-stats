@@ -60,6 +60,10 @@ jobs:
 
       - name: Run help command
         id: runner
+        env:
+          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
+          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
+          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
         run: |
           runners=(target/github-stats-*-runner)
           echo "cmd=$(basename ${runners[0]})" >> "$GITHUB_OUTPUT"
