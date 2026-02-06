@@ -111,6 +111,10 @@ jobs:
           extra-args: "--squash"
 
       - name: Run image
+        env:
+          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
+          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
+          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
         run: podman run localhost/github-stats:latest help
 
       - name: Push to ghcr.io
