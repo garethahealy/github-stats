@@ -33,14 +33,16 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
 
+      - name: Clone member-mapping
+        run: make member-mapping
+
       - name: Collect dependencies
         run: |
           ./mvnw dependency:go-offline dependency:resolve dependency:resolve-sources dependency:resolve-plugins -Dclassifier=javadoc --batch-mode
           ./mvnw verify -DskipTests --fail-never --batch-mode
 
       - name: Build
-        run: |
-          ./mvnw clean install -Pnative -DskipTests --batch-mode
+        run: ./mvnw clean install -Pnative -DskipTests --batch-mode
 
       - name: Test
         env:
