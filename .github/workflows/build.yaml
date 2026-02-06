@@ -41,11 +41,19 @@ jobs:
 
       - name: Build
         run: |
-          ./mvnw clean install --batch-mode -DskipTests
-          ./mvnw clean install -Pnative --batch-mode -DskipTests
+          ./mvnw clean install -DskipTests --batch-mode
+          ./mvnw clean install -Pnative -DskipTests --batch-mode
 
       - name: Test
-        run: ./mvnw test --batch-mode
+        env:
+          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
+          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
+        run: ./mvnw verify -Dquarkus.test.integration-test-profile=test-with-native-agent --batch-mode
+
+      - name: Apply native agent config
+        run: |
+          cat ./target/native-image-agent-final-config/reflect-config.json
+          ./mvnw verify -Dnative -Dquarkus.native.agent-configuration-apply
 
       - name: Run help command
         id: runner
@@ -83,16 +91,17 @@ jobs:
 
       - uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
         with:
-          dockerfile: src/main/docker/Dockerfile.native
+          dockerfile: src/main/docker/Dockerfile
 
       - name: Build image
         id: build_image
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
-          dockerfiles: src/main/docker/Dockerfile.native
+          containerfiles: src/main/docker/Dockerfile
           image: github-stats
           oci: true
           tags: "${{ steps.image_tags.outputs.IMAGE_TAGS }}"
+          extra-args: "--squash"
 
       - name: Run image
         run: podman run localhost/github-stats:latest help
@@ -167,17 +176,13 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-        run: |
-          touch /tmp/stats.csv
-          ./${{ env.RUNNER }} stats collect-stats --organization=redhat-cop --csv-output=/tmp/redhat-cop-collect-stats.csv --validate-org-config=true --repository-limit=5 --api-limit=400
+        run: ./${{ env.RUNNER }} stats collect-stats --organization=redhat-cop --csv-output=/tmp/redhat-cop-collect-stats.csv --validate-org-config=true --repository-limit=5 --api-limit=400
 
       - name: Run 'collect-members-from-ldap' for CoP
         env:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-        run: |
-          touch /tmp/members.csv
-          ./${{ env.RUNNER }} users collect-members-from-ldap --organization=redhat-cop --ldap-members-csv=test-data/ldap-members.csv --supplementary-csv=test-data/supplementary.csv --user-limit=5 --fail-if-no-vpn=false
+        run: ./${{ env.RUNNER }} users collect-members-from-ldap --organization=redhat-cop --ldap-members-csv=test-data/ldap-members.csv --supplementary-csv=test-data/supplementary.csv --user-limit=5 --fail-if-no-vpn=false
 
       - name: Run 'create-who-are-you-issues' for CoP
         env:
