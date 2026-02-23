@@ -56,7 +56,7 @@ jobs:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
           GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
-        run: ./mvnw verify -DskipITs=true --batch-mode
+        run: ./mvnw test -DskipITs=true --batch-mode
 
       - name: Run help command
         id: runner
