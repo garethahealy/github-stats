@@ -1,7 +1,6 @@
 package com.garethahealy.githubstats.processors.users.pullrequests;
 
 import com.garethahealy.githubstats.clients.GitHubDiffService;
-import com.garethahealy.githubstats.clients.rest.GitHubDiffRestClient;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.predicates.GHLabelFilters;
@@ -15,9 +14,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.reactive.RestResponse;
 import org.kohsuke.github.*;
 
 import java.io.IOException;

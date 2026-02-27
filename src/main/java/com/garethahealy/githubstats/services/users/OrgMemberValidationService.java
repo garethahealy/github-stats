@@ -1,14 +1,12 @@
 package com.garethahealy.githubstats.services.users;
 
+import com.garethahealy.githubstats.clients.QuayUserService;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
-import com.garethahealy.githubstats.clients.QuayUserService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.reactive.RestResponse;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 
