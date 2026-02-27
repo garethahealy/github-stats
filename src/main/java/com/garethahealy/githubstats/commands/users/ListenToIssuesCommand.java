@@ -1,15 +1,24 @@
 package com.garethahealy.githubstats.commands.users;
 
-import com.garethahealy.githubstats.services.users.ListenToIssuesService;
-import freemarker.template.TemplateException;
+import com.garethahealy.githubstats.model.users.OrgMemberRepository;
+import com.garethahealy.githubstats.processors.users.issues.AddMeAsMemberProcessor;
+import com.garethahealy.githubstats.processors.users.issues.Processor;
+import com.garethahealy.githubstats.services.github.GitHubOrganizationWriterService;
+import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
+import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.jboss.logging.Logger;
+import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHRepository;
 import picocli.CommandLine;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 @CommandLine.Command(name = "listen-to-issues", mixinStandardHelpOptions = true, description = "Searches for issues and runs the specified processors")
@@ -18,8 +27,8 @@ public class ListenToIssuesCommand implements Runnable {
     @CommandLine.Option(names = {"-org", "--organization"}, description = "GitHub organization", required = true)
     String organization;
 
-    @CommandLine.Option(names = {"-repo", "--issue-repo"}, description = "Repo where the issues should be created, i.e.: 'org'")
-    String orgRepo;
+    @CommandLine.Option(names = {"-repo", "--issue-repo"}, description = "Repo where the issues should be created, i.e.: 'org'", defaultValue = "org")
+    String issueRepo;
 
     @CommandLine.Option(names = {"-p", "--processors"}, description = "Comma-separated list of processors to run against pull requests", required = true)
     String processors;
@@ -37,7 +46,19 @@ public class ListenToIssuesCommand implements Runnable {
     boolean failNoVpn;
 
     @Inject
-    ListenToIssuesService listenToIssuesService;
+    Logger logger;
+
+    @Inject
+    GitHubOrganizationWriterService gitHubOrganizationWriterService;
+
+    @Inject
+    GitHubRepositoryLookupService gitHubRepositoryLookupService;
+
+    @Inject
+    OrgMemberCsvService orgMemberCsvService;
+
+    @Inject
+    AddMeAsMemberProcessor addMeAsMemberProcessor;
 
     @Override
     public void run() {
@@ -57,9 +78,39 @@ public class ListenToIssuesCommand implements Runnable {
                 throw new IllegalArgumentException("--processors is empty");
             }
 
-            listenToIssuesService.run(organization, orgRepo, activeProcessors, ldapMembersPath.toFile(), supplementaryPath.toFile(), dryRun, failNoVpn);
-        } catch (IOException | LdapException | TemplateException e) {
+            GHOrganization org = gitHubOrganizationWriterService.getOrganization(organization);
+            GHRepository orgRepo = gitHubOrganizationWriterService.getRepository(org, issueRepo);
+
+            OrgMemberRepository ldapMembers = orgMemberCsvService.parse(ldapMembersPath.toFile());
+            OrgMemberRepository supplementaryMembers = orgMemberCsvService.parse(supplementaryPath.toFile());
+
+            logger.infof("There are %s known members and %s supplementary members in the CSVs, total %s", ldapMembers.size(), supplementaryMembers.size(), (ldapMembers.size() + supplementaryMembers.size()));
+
+            process(orgRepo, activeProcessors, ldapMembers, supplementaryMembers, dryRun, failNoVpn);
+        } catch (IOException | LdapException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void process(GHRepository orgRepo, Set<String> activeProcessors, OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, boolean isDryRun, boolean failNoVpn) throws IOException, LdapException {
+        List<GHIssue> openIssues = gitHubRepositoryLookupService.listOpenIssues(orgRepo);
+
+        logger.infof("Currently %s open issues", openIssues.size());
+
+        for (Processor processor : List.of(addMeAsMemberProcessor)) {
+            if (activeProcessors.contains(processor.id())) {
+                for (GHIssue current : openIssues) {
+                    if (processor.isActive(current)) {
+                        logger.infof("#%s looking at Issue", current.getNumber());
+
+                        processor.process(current, ldapMembers, supplementaryMembers, isDryRun, failNoVpn);
+                    } else {
+                        logger.infof("#%s Issue is not a %s change, ignoring", current.getNumber(), processor.id());
+                    }
+                }
+            } else {
+                logger.warnf("Processor %s is not active, ignoring", processor.id());
+            }
         }
     }
 }

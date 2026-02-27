@@ -20,7 +20,7 @@ github-stats-users-listen-to-pullrequests - Searches for pull-requests and runs 
 == Synopsis
 
 *github-stats users listen-to-pullrequests* [*-hV*] *-dry* [*-vpn*]
-[*-i*=_<ldapMembersCsv>_] *-org*=_<organization>_ *-p*=_<processors>_ [*-repo*=_<orgRepo>_]
+[*-i*=_<ldapMembersCsv>_] *-org*=_<organization>_ *-p*=_<processors>_ [*-repo*=_<issueRepo>_]
 [*-s*=_<supplementaryCsv>_]
 
 // end::picocli-generated-man-section-synopsis[]
@@ -50,7 +50,7 @@ Searches for pull-requests and runs the specified processors
 *-p*, *--processors*=_<processors>_::
   Comma-separated list of processors to run against pull requests
 
-*-repo, --issue-repo*=_<orgRepo>_::
+*-repo, --issue-repo*=_<issueRepo>_::
   Repo where the issues should be created, i.e.: 'org'
 
 *-s*, *--supplementary-csv*=_<supplementaryCsv>_::

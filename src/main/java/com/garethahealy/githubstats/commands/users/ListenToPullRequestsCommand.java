@@ -1,9 +1,21 @@
 package com.garethahealy.githubstats.commands.users;
 
-import com.garethahealy.githubstats.services.users.ListenToPullRequestsService;
+import com.garethahealy.githubstats.model.users.OrgMemberRepository;
+import com.garethahealy.githubstats.processors.users.pullrequests.MembersChangeInAnsibleVarsYamlProcessor;
+import com.garethahealy.githubstats.processors.users.pullrequests.MembersChangeInConfigYamlProcessor;
+import com.garethahealy.githubstats.processors.users.pullrequests.Processor;
+import com.garethahealy.githubstats.services.github.GitHubFileRetrievalService;
+import com.garethahealy.githubstats.services.github.GitHubOrganizationWriterService;
+import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
+import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
 import freemarker.template.TemplateException;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.jboss.logging.Logger;
+import org.kohsuke.github.GHContent;
+import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHRepository;
 import picocli.CommandLine;
 
 import java.io.FileNotFoundException;
@@ -11,6 +23,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @CommandLine.Command(name = "listen-to-pullrequests", mixinStandardHelpOptions = true, description = "Searches for pull-requests and runs the specified processors")
@@ -20,7 +35,7 @@ public class ListenToPullRequestsCommand implements Runnable {
     String organization;
 
     @CommandLine.Option(names = {"-repo", "--issue-repo"}, description = "Repo where the issues should be created, i.e.: 'org'")
-    String orgRepo;
+    String issueRepo;
 
     @CommandLine.Option(names = {"-p", "--processors"}, description = "Comma-separated list of processors to run against pull requests", required = true)
     String processors;
@@ -38,7 +53,25 @@ public class ListenToPullRequestsCommand implements Runnable {
     boolean failNoVpn;
 
     @Inject
-    ListenToPullRequestsService listenToPullRequestsService;
+    Logger logger;
+
+    @Inject
+    GitHubOrganizationWriterService gitHubOrganizationWriterService;
+
+    @Inject
+    GitHubRepositoryLookupService gitHubRepositoryLookupService;
+
+    @Inject
+    GitHubFileRetrievalService gitHubFileRetrievalService;
+
+    @Inject
+    OrgMemberCsvService orgMemberCsvService;
+
+    @Inject
+    MembersChangeInConfigYamlProcessor membersChangeInConfigYamlProcessor;
+
+    @Inject
+    MembersChangeInAnsibleVarsYamlProcessor membersChangeInAnsibleVarsYamlProcessor;
 
     @Override
     public void run() {
@@ -58,9 +91,65 @@ public class ListenToPullRequestsCommand implements Runnable {
                 throw new IllegalArgumentException("--processors is empty");
             }
 
-            listenToPullRequestsService.run(organization, orgRepo, activeProcessors, ldapMembersPath.toFile(), supplementaryPath.toFile(), dryRun, failNoVpn);
+            GHOrganization org = gitHubOrganizationWriterService.getOrganization(organization);
+            GHRepository orgRepo = gitHubOrganizationWriterService.getRepository(org, issueRepo);
+
+            OrgMemberRepository ldapMembers = orgMemberCsvService.parse(ldapMembersPath.toFile());
+            OrgMemberRepository supplementaryMembers = orgMemberCsvService.parse(supplementaryPath.toFile());
+
+            logger.infof("There are %s known members and %s supplementary members in the CSVs, total %s", ldapMembers.size(), supplementaryMembers.size(), (ldapMembers.size() + supplementaryMembers.size()));
+
+            process(orgRepo, activeProcessors, ldapMembers, supplementaryMembers, dryRun, failNoVpn);
         } catch (IOException | LdapException | TemplateException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void process(GHRepository orgRepo, Set<String> activeProcessors, OrgMemberRepository ldapMembers, OrgMemberRepository supplementaryMembers, boolean isDryRun, boolean failNoVpn) throws IOException, TemplateException, LdapException, URISyntaxException {
+        List<GHPullRequest> pullRequests = gitHubRepositoryLookupService.listOpenPullRequests(orgRepo);
+
+        logger.infof("Currently %s open pull-requests", pullRequests.size());
+
+        Map<String, Set<String>> data = new HashMap<>();
+        data.put(Processor.CONFIG_MEMBERS, getMainConfigMembers());
+        data.put(Processor.VARS_MEMBERS, getMainVarsMembers());
+
+        for (Processor processor : List.of(membersChangeInConfigYamlProcessor, membersChangeInAnsibleVarsYamlProcessor)) {
+            if (activeProcessors.contains(processor.id())) {
+                for (GHPullRequest current : pullRequests) {
+                    if (processor.isActive(current)) {
+                        logger.infof("#%s looking at PR", current.getNumber());
+
+                        processor.process(current, data, ldapMembers, supplementaryMembers, isDryRun, failNoVpn);
+                    } else {
+                        logger.infof("#%s Pull request is not a %s change, ignoring", current.getNumber(), processor.id());
+                    }
+                }
+            } else {
+                logger.warnf("Processor %s is not active, ignoring", processor.id());
+            }
+        }
+    }
+
+    private Set<String> getMainConfigMembers() throws IOException {
+        GHRepository mainOrgRepo = gitHubOrganizationWriterService.getRepository("redhat-cop", "org");
+        GHContent mainConfigYaml = gitHubRepositoryLookupService.getConfigYaml(mainOrgRepo, true);
+        Set<String> mainMembers = gitHubFileRetrievalService.getConfigMembers(mainConfigYaml);
+        if (mainMembers.isEmpty()) {
+            throw new IllegalArgumentException("config.yaml members is empty for " + mainOrgRepo.getOwnerName() + "/" + mainOrgRepo.getName() + "/main");
+        }
+
+        return mainMembers;
+    }
+
+    private Set<String> getMainVarsMembers() throws IOException {
+        GHRepository mainOrgRepo = gitHubOrganizationWriterService.getRepository("redhat-cop", "org");
+        GHContent mainVarsYaml = gitHubRepositoryLookupService.getAnsibleInventoryGroupVarsAllYml(mainOrgRepo);
+        Set<String> mainMembers = gitHubFileRetrievalService.getAnsibleMembers(mainVarsYaml);
+        if (mainMembers.isEmpty()) {
+            throw new IllegalArgumentException("ansible/inventory/group_vars/all.yml members is empty for " + mainOrgRepo.getOwnerName() + "/" + mainOrgRepo.getName() + "/main");
+        }
+
+        return mainMembers;
     }
 }
