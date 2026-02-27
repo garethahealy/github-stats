@@ -127,7 +127,7 @@ public class MembersChangeInConfigYamlProcessor implements Processor {
 
         List<String> unknownMembers = new ArrayList<>();
         if (!unknownSourceMembers.isEmpty()) {
-            String diffContent = gitHubDiffService.getDiff(current.getRepository().getOwner().getLogin(), current.getRepository().getName(), current.getNumber());
+            String diffContent = gitHubDiffService.getDiff(current);
             for (String unknown : unknownSourceMembers) {
                 if (diffContent.contains(unknown)) {
                     unknownMembers.add(unknown);
