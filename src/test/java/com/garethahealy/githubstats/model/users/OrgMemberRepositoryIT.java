@@ -1,8 +1,7 @@
 package com.garethahealy.githubstats.model.users;
 
-import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import com.garethahealy.githubstats.services.ldap.LdapSearchService;
-import com.garethahealy.githubstats.services.quay.QuayUserService;
+import com.garethahealy.githubstats.services.users.OrgMemberValidationService;
 import com.garethahealy.githubstats.testutils.BaseRequiresLdapConnection;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -22,10 +21,7 @@ class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
     LdapSearchService ldapSearchService;
 
     @Inject
-    GitHubOrganizationLookupService gitHubOrganizationLookupService;
-
-    @Inject
-    QuayUserService quayUserService;
+    OrgMemberValidationService orgMemberValidationService;
 
     @Test
     @EnabledIf("canConnectVpn")
@@ -34,8 +30,7 @@ class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
             OrgMember answer = ldapSearchService.retrieve(connection, "sean-m-sullivan", "ssulliva@redhat.com");
             assertNotNull(answer);
 
-            OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-            orgMemberRepository.validate(answer);
+            orgMemberValidationService.validate(answer);
 
             assertEquals("ssulliva@redhat.com", answer.redhatEmailAddress());
             assertEquals("sean-m-sullivan", answer.gitHubUsername());
@@ -53,8 +48,7 @@ class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
             OrgMember answer = ldapSearchService.retrieve(connection, "claudiol", "claudiol@redhat.com");
             assertNotNull(answer);
 
-            OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-            orgMemberRepository.validate(answer);
+            orgMemberValidationService.validate(answer);
 
             assertEquals("claudiol@redhat.com", answer.redhatEmailAddress());
             assertEquals("claudiol", answer.gitHubUsername());
@@ -72,8 +66,7 @@ class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
             OrgMember answer = ldapSearchService.retrieve(connection, "sabre1041", "ablock@redhat.com");
             assertNotNull(answer);
 
-            OrgMemberRepository orgMemberRepository = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-            orgMemberRepository.validate(answer);
+            orgMemberValidationService.validate(answer);
 
             assertEquals("ablock@redhat.com", answer.redhatEmailAddress());
             assertEquals("sabre1041", answer.gitHubUsername());

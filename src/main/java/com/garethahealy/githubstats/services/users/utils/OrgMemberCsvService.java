@@ -2,8 +2,6 @@ package com.garethahealy.githubstats.services.users.utils;
 
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
-import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
-import com.garethahealy.githubstats.services.quay.QuayUserService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
@@ -27,14 +25,10 @@ import java.util.TreeMap;
 public class OrgMemberCsvService {
 
     private final Logger logger;
-    private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
-    private final QuayUserService quayUserService;
 
     @Inject
-    public OrgMemberCsvService(Logger logger, GitHubOrganizationLookupService gitHubOrganizationLookupService, QuayUserService quayUserService) {
+    public OrgMemberCsvService(Logger logger) {
         this.logger = logger;
-        this.gitHubOrganizationLookupService = gitHubOrganizationLookupService;
-        this.quayUserService = quayUserService;
     }
 
     /**
@@ -70,7 +64,7 @@ public class OrgMemberCsvService {
             }
         }
 
-        return new OrgMemberRepository(input, answer, gitHubOrganizationLookupService, quayUserService);
+        return new OrgMemberRepository(input, answer);
     }
 
     /**

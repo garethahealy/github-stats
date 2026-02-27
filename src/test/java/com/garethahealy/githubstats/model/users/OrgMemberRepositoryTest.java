@@ -1,7 +1,6 @@
 package com.garethahealy.githubstats.model.users;
 
-import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
-import com.garethahealy.githubstats.services.quay.QuayUserService;
+import com.garethahealy.githubstats.services.users.OrgMemberValidationService;
 import com.garethahealy.githubstats.testutils.OrgMemberMockData;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -19,10 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class OrgMemberRepositoryTest {
 
     @Inject
-    GitHubOrganizationLookupService gitHubOrganizationLookupService;
-
-    @Inject
-    QuayUserService quayUserService;
+    OrgMemberValidationService orgMemberValidationService;
 
     @Inject
     @Named("read")
@@ -30,8 +26,7 @@ class OrgMemberRepositoryTest {
 
     @Test
     void validate() throws IOException {
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(OrgMemberMockData.getMe(client));
+        orgMemberValidationService.validate(OrgMemberMockData.getMe(client));
 
         assertTrue(true);
     }
@@ -40,8 +35,7 @@ class OrgMemberRepositoryTest {
     void validateMissingGitHubUser() throws IOException {
         OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", new ArrayList<>(List.of("missing-user1")), List.of("garethahealy"), OrgMember.Source.Manual, null, null);
 
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
+        orgMemberValidationService.validate(invalid);
 
         assertTrue(invalid.linkedGitHubUsernames().isEmpty());
     }
@@ -50,8 +44,7 @@ class OrgMemberRepositoryTest {
     void validateGitHubOrg() throws IOException {
         OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", new ArrayList<>(List.of("redhat-cop/org")), List.of("garethahealy"), OrgMember.Source.Manual, null, null);
 
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
+        orgMemberValidationService.validate(invalid);
 
         assertTrue(invalid.linkedGitHubUsernames().isEmpty());
     }
@@ -60,8 +53,7 @@ class OrgMemberRepositoryTest {
     void validateGitHubRepo() throws IOException {
         OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", new ArrayList<>(List.of("garethahealy/org")), List.of("garethahealy"), OrgMember.Source.Manual, null, null);
 
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
+        orgMemberValidationService.validate(invalid);
 
         assertTrue(invalid.linkedGitHubUsernames().isEmpty());
     }
@@ -70,8 +62,7 @@ class OrgMemberRepositoryTest {
     void validateGitHubRepoExtraSlash() throws IOException {
         OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", new ArrayList<>(List.of("garethahealy/org/")), List.of("garethahealy"), OrgMember.Source.Manual, null, null);
 
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
+        orgMemberValidationService.validate(invalid);
 
         assertTrue(invalid.linkedGitHubUsernames().isEmpty());
     }
@@ -80,8 +71,7 @@ class OrgMemberRepositoryTest {
     void validateMissingQuayUser() throws IOException {
         OrgMember invalid = new OrgMember("gahealy@redhat.com", "garethahealy", List.of("garethahealy"), new ArrayList<>(List.of("missing-user1")), OrgMember.Source.Manual, null, null);
 
-        OrgMemberRepository answer = new OrgMemberRepository(null, null, gitHubOrganizationLookupService, quayUserService);
-        answer.validate(invalid);
+        orgMemberValidationService.validate(invalid);
 
         assertTrue(invalid.linkedQuayUsernames().isEmpty());
     }

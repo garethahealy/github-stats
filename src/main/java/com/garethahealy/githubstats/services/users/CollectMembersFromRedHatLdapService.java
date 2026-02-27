@@ -37,12 +37,14 @@ public class CollectMembersFromRedHatLdapService {
     private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
     private final LdapSearchService ldapSearchService;
     private final OrgMemberCsvService orgMemberCsvService;
+    private final OrgMemberValidationService orgMemberValidationService;
 
     @Inject
-    public CollectMembersFromRedHatLdapService(GitHubOrganizationLookupService gitHubOrganizationLookupService, OrgMemberCsvService orgMemberCsvService, LdapSearchService ldapSearchService) {
+    public CollectMembersFromRedHatLdapService(GitHubOrganizationLookupService gitHubOrganizationLookupService, OrgMemberCsvService orgMemberCsvService, LdapSearchService ldapSearchService, OrgMemberValidationService orgMemberValidationService) {
         this.gitHubOrganizationLookupService = gitHubOrganizationLookupService;
         this.orgMemberCsvService = orgMemberCsvService;
         this.ldapSearchService = ldapSearchService;
+        this.orgMemberValidationService = orgMemberValidationService;
     }
 
     public void run(String organization, File ldapMembersCsv, File supplementaryCsv, boolean validateCsv, int limit, boolean failNoVpn) throws IOException, LdapException, TemplateException, ExecutionException, InterruptedException, URISyntaxException {
@@ -68,6 +70,9 @@ public class CollectMembersFromRedHatLdapService {
         if (validateCsv) {
             searchViaLdapForLdapCsvMembers(ldapMembers, supplementaryMembers, failNoVpn);
             searchViaLdapForSupplementaryCsvMembers(ldapMembers, supplementaryMembers, failNoVpn);
+
+            validateOrgMembersAccounts(ldapMembers);
+            validateOrgMembersAccounts(supplementaryMembers);
         }
 
         searchViaLdapForUnknownMembers(githubMembers, ldapMembers, supplementaryMembers, limit, failNoVpn);
@@ -193,6 +198,10 @@ public class CollectMembersFromRedHatLdapService {
         }
     }
 
+    private void validateOrgMembersAccounts(OrgMemberRepository members) throws IOException {
+        orgMemberValidationService.validate(members);
+    }
+
     /**
      * Search LDAP for everyone that is not in the ldapMembers or supplementaryMembers (i.e.: unknown) CSVs but a GitHub member
      *
@@ -221,7 +230,7 @@ public class CollectMembersFromRedHatLdapService {
                         } else {
                             logger.infof("Adding %s to %s CSV", user.getLogin(), ldapMembers.name());
 
-                            OrgMember orgMember = ldapSearchService.retrieve(connection, user.getLogin(), rhEmail);
+                            OrgMember orgMember = orgMemberValidationService.validate(ldapSearchService.retrieve(connection, user.getLogin(), rhEmail));
                             ldapMembers.put(orgMember);
                         }
                     }
