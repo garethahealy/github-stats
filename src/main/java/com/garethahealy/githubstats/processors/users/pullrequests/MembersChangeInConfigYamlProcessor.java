@@ -1,5 +1,6 @@
 package com.garethahealy.githubstats.processors.users.pullrequests;
 
+import com.garethahealy.githubstats.clients.GitHubDiffService;
 import com.garethahealy.githubstats.clients.rest.GitHubDiffRestClient;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
@@ -33,8 +34,8 @@ public class MembersChangeInConfigYamlProcessor implements Processor {
     @Inject
     Logger logger;
 
-    @RestClient
-    GitHubDiffRestClient gitHubDiffRestClient;
+    @Inject
+    GitHubDiffService gitHubDiffService;
 
     @Inject
     @TemplatePath("LinkSocialToLDAPComment.ftl")
@@ -129,8 +130,7 @@ public class MembersChangeInConfigYamlProcessor implements Processor {
 
         List<String> unknownMembers = new ArrayList<>();
         if (!unknownSourceMembers.isEmpty()) {
-            RestResponse<String> diff = gitHubDiffRestClient.getDiff(current.getRepository().getOwner().getLogin(), current.getRepository().getName(), current.getNumber());
-            String diffContent = diff.getEntity();
+            String diffContent = gitHubDiffService.getDiff(current.getRepository().getOwner().getLogin(), current.getRepository().getName(), current.getNumber());
             for (String unknown : unknownSourceMembers) {
                 if (diffContent.contains(unknown)) {
                     unknownMembers.add(unknown);

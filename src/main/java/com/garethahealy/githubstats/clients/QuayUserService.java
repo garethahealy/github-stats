@@ -1,0 +1,40 @@
+package com.garethahealy.githubstats.clients;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garethahealy.githubstats.clients.rest.QuayUsersRestClient;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
+import org.jboss.resteasy.reactive.ClientWebApplicationException;
+import org.jboss.resteasy.reactive.RestResponse;
+
+@ApplicationScoped
+public class QuayUserService {
+
+    @Inject
+    Logger logger;
+
+    @RestClient
+    QuayUsersRestClient quayUsersRestClient;
+
+    @Inject
+    ObjectMapper mapper;
+
+    public String getUser(String user) {
+        String answer = null;
+
+        try {
+            RestResponse<String> response = quayUsersRestClient.getUser(user);
+
+            JsonNode node = mapper.readTree(response.getEntity());
+            answer = node.get("username").asText();
+        } catch (ClientWebApplicationException | JsonProcessingException ex) {
+            logger.error(ex);
+        }
+
+        return answer;
+    }
+}
