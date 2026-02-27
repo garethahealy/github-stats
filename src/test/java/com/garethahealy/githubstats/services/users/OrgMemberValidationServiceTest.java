@@ -1,6 +1,6 @@
-package com.garethahealy.githubstats.model.users;
+package com.garethahealy.githubstats.services.users;
 
-import com.garethahealy.githubstats.services.users.OrgMemberValidationService;
+import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.testutils.OrgMemberMockData;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
-class OrgMemberRepositoryTest {
+class OrgMemberValidationServiceTest {
 
     @Inject
     OrgMemberValidationService orgMemberValidationService;

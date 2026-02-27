@@ -1,7 +1,7 @@
-package com.garethahealy.githubstats.model.users;
+package com.garethahealy.githubstats.services.users;
 
+import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.services.ldap.LdapSearchService;
-import com.garethahealy.githubstats.services.users.OrgMemberValidationService;
 import com.garethahealy.githubstats.testutils.BaseRequiresLdapConnection;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -15,7 +15,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
+class OrgMemberValidationServiceIT extends BaseRequiresLdapConnection {
 
     @Inject
     LdapSearchService ldapSearchService;
@@ -25,12 +25,10 @@ class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
 
     @Test
     @EnabledIf("canConnectVpn")
-    void retrieveAndValidateSsulliva() throws IOException, LdapException {
+    void validateSsulliva() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
-            OrgMember answer = ldapSearchService.retrieve(connection, "sean-m-sullivan", "ssulliva@redhat.com");
+            OrgMember answer = orgMemberValidationService.validate(ldapSearchService.retrieve(connection, "sean-m-sullivan", "ssulliva@redhat.com"));
             assertNotNull(answer);
-
-            orgMemberValidationService.validate(answer);
 
             assertEquals("ssulliva@redhat.com", answer.redhatEmailAddress());
             assertEquals("sean-m-sullivan", answer.gitHubUsername());
@@ -43,12 +41,10 @@ class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
 
     @Test
     @EnabledIf("canConnectVpn")
-    void retrieveAndValidateClaudiol() throws IOException, LdapException {
+    void validateClaudiol() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
-            OrgMember answer = ldapSearchService.retrieve(connection, "claudiol", "claudiol@redhat.com");
+            OrgMember answer = orgMemberValidationService.validate(ldapSearchService.retrieve(connection, "claudiol", "claudiol@redhat.com"));
             assertNotNull(answer);
-
-            orgMemberValidationService.validate(answer);
 
             assertEquals("claudiol@redhat.com", answer.redhatEmailAddress());
             assertEquals("claudiol", answer.gitHubUsername());
@@ -61,12 +57,10 @@ class OrgMemberRepositoryIT extends BaseRequiresLdapConnection {
 
     @Test
     @EnabledIf("canConnectVpn")
-    void retrieveAndValidateAblock() throws IOException, LdapException {
+    void validateAblock() throws IOException, LdapException {
         try (LdapConnection connection = ldapSearchService.open()) {
-            OrgMember answer = ldapSearchService.retrieve(connection, "sabre1041", "ablock@redhat.com");
+            OrgMember answer = orgMemberValidationService.validate(ldapSearchService.retrieve(connection, "sabre1041", "ablock@redhat.com"));
             assertNotNull(answer);
-
-            orgMemberValidationService.validate(answer);
 
             assertEquals("ablock@redhat.com", answer.redhatEmailAddress());
             assertEquals("sabre1041", answer.gitHubUsername());
