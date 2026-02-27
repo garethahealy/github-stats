@@ -43,10 +43,6 @@ public class GitHubOrganizationWriterService {
         return client.getRepository(owner + "/" + repo);
     }
 
-    public List<GHUser> listMembers(GHOrganization org) throws IOException {
-        return org.listMembers().toList();
-    }
-
     private void logRateLimit() throws IOException {
         GHRateLimit rateLimit = client.getRateLimit();
         logger.infof("RateLimit: limit %s, remaining %s, resetDate %s", rateLimit.getLimit(), rateLimit.getRemaining(), rateLimit.getResetDate());

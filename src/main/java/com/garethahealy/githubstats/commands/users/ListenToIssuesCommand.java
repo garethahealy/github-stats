@@ -5,7 +5,7 @@ import com.garethahealy.githubstats.processors.users.issues.AddMeAsMemberProcess
 import com.garethahealy.githubstats.processors.users.issues.Processor;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationWriterService;
 import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
-import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
+import com.garethahealy.githubstats.services.users.OrgMemberCsvService;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.jboss.logging.Logger;

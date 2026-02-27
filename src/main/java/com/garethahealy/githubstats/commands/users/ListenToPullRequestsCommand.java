@@ -7,7 +7,7 @@ import com.garethahealy.githubstats.processors.users.pullrequests.Processor;
 import com.garethahealy.githubstats.services.github.GitHubFileRetrievalService;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationWriterService;
 import com.garethahealy.githubstats.services.github.GitHubRepositoryLookupService;
-import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
+import com.garethahealy.githubstats.services.users.OrgMemberCsvService;
 import freemarker.template.TemplateException;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;

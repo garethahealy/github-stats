@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.services.users;
+package com.garethahealy.githubstats.processors.users.jobs;
 
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
@@ -6,7 +6,8 @@ import com.garethahealy.githubstats.predicates.GHUserFilters;
 import com.garethahealy.githubstats.predicates.OrgMemberFilters;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import com.garethahealy.githubstats.services.ldap.LdapSearchService;
-import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
+import com.garethahealy.githubstats.services.users.OrgMemberValidationService;
+import com.garethahealy.githubstats.services.users.OrgMemberCsvService;
 import freemarker.template.TemplateException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

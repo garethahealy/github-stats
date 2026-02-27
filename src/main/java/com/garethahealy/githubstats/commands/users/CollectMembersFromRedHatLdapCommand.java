@@ -1,6 +1,6 @@
 package com.garethahealy.githubstats.commands.users;
 
-import com.garethahealy.githubstats.services.users.CollectMembersFromRedHatLdapService;
+import com.garethahealy.githubstats.processors.users.jobs.CollectMembersFromRedHatLdapService;
 import freemarker.template.TemplateException;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;

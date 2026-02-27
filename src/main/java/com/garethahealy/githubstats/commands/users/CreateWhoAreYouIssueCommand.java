@@ -1,7 +1,7 @@
 package com.garethahealy.githubstats.commands.users;
 
 import com.garethahealy.githubstats.services.ldap.NoopLdapGuessService;
-import com.garethahealy.githubstats.services.users.CreateWhoAreYouIssueService;
+import com.garethahealy.githubstats.processors.users.jobs.CreateWhoAreYouIssueService;
 import freemarker.template.TemplateException;
 import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;

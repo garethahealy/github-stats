@@ -1,4 +1,4 @@
-package com.garethahealy.githubstats.services.users;
+package com.garethahealy.githubstats.processors.users.jobs;
 
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
@@ -9,7 +9,7 @@ import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupServ
 import com.garethahealy.githubstats.services.github.GitHubOrganizationWriterService;
 import com.garethahealy.githubstats.services.ldap.DefaultLdapGuessService;
 import com.garethahealy.githubstats.services.ldap.LdapGuessService;
-import com.garethahealy.githubstats.services.users.utils.OrgMemberCsvService;
+import com.garethahealy.githubstats.services.users.OrgMemberCsvService;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.quarkiverse.freemarker.TemplatePath;
