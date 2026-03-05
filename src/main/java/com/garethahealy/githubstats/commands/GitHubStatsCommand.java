@@ -1,6 +1,7 @@
 package com.garethahealy.githubstats.commands;
 
 import io.quarkus.picocli.runtime.annotations.TopCommand;
+import picocli.AutoComplete;
 import picocli.CommandLine;
 
 @TopCommand
@@ -8,6 +9,6 @@ import picocli.CommandLine;
     name = "github-stats",
     description = "GitHub helper utility",
     mixinStandardHelpOptions = true,
-    subcommands = {StatsCommand.class, UsersCommand.class, CommandLine.HelpCommand.class})
+    subcommands = {StatsCommand.class, UsersCommand.class, CommandLine.HelpCommand.class, AutoComplete.GenerateCompletion.class})
 public class GitHubStatsCommand {
 }

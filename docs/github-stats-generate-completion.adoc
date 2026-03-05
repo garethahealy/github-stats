@@ -1,32 +1,36 @@
 // tag::picocli-generated-full-manpage[]
 // tag::picocli-generated-man-section-header[]
 :doctype: manpage
-:revnumber: 
+:revnumber: generate-completion 4.7.7
 :manmanual: Github-stats Manual
-:mansource: 
+:mansource: generate-completion 4.7.7
 :man-linkstyle: pass:[blue R < >]
-= github-stats(1)
+= github-stats-generate-completion(1)
 
 // end::picocli-generated-man-section-header[]
 
 // tag::picocli-generated-man-section-name[]
 == Name
 
-github-stats - GitHub helper utility
+github-stats-generate-completion - Generate bash/zsh completion script for github-stats.
 
 // end::picocli-generated-man-section-name[]
 
 // tag::picocli-generated-man-section-synopsis[]
 == Synopsis
 
-*github-stats* [*-hV*] [COMMAND]
+*github-stats generate-completion* [*-hV*]
 
 // end::picocli-generated-man-section-synopsis[]
 
 // tag::picocli-generated-man-section-description[]
 == Description
 
-GitHub helper utility
+Generate bash/zsh completion script for github-stats.
+Run the following command to give `github-stats` TAB completion in the current shell:
+
+  source <(github-stats generate-completion)
+
 
 // end::picocli-generated-man-section-description[]
 
@@ -45,20 +49,6 @@ GitHub helper utility
 // end::picocli-generated-man-section-arguments[]
 
 // tag::picocli-generated-man-section-commands[]
-== Commands
-
-xref:github-stats-stats.adoc[*stats*]::
-  Stats collection
-
-xref:github-stats-users.adoc[*users*]::
-  Users operations
-
-xref:github-stats-help.adoc[*help*]::
-  Display help information about the specified command.
-
-xref:github-stats-generate-completion.adoc[*generate-completion*]::
-  Generate bash/zsh completion script for github-stats.
-
 // end::picocli-generated-man-section-commands[]
 
 // tag::picocli-generated-man-section-exit-status[]
