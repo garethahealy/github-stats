@@ -49,6 +49,10 @@ jobs:
           ./mvnw verify -DskipTests --fail-never --batch-mode
 
       - name: Build
+        env:
+          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
+          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
+          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
         run: ./mvnw clean install -Pnative -DskipTests --batch-mode
 
       - name: Test
