@@ -3,7 +3,6 @@ package com.garethahealy.githubstats.services.github;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.FileUtils;
 import org.jboss.logging.Logger;
@@ -25,7 +24,6 @@ public class GitHubFileRetrievalService {
     private final YAMLMapper mapper;
     private final Logger logger;
 
-    @Inject
     public GitHubFileRetrievalService(Logger logger, YAMLMapper mapper) {
         this.logger = logger;
         this.mapper = mapper;

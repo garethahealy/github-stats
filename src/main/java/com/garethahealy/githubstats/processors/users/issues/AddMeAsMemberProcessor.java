@@ -4,7 +4,6 @@ import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.predicates.GHLabelFilters;
 import com.garethahealy.githubstats.services.ldap.LdapSearchService;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
@@ -23,13 +22,11 @@ import java.util.Optional;
 @ApplicationScoped
 public class AddMeAsMemberProcessor implements Processor {
 
-    @Inject
-    Logger logger;
-
+    private final Logger logger;
     private final LdapSearchService ldapSearchService;
 
-    @Inject
-    public AddMeAsMemberProcessor(LdapSearchService ldapSearchService) {
+    public AddMeAsMemberProcessor(Logger logger, LdapSearchService ldapSearchService) {
+        this.logger = logger;
         this.ldapSearchService = ldapSearchService;
     }
 

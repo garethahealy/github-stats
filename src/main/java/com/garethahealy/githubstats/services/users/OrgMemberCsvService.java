@@ -3,7 +3,6 @@ package com.garethahealy.githubstats.services.users;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -26,7 +25,6 @@ public class OrgMemberCsvService {
 
     private final Logger logger;
 
-    @Inject
     public OrgMemberCsvService(Logger logger) {
         this.logger = logger;
     }

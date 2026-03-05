@@ -28,8 +28,10 @@ import java.util.*;
 @ApplicationScoped
 public class MembersChangeInConfigYamlProcessor implements Processor {
 
-    @Inject
-    Logger logger;
+    private final Logger logger;
+    private final GitHubRepositoryLookupService gitHubRepositoryLookupService;
+    private final GitHubFileRetrievalService gitHubFileRetrievalService;
+    private final LdapSearchService ldapSearchService;
 
     @Inject
     GitHubDiffService gitHubDiffService;
@@ -38,12 +40,8 @@ public class MembersChangeInConfigYamlProcessor implements Processor {
     @TemplatePath("LinkSocialToLDAPComment.ftl")
     Template linkSocialToLDAPComment;
 
-    private final GitHubRepositoryLookupService gitHubRepositoryLookupService;
-    private final GitHubFileRetrievalService gitHubFileRetrievalService;
-    private final LdapSearchService ldapSearchService;
-
-    @Inject
-    public MembersChangeInConfigYamlProcessor(GitHubRepositoryLookupService gitHubRepositoryLookupService, GitHubFileRetrievalService gitHubFileRetrievalService, LdapSearchService ldapSearchService) {
+    public MembersChangeInConfigYamlProcessor(Logger logger, GitHubRepositoryLookupService gitHubRepositoryLookupService, GitHubFileRetrievalService gitHubFileRetrievalService, LdapSearchService ldapSearchService) {
+        this.logger = logger;
         this.gitHubRepositoryLookupService = gitHubRepositoryLookupService;
         this.gitHubFileRetrievalService = gitHubFileRetrievalService;
         this.ldapSearchService = ldapSearchService;

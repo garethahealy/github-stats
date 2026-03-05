@@ -2,7 +2,6 @@ package com.garethahealy.githubstats.services.ldap;
 
 import com.garethahealy.githubstats.model.users.OrgMember;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
@@ -15,12 +14,11 @@ import java.io.IOException;
 @ApplicationScoped
 public class DefaultLdapGuessService implements LdapGuessService {
 
-    @Inject
-    Logger logger;
-
+    private final Logger logger;
     private final LdapSearchService ldapSearchService;
 
-    public DefaultLdapGuessService(LdapSearchService ldapSearchService) {
+    public DefaultLdapGuessService(Logger logger, LdapSearchService ldapSearchService) {
+        this.logger = logger;
         this.ldapSearchService = ldapSearchService;
     }
 

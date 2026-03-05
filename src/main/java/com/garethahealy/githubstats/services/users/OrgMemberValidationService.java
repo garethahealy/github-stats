@@ -5,7 +5,6 @@ import com.garethahealy.githubstats.model.users.OrgMember;
 import com.garethahealy.githubstats.model.users.OrgMemberRepository;
 import com.garethahealy.githubstats.services.github.GitHubOrganizationLookupService;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
@@ -17,14 +16,12 @@ import java.util.List;
 @ApplicationScoped
 public class OrgMemberValidationService {
 
-    @Inject
-    Logger logger;
-
+    private final Logger logger;
     private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
     private final QuayUserService quayUserService;
 
-    @Inject
-    public OrgMemberValidationService(GitHubOrganizationLookupService gitHubOrganizationLookupService, QuayUserService quayUserService) {
+    public OrgMemberValidationService(Logger logger, GitHubOrganizationLookupService gitHubOrganizationLookupService, QuayUserService quayUserService) {
+        this.logger = logger;
         this.gitHubOrganizationLookupService = gitHubOrganizationLookupService;
         this.quayUserService = quayUserService;
     }

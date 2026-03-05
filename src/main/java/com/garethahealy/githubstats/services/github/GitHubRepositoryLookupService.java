@@ -1,7 +1,6 @@
 package com.garethahealy.githubstats.services.github;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
 
@@ -16,7 +15,6 @@ public class GitHubRepositoryLookupService {
 
     private final Logger logger;
 
-    @Inject
     public GitHubRepositoryLookupService(Logger logger) {
         this.logger = logger;
     }

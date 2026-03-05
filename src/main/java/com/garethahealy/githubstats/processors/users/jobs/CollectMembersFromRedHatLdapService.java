@@ -10,7 +10,6 @@ import com.garethahealy.githubstats.services.users.OrgMemberCsvService;
 import com.garethahealy.githubstats.services.users.OrgMemberValidationService;
 import freemarker.template.TemplateException;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.jboss.logging.Logger;
@@ -32,16 +31,14 @@ import java.util.concurrent.ExecutionException;
 @ApplicationScoped
 public class CollectMembersFromRedHatLdapService {
 
-    @Inject
-    Logger logger;
-
+    private final Logger logger;
     private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
     private final LdapSearchService ldapSearchService;
     private final OrgMemberCsvService orgMemberCsvService;
     private final OrgMemberValidationService orgMemberValidationService;
 
-    @Inject
-    public CollectMembersFromRedHatLdapService(GitHubOrganizationLookupService gitHubOrganizationLookupService, OrgMemberCsvService orgMemberCsvService, LdapSearchService ldapSearchService, OrgMemberValidationService orgMemberValidationService) {
+    public CollectMembersFromRedHatLdapService(Logger logger, GitHubOrganizationLookupService gitHubOrganizationLookupService, OrgMemberCsvService orgMemberCsvService, LdapSearchService ldapSearchService, OrgMemberValidationService orgMemberValidationService) {
+        this.logger = logger;
         this.gitHubOrganizationLookupService = gitHubOrganizationLookupService;
         this.orgMemberCsvService = orgMemberCsvService;
         this.ldapSearchService = ldapSearchService;

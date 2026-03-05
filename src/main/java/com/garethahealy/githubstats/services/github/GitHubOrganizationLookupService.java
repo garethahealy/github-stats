@@ -2,7 +2,6 @@ package com.garethahealy.githubstats.services.github;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.jboss.logging.Logger;
 import org.kohsuke.github.*;
@@ -21,7 +20,6 @@ public class GitHubOrganizationLookupService {
     private final Logger logger;
     private final GitHub client;
 
-    @Inject
     public GitHubOrganizationLookupService(Logger logger, @Named("read") GitHub client) {
         this.logger = logger;
         this.client = client;

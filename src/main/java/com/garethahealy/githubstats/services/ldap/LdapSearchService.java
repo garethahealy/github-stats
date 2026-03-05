@@ -3,7 +3,6 @@ package com.garethahealy.githubstats.services.ldap;
 import com.garethahealy.githubstats.factories.LdapConnectionFactory;
 import com.garethahealy.githubstats.model.users.OrgMember;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -31,13 +30,11 @@ public class LdapSearchService {
         public static final String SocialURLQuay = SocialURL + "->Quay";
     }
 
-    @Inject
-    Logger logger;
-
+    private final Logger logger;
     private final LdapConnectionFactory connectionFactory;
 
-    @Inject
-    public LdapSearchService(LdapConnectionFactory connectionFactory) {
+    public LdapSearchService(Logger logger, LdapConnectionFactory connectionFactory) {
+        this.logger = logger;
         this.connectionFactory = connectionFactory;
     }
 

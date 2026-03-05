@@ -33,8 +33,11 @@ import java.util.concurrent.*;
 @ApplicationScoped
 public class CreateWhoAreYouIssueService {
 
-    @Inject
-    Logger logger;
+    private final Logger logger;
+    private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
+    private final GitHubOrganizationWriterService gitHubOrganizationWriterService;
+    private final OrgMemberCsvService orgMemberCsvService;
+    private LdapGuessService ldapGuessService;
 
     @Inject
     @TemplatePath("LinkSocialToLDAPComment.ftl")
@@ -44,17 +47,13 @@ public class CreateWhoAreYouIssueService {
     @TemplatePath("GitHubMemberNotFoundInLdap.ftl")
     Template gitHubMemberNotFoundInLdap;
 
-    private final GitHubOrganizationLookupService gitHubOrganizationLookupService;
-    private final GitHubOrganizationWriterService gitHubOrganizationWriterService;
-    private final OrgMemberCsvService orgMemberCsvService;
-    private LdapGuessService ldapGuessService;
-
     public void setLdapGuessService(LdapGuessService ldapGuessService) {
         this.ldapGuessService = ldapGuessService;
     }
 
     @Inject
-    public CreateWhoAreYouIssueService(GitHubOrganizationLookupService gitHubOrganizationLookupService, GitHubOrganizationWriterService gitHubOrganizationWriterService, OrgMemberCsvService orgMemberCsvService, DefaultLdapGuessService ldapGuessService) {
+    public CreateWhoAreYouIssueService(Logger logger, GitHubOrganizationLookupService gitHubOrganizationLookupService, GitHubOrganizationWriterService gitHubOrganizationWriterService, OrgMemberCsvService orgMemberCsvService, DefaultLdapGuessService ldapGuessService) {
+        this.logger = logger;
         this.gitHubOrganizationLookupService = gitHubOrganizationLookupService;
         this.gitHubOrganizationWriterService = gitHubOrganizationWriterService;
         this.orgMemberCsvService = orgMemberCsvService;

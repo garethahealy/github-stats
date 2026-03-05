@@ -2,7 +2,6 @@ package com.garethahealy.githubstats.clients;
 
 import com.garethahealy.githubstats.clients.rest.GitHubDiffRestClient;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
@@ -14,11 +13,14 @@ import java.io.IOException;
 @ApplicationScoped
 public class GitHubDiffService {
 
-    @Inject
-    Logger logger;
+    private final Logger logger;
 
     @RestClient
     GitHubDiffRestClient gitHubDiffRestClient;
+
+    public GitHubDiffService(Logger logger) {
+        this.logger = logger;
+    }
 
     public String getDiff(GHPullRequest pr) {
         String answer = null;

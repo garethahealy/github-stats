@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garethahealy.githubstats.clients.rest.QuayUsersRestClient;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
@@ -14,14 +13,16 @@ import org.jboss.resteasy.reactive.RestResponse;
 @ApplicationScoped
 public class QuayUserService {
 
-    @Inject
-    Logger logger;
+    private final Logger logger;
+    private final ObjectMapper mapper;
 
     @RestClient
     QuayUsersRestClient quayUsersRestClient;
 
-    @Inject
-    ObjectMapper mapper;
+    public QuayUserService(Logger logger, ObjectMapper mapper) {
+        this.logger = logger;
+        this.mapper = mapper;
+    }
 
     public String getUser(String user) {
         String answer = null;

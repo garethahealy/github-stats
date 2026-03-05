@@ -28,8 +28,10 @@ import java.util.*;
 @ApplicationScoped
 public class MembersChangeInAnsibleVarsYamlProcessor implements Processor {
 
-    @Inject
-    Logger logger;
+    private final Logger logger;
+    private final GitHubFileRetrievalService gitHubFileRetrievalService;
+    private final GitHubRepositoryLookupService gitHubRepositoryLookupService;
+    private final LdapSearchService ldapSearchService;
 
     @Inject
     GitHubDiffService gitHubDiffService;
@@ -38,12 +40,8 @@ public class MembersChangeInAnsibleVarsYamlProcessor implements Processor {
     @TemplatePath("LinkSocialToLDAPComment.ftl")
     Template linkSocialToLDAPComment;
 
-    private final GitHubFileRetrievalService gitHubFileRetrievalService;
-    private final GitHubRepositoryLookupService gitHubRepositoryLookupService;
-    private final LdapSearchService ldapSearchService;
-
-    @Inject
-    public MembersChangeInAnsibleVarsYamlProcessor(GitHubFileRetrievalService gitHubFileRetrievalService, GitHubRepositoryLookupService gitHubRepositoryLookupService, LdapSearchService ldapSearchService) {
+    public MembersChangeInAnsibleVarsYamlProcessor(Logger logger, GitHubFileRetrievalService gitHubFileRetrievalService, GitHubRepositoryLookupService gitHubRepositoryLookupService, LdapSearchService ldapSearchService) {
+        this.logger = logger;
         this.gitHubFileRetrievalService = gitHubFileRetrievalService;
         this.gitHubRepositoryLookupService = gitHubRepositoryLookupService;
         this.ldapSearchService = ldapSearchService;
