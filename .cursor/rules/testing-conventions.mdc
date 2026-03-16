@@ -1,0 +1,42 @@
+---
+description: Testing patterns and conventions
+globs: src/test/**/*.java
+alwaysApply: false
+---
+
+# Testing Conventions
+
+## Structure
+
+- Unit tests: `*Test.java` — pure JUnit 5 + Mockito or `@QuarkusTest`
+- Integration tests: `*IT.java` — `@QuarkusMainIntegrationTest` with `@Launch`
+- Test data goes in `test-data/` directory or `src/test/resources/`
+
+## Unit Tests
+
+- Use `Mockito.mock()` and `when().thenReturn()` for mocking
+- Use JUnit 5 assertions: `assertTrue`, `assertNotNull`, `assertEquals`
+- Inject real beans with `@Inject` when using `@QuarkusTest`
+
+## Integration Tests
+
+- Use `@QuarkusMainIntegrationTest` for CLI command tests
+- Use `@Launch` annotation to invoke commands with arguments
+- Verify exit codes and output in launch results
+
+## Example Pattern
+
+```java
+@QuarkusTest
+class MyServiceTest {
+
+    @Inject
+    MyService service;
+
+    @Test
+    void shouldDoSomething() {
+        var result = service.execute();
+        assertNotNull(result);
+    }
+}
+```

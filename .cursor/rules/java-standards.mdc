@@ -1,0 +1,37 @@
+---
+description: Java coding standards and patterns
+globs: **/*.java
+alwaysApply: true
+---
+
+# Java Standards
+
+## Dependency Injection
+
+- Use **constructor injection** for services and business logic beans
+- Field injection (`@Inject`, `@RestClient`) is acceptable for Picocli commands and MicroProfile REST clients
+- Annotate services with `@ApplicationScoped`, config/producers with `@Singleton`
+
+## Data Classes
+
+- Use **Java records** for DTOs and value objects (e.g., `OrgMember`, `Repository`)
+- Use Apache Commons Lang3 (`EqualsBuilder`, `HashCodeBuilder`, `CompareToBuilder`) in records when custom equality/ordering is needed
+- Add `@RegisterForReflection` to records and classes required for Quarkus native image
+
+## Error Handling
+
+- Wrap checked exceptions in `RuntimeException` in command `run()` methods
+- Use `IllegalArgumentException` / `IllegalStateException` for invalid input or configuration
+- Log errors with `logger.error()` before returning null or continuing in non-critical paths
+- Fail fast in configuration classes on invalid credentials/settings
+
+## Logging
+
+- Use `org.jboss.logging.Logger` (constructor-injected)
+- Use format methods: `logger.infof()`, `logger.warnf()`, `logger.error()`
+
+## Conventions
+
+- Every package should have a `package-info.java`
+- REST clients: `@RegisterRestClient` on interfaces in `clients.rest`
+- Commands: `@CommandLine.Command` with options via `@CommandLine.Option`

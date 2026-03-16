@@ -1,0 +1,32 @@
+---
+description: Project overview and conventions for github-stats CLI
+alwaysApply: true
+---
+
+# Project Overview
+
+Quarkus 3 CLI application (`github-stats`) for GitHub organization stats and member management. Uses Picocli for commands, MicroProfile REST Client for HTTP, and Apache Directory API for LDAP.
+
+## Tech Stack
+
+- **Runtime:** Quarkus 3.32.3, Java 25, Maven
+- **CLI:** Picocli via `quarkus-picocli`
+- **DI:** Quarkus Arc (CDI)
+- **HTTP:** MicroProfile REST Client (RESTEasy Reactive)
+- **GitHub:** `quarkus-github-api` (kohsuke GitHub API)
+- **LDAP:** Apache Directory API
+- **Data:** Jackson (JSON/YAML), Apache Commons CSV, Freemarker templates
+- **Testing:** JUnit 5, Mockito, `@QuarkusTest`, `@QuarkusMainIntegrationTest`
+
+## Package Structure
+
+Base: `com.garethahealy.githubstats`
+
+- `commands` / `commands.stats` / `commands.users` — Picocli CLI commands
+- `clients` / `clients.rest` - HTTP clients and MicroProfile REST interfaces
+- `config` - CDI producers and configuration
+- `factories` - connection factories (LDAP)
+- `model.users` / `model.stats` - domain models (prefer Java records)
+- `predicates` - reusable filters
+- `processors.users.*` - processing logic
+- `services.github` / `services.ldap` / `services.users` - business logic

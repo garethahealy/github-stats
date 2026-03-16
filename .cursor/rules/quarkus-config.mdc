@@ -1,0 +1,34 @@
+---
+description: Quarkus configuration and build conventions
+globs: "{pom.xml,src/main/resources/application.properties}"
+alwaysApply: false
+---
+
+# Quarkus & Build Conventions
+
+## Configuration
+
+- Use `application.properties` (not YAML) for Quarkus config
+- Inject config values via `@ConfigProperty(name = "...")` in constructor parameters
+- Environment variables follow Quarkus mapping (e.g., `github.login` → `GITHUB_LOGIN`)
+
+## Maven
+
+- Packaging type is `quarkus`
+- Use Quarkus BOM for dependency management (`quarkus-bom`)
+- Native image profile: `-Pnative`
+- JaCoCo for code coverage
+- Maven Enforcer for required env vars (e.g., `GITHUB_LOGIN`)
+
+## REST Clients
+
+- Define interfaces in `clients.rest` with `@RegisterRestClient`
+- Configure base URL and timeouts in `application.properties`
+- Inject via `@RestClient` field injection
+
+## Code Style
+
+- 4 spaces for Java, 2 spaces for YAML/JSON/properties
+- UTF-8 encoding, LF line endings
+- Trim trailing whitespace, insert final newline
+- Follow `.editorconfig` settings
