@@ -9,22 +9,27 @@ alwaysApply: false
 ## Configuration
 
 - Use `application.properties` (not YAML) for Quarkus config
-- Inject config values via `@ConfigProperty(name = "...")` in constructor parameters
-- Environment variables follow Quarkus mapping (e.g., `github.login` → `GITHUB_LOGIN`)
+- Inject config values via `@ConfigProperty` / `SmallRyeConfigMapping` style beans (e.g. `GitHubConfigProperties`) where appropriate
+- Env overrides: e.g. `github.login` ↔ `GITHUB_LOGIN`, `github.oauth` ↔ `GITHUB_OAUTH` (see `application.properties` and `GitHubConfigProperties`)
 
 ## Maven
 
 - Packaging type is `quarkus`
 - Use Quarkus BOM for dependency management (`quarkus-bom`)
 - Native image profile: `-Pnative`
-- JaCoCo for code coverage
-- Maven Enforcer for required env vars (e.g., `GITHUB_LOGIN`)
+- JaCoCo for code coverage (test scope)
+- **Maven Enforcer** requires **`GITHUB_LOGIN`** to be set for builds (`enforce-prerequisites`); use a placeholder in CI if needed
 
-## REST Clients
+## GitHub integration (this project)
 
-- Define interfaces in `clients.rest` with `@RegisterRestClient`
-- Configure base URL and timeouts in `application.properties`
-- Inject via `@RestClient` field injection
+- **GraphQL:** SmallRye GraphQL client named `github-graphql` in `application.properties`; query document loaded from classpath (e.g. `graphql/queries/*.graphql`)
+- **REST / metrics:** kohsuke GitHub API (`GitHub`, `GHRepository`) for org/repos, contributors, **traffic** (requires token permissions sufficient for those endpoints — traffic often needs **push/admin** on the repo)
+- **Native image resources:** `quarkus.native.resources.includes` uses **globs without a leading `/`** (e.g. `graphql/queries/*.graphql`) so resources are actually embedded; leading `/` on the pattern can exclude matches
+
+## GraphQL code generation
+
+- **`graphql-codegen-maven-plugin`** generates Java under `target/generated-sources/graphql`
+- **`customTemplatesRoot` + `customTemplates`** point at forked **`type.ftl` / `interface.ftl` / `enum.ftl`** — when upgrading **`graphql.codegen.version`**, re-extract templates from the plugin JAR and re-apply the `@RegisterForReflection` line (see `pom.xml` comment)
 
 ## Code Style
 

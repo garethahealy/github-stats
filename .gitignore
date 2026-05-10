@@ -3,12 +3,5 @@
 
 target/
 
-member-mapping/*
-ldap-members.csv
-supplementary.csv
-
 scripts/_creds.sh
 scripts/_creds_update_github_secrets.sh
-src/test/resources/application.properties
-
-!test-data/*.csv

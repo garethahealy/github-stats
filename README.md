@@ -1,6 +1,6 @@
 # github-stats
 
-CLI to generate stats and issues for a GitHub org.
+CLI to generate stats for a GitHub org.
 
 ## Build
 
@@ -20,18 +20,11 @@ java -jar target/quarkus-app/quarkus-run.jar help
 
 ## GitHub Auth
 
-Read permissions are required for the OAuth PAT.
+Read permissions are required for the OAuth PAT:
 
 ```bash
 export GITHUB_LOGIN=replace
 export GITHUB_OAUTH=replace
-```
-
-## LDAP Lookup
-
-```bash
-ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com -s sub 'uid=gahealy'
-ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com -s sub 'rhatSocialURL=Github->*garethahealy*'
 ```
 
 ## APIs
@@ -39,7 +32,7 @@ ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com -s sub 'rhatSocialURL=
 Once you've built the code, you can execute the commands, for example:
 
 ```bash
-./target/github-stats-*-runner users collect-members-from-ldap --organization=redhat-cop --csv-output=ldap-members.csv --ldap-members-csv=ldap-members.csv --fail-if-no-vpn=true --guess=false
+./target/github-stats-*-runner collect-stats --organization=redhat-cop --csv-output=/tmp/redhat-cop-collect-stats.csv --repository-limit=5
 ```
 
 For a full list of commands, see: [docs](docs)

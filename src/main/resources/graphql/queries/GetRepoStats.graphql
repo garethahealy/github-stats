@@ -1,0 +1,51 @@
+query RepoStats($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    name
+    repositoryTopics(first: 100) {
+      nodes {
+        topic {
+          name
+        }
+      }
+    }
+    issues(states: [OPEN]) {
+      totalCount
+    }
+    pullRequests(states: [OPEN]) {
+      totalCount
+    }
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          __typename
+          history(first: 1) {
+            totalCount
+            nodes {
+              committedDate
+              author {
+                user {
+                  login
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    owners: object(expression: "HEAD:OWNERS") {
+      __typename
+    }
+    codeowners: object(expression: "HEAD:CODEOWNERS") {
+      __typename
+    }
+    workflows: object(expression: "HEAD:.github/workflows") {
+      __typename
+    }
+    travis: object(expression: "HEAD:.travis.yml") {
+      __typename
+    }
+    renovate: object(expression: "HEAD:renovate.json") {
+      __typename
+    }
+  }
+}

@@ -1,0 +1,97 @@
+# Minimal GitHub GraphQL schema for the collect-stats RepoStats operation.
+# Update when the query changes. Full reference: https://docs.github.com/en/graphql
+
+schema {
+  query: Query
+}
+
+type Query {
+  repository(owner: String!, name: String!): Repository
+}
+
+type Repository {
+  name: String
+  repositoryTopics(first: Int!): RepositoryTopicConnection!
+  issues(states: [IssueState!]): IssueConnection!
+  pullRequests(states: [PullRequestState!]): PullRequestConnection!
+  defaultBranchRef: Ref
+  object(expression: String!): GitObject
+  # Client stub fields: GitHub returns these as aliases of object(expression: …); used for typed Jackson binding only.
+  owners: GitObject
+  codeowners: GitObject
+  workflows: GitObject
+  travis: GitObject
+  renovate: GitObject
+}
+
+type RepositoryTopicConnection {
+  nodes: [RepositoryTopic!]!
+}
+
+type RepositoryTopic {
+  topic: Topic!
+}
+
+type Topic {
+  name: String!
+}
+
+type IssueConnection {
+  totalCount: Int!
+}
+
+type PullRequestConnection {
+  totalCount: Int!
+}
+
+type Ref {
+  target: GitObject
+}
+
+interface GitObject {
+  oid: GitObjectID
+}
+
+type Blob implements GitObject {
+  oid: GitObjectID
+  text: String
+  isBinary: Boolean!
+}
+
+type Tree implements GitObject {
+  oid: GitObjectID
+}
+
+type Commit implements GitObject {
+  oid: GitObjectID
+  history(first: Int!): CommitHistoryConnection!
+  committedDate: GitTimestamp
+  author: GitActor
+}
+
+type CommitHistoryConnection {
+  totalCount: Int!
+  nodes: [Commit!]!
+}
+
+type User {
+  login: String!
+}
+
+type GitActor {
+  user: User
+}
+
+enum IssueState {
+  OPEN
+  CLOSED
+}
+
+enum PullRequestState {
+  OPEN
+  CLOSED
+  MERGED
+}
+
+scalar GitTimestamp
+scalar GitObjectID

@@ -23,13 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Checkout redhat-cop-dev/member-mapping
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          token: ${{ secrets.MEMBER_MAPPING_TOKEN }}
-          repository: redhat-cop-dev/member-mapping
-          path: member-mapping
-
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: "temurin"
@@ -40,9 +33,6 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
 
-      - name: Copy csv's from member-mapping
-        run: make member-mapping
-
       - name: Collect dependencies
         run: |
           ./mvnw dependency:go-offline dependency:resolve dependency:resolve-sources dependency:resolve-plugins -Dclassifier=javadoc --batch-mode
@@ -52,14 +42,12 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
         run: ./mvnw clean install -Pnative -DskipTests --batch-mode
 
       - name: Test
         env:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
         run: ./mvnw test -DskipITs=true --batch-mode
 
       - name: Run help command
@@ -67,7 +55,6 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
         run: |
           runners=(target/github-stats-*-runner)
           echo "cmd=$(basename ${runners[0]})" >> "$GITHUB_OUTPUT"
@@ -94,49 +81,8 @@ jobs:
         run: |
           echo "hashes=$(sha256sum target/github-stats-*-runner | base64 -w0)" >> "$GITHUB_OUTPUT"
 
-      - name: Get image tags
-        id: image_tags
-        uses: redhat-cop/github-actions/get-image-version@e4729075dcd3f34946b80df6b1bfb952b9fee166 # v4
-        with:
-          IMAGE_CONTEXT_DIR: src/main/docker
-
-      - uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
-        with:
-          dockerfile: src/main/docker/Dockerfile
-
-      - name: Build image
-        id: build_image
-        uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
-        with:
-          containerfiles: src/main/docker/Dockerfile
-          image: github-stats
-          oci: true
-          tags: "${{ steps.image_tags.outputs.IMAGE_TAGS }}"
-          extra-args: "--squash"
-
-      - name: Run image
-        env:
-          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
-          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
-        run: podman run -e GITHUB_LOGIN=${GITHUB_LOGIN} -e GITHUB_OAUTH=${GITHUB_OAUTH} -e GITHUB_WRITE_OAUTH=${GITHUB_WRITE_OAUTH} localhost/github-stats:latest help
-
-      - name: Push to ghcr.io
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
-        id: push_image
-        with:
-          image: ${{ steps.build_image.outputs.image }}
-          registry: ghcr.io/${{ github.repository }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          tags: ${{ steps.build_image.outputs.tags }}
-
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
-      image_repo: "ghcr.io/${{ github.repository }}/${{ steps.build_image.outputs.image }}"
-      image_digest: "${{ steps.push_image.outputs.digest }}"
-      image_uri: "ghcr.io/${{ github.repository }}/${{ steps.build_image.outputs.image }}@${{ steps.push_image.outputs.digest }}"
       runner: "${{ steps.runner.outputs.cmd }}"
 
   analyze:
@@ -191,22 +137,7 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
-        run: ./${{ env.RUNNER }} stats collect-stats --organization=redhat-cop --csv-output=/tmp/redhat-cop-collect-stats.csv --validate-org-config=true --repository-limit=5 --api-limit=400
-
-      - name: Run 'collect-members-from-ldap' for CoP
-        env:
-          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
-          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
-        run: ./${{ env.RUNNER }} users collect-members-from-ldap --organization=redhat-cop --ldap-members-csv=test-data/ldap-members.csv --supplementary-csv=test-data/supplementary.csv --user-limit=5 --fail-if-no-vpn=false
-
-      - name: Run 'create-who-are-you-issues' for CoP
-        env:
-          GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
-          GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-          GITHUB_WRITE_OAUTH: ${{ secrets.COP_GITHUB_WRITE_OAUTH }}
-        run: ./${{ env.RUNNER }} users create-who-are-you-issues --dry-run=true --organization=redhat-cop --issue-repo=org --ldap-members-csv=test-data/ldap-members.csv --supplementary-csv=test-data/supplementary.csv --permission=admin --team-limit=5 --guess=false --fail-if-no-vpn=false
+        run: ./${{ env.RUNNER }} collect-stats --organization=redhat-cop --csv-output=/tmp/redhat-cop-collect-stats.csv --repository-limit=5
 
       - name: Upload /tmp/*.csv
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
@@ -214,54 +145,6 @@ jobs:
           name: outputs.csv
           path: /tmp/*.csv
           if-no-files-found: error
-
-  sign-image:
-    needs: [ build ]
-    permissions:
-      id-token: write
-      packages: write
-    if: startsWith(github.ref, 'refs/tags/')
-    env:
-      image_uri: ${{ needs.build.outputs.image_uri }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup cosign
-        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
-
-      - name: Cosign login
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | cosign login --username ${{ github.repository_owner }} --password-stdin ghcr.io
-
-      - name: Sign Image
-        run: |
-          cosign sign --yes "${image_uri}"
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        env:
-          TRIVY_USERNAME: ${{ github.repository_owner }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          scan-type: image
-          image-ref: ${{ env.image_uri }}
-          format: "cosign-vuln"
-          output: "cosign-vuln.json"
-
-      - name: Run Trivy SBOM generator
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        env:
-          TRIVY_USERNAME: ${{ github.repository_owner }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          scan-type: image
-          image-ref: ${{ env.image_uri }}
-          format: "spdx-json"
-          output: "spdx-json.json"
-
-      - name: Attach attestations
-        run: |
-          cosign attest --yes --type vuln --predicate cosign-vuln.json "${image_uri}"
-          cosign attest --yes --type cyclonedx --predicate spdx-json.json "${image_uri}"
 
   provenance_binary:
     needs: [ build ]
@@ -274,21 +157,6 @@ jobs:
     with:
       base64-subjects: "${{ needs.build.outputs.hashes }}"
       upload-assets: true
-
-  provenance_image:
-    needs: [ build ]
-    permissions:
-      actions: read # for detecting the Github Actions environment.
-      id-token: write # for creating OIDC tokens for signing.
-      packages: write # for uploading attestations.
-    if: startsWith(github.ref, 'refs/tags/')
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
-    with:
-      image: ${{ needs.build.outputs.image_repo }}
-      digest: ${{ needs.build.outputs.image_digest }}
-      registry-username: ${{ github.repository_owner }}
-    secrets:
-      registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     needs: [ build ]

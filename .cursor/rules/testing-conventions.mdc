@@ -10,7 +10,7 @@ alwaysApply: false
 
 - Unit tests: `*Test.java` — pure JUnit 5 + Mockito or `@QuarkusTest`
 - Integration tests: `*IT.java` — `@QuarkusMainIntegrationTest` with `@Launch`
-- Test data goes in `test-data/` directory or `src/test/resources/`
+- Prefer **`src/test/resources/`** for fixtures (JSON, YAML, small files). Optional ad-hoc dirs (e.g. `test-data/`) only if the test suite already uses them
 
 ## Unit Tests
 

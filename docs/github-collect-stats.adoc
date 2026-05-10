@@ -1,0 +1,65 @@
+// tag::picocli-generated-full-manpage[]
+// tag::picocli-generated-man-section-header[]
+:doctype: manpage
+:revnumber: 
+:manmanual: Github Manual
+:mansource: 
+:man-linkstyle: pass:[blue R < >]
+= github-collect-stats(1)
+
+// end::picocli-generated-man-section-header[]
+
+// tag::picocli-generated-man-section-name[]
+== Name
+
+github-collect-stats - Collect the stats in CSV format
+
+// end::picocli-generated-man-section-name[]
+
+// tag::picocli-generated-man-section-synopsis[]
+== Synopsis
+
+*github collect-stats* [*-hV*] [*-l*=_<repoLimit>_] [*-o*=_<output>_] *-org*=_<organization>_
+
+// end::picocli-generated-man-section-synopsis[]
+
+// tag::picocli-generated-man-section-description[]
+== Description
+
+Collect the stats in CSV format
+
+// end::picocli-generated-man-section-description[]
+
+// tag::picocli-generated-man-section-options[]
+== Options
+
+*-h*, *--help*::
+  Show this help message and exit.
+
+*-l*, *--repository-limit*=_<repoLimit>_::
+  Max repositories to list and process; 0 means no limit (all org repos)
+
+*-o*, *--csv-output*=_<output>_::
+  Output location for CSV
+
+*-org, --organization*=_<organization>_::
+  GitHub organization
+
+*-V*, *--version*::
+  Print version information and exit.
+
+// end::picocli-generated-man-section-options[]
+
+// tag::picocli-generated-man-section-arguments[]
+// end::picocli-generated-man-section-arguments[]
+
+// tag::picocli-generated-man-section-commands[]
+// end::picocli-generated-man-section-commands[]
+
+// tag::picocli-generated-man-section-exit-status[]
+// end::picocli-generated-man-section-exit-status[]
+
+// tag::picocli-generated-man-section-footer[]
+// end::picocli-generated-man-section-footer[]
+
+// end::picocli-generated-full-manpage[]

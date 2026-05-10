@@ -9,14 +9,15 @@ alwaysApply: true
 ## Dependency Injection
 
 - Use **constructor injection** for services and business logic beans
-- Field injection (`@Inject`, `@RestClient`) is acceptable for Picocli commands and MicroProfile REST clients
-- Annotate services with `@ApplicationScoped`, config/producers with `@Singleton`
+- Field injection (`@Inject`) is acceptable for **Picocli commands** (`Runnable` / command classes)
+- Annotate services with `@ApplicationScoped`, config/producers with `@Singleton` where appropriate
+- **MapStruct `@Named` helpers** used by mappers: `@ApplicationScoped` beans in `mapping.fields` (constructor-inject `Logger` when logging is needed)
 
 ## Data Classes
 
-- Use **Java records** for DTOs and value objects (e.g., `OrgMember`, `Repository`)
+- Use **Java records** for DTOs and value objects (e.g. `model.csv.Repository`, `model.graphql.GitHubRepoStatsGraphqlData`)
 - Use Apache Commons Lang3 (`EqualsBuilder`, `HashCodeBuilder`, `CompareToBuilder`) in records when custom equality/ordering is needed
-- Add `@RegisterForReflection` to records and classes required for Quarkus native image
+- Add `@RegisterForReflection` to records and classes required for **Quarkus native** (including MapStruct mapping beans and hand-written GraphQL/DTO types as needed)
 
 ## Error Handling
 
@@ -33,5 +34,6 @@ alwaysApply: true
 ## Conventions
 
 - Every package should have a `package-info.java`
-- REST clients: `@RegisterRestClient` on interfaces in `clients.rest`
-- Commands: `@CommandLine.Command` with options via `@CommandLine.Option`
+- **Commands:** `@CommandLine.Command` on command classes; options via `@CommandLine.Option`; root command aggregates subcommands in `GitHubCommand`
+- **GraphQL:** hand-written client/wrapper classes in **`clients`** (e.g. **`GitHubGraphQLClient`**); **generated** types under **`clients.graphql.generated`** (do not hand-edit)
+- **MicroProfile REST:** only if reintroduced — `@RegisterRestClient` on interfaces in `clients.rest` (not used by collect-stats today)

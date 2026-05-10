@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.garethahealy</groupId>
     <artifactId>github-stats</artifactId>
-    <version>3.1.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>quarkus</packaging>
     <properties>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
@@ -13,6 +13,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.version>3.32.3</quarkus.platform.version>
+        <graphql.codegen.version>5.10.0</graphql.codegen.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <quarkus-mapstruct.version>1.1.0</quarkus-mapstruct.version>
         <skipITs>false</skipITs>
         <surefire-plugin.version>3.5.5</surefire-plugin.version>
     </properties>
@@ -44,22 +47,13 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest-client-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-caffeine</artifactId>
+            <artifactId>quarkus-smallrye-graphql-client</artifactId>
         </dependency>
 
         <dependency>
             <groupId>io.quarkiverse.githubapi</groupId>
             <artifactId>quarkus-github-api</artifactId>
             <version>1.330.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkiverse.freemarker</groupId>
-            <artifactId>quarkus-freemarker</artifactId>
-            <version>1.3.0</version>
         </dependency>
 
         <dependency>
@@ -72,19 +66,20 @@
             <version>1.14.1</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.directory.api</groupId>
-            <artifactId>api-all</artifactId>
-            <version>2.1.7</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.github.ben-manes.caffeine</groupId>
-                    <artifactId>caffeine</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>4.5.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkiverse.mapstruct</groupId>
+            <artifactId>quarkus-mapstruct</artifactId>
+            <version>${quarkus-mapstruct.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jboss.slf4j</groupId>
-            <artifactId>slf4j-jboss-logmanager</artifactId>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
         </dependency>
 
         <dependency>
@@ -122,6 +117,13 @@
                 <version>${compiler-plugin.version}</version>
                 <configuration>
                     <parameters>true</parameters>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
@@ -175,7 +177,7 @@
                     <mainClass>picocli.codegen.docgen.manpage.ManPageGenerator</mainClass>
                     <arguments>
                         <argument>--outdir=docs</argument>
-                        <argument>com.garethahealy.githubstats.commands.GitHubStatsCommand</argument>
+                        <argument>com.garethahealy.githubstats.commands.GitHubCommand</argument>
                     </arguments>
                 </configuration>
                 <dependencies>
@@ -216,6 +218,64 @@
                         <goals>
                             <goal>properties</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.github.kobylynskyi</groupId>
+                <artifactId>graphql-codegen-maven-plugin</artifactId>
+                <version>${graphql.codegen.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Forked graphql-java-codegen Java templates; re-sync from the plugin JAR when bumping ${graphql.codegen.version}. -->
+                    <customTemplatesRoot>${project.basedir}/src/main/resources/graphql-codegen-templates</customTemplatesRoot>
+                    <customTemplates>
+                        <TYPE>templates/java-lang/type.ftl</TYPE>
+                        <INTERFACE>templates/java-lang/interface.ftl</INTERFACE>
+                        <ENUM>templates/java-lang/enum.ftl</ENUM>
+                    </customTemplates>
+                    <graphqlSchemas>
+                        <rootDir>${project.basedir}/src/main/resources/graphql</rootDir>
+                        <includePattern>github-schema.graphqls</includePattern>
+                    </graphqlSchemas>
+                    <outputDir>${project.build.directory}/generated-sources/graphql</outputDir>
+                    <packageName>com.garethahealy.githubstats.clients.graphql.generated</packageName>
+                    <generateApis>false</generateApis>
+                    <generateClient>false</generateClient>
+                    <generateParameterizedFieldsResolvers>false</generateParameterizedFieldsResolvers>
+                    <generateToString>false</generateToString>
+                    <addGeneratedAnnotation>false</addGeneratedAnnotation>
+                    <!-- Nonnull is on the classpath via jakarta.annotation-api (Quarkus); avoids validation-api. -->
+                    <modelValidationAnnotation>jakarta.annotation.Nonnull</modelValidationAnnotation>
+                    <customTypesMapping>
+                        <GitTimestamp>java.lang.String</GitTimestamp>
+                        <GitObjectID>java.lang.String</GitObjectID>
+                    </customTypesMapping>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>add-graphql-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/graphql</source>
+                            </sources>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
