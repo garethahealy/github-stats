@@ -62,14 +62,14 @@ jobs:
           "${runners[0]}" help
 
       - name: Upload target
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: target
           path: target/
           if-no-files-found: error
 
       - name: Upload runner binary
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: runner
           path: target/github-stats-*-runner
@@ -140,7 +140,7 @@ jobs:
         run: ./${{ env.RUNNER }} collect-stats --organization=redhat-cop --csv-output=/tmp/redhat-cop-collect-stats.csv --repository-limit=5
 
       - name: Upload /tmp/*.csv
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: outputs.csv
           path: /tmp/*.csv
