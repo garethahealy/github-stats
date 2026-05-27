@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.garethahealy</groupId>
     <artifactId>github-stats</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.1-SNAPSHOT</version>
     <packaging>quarkus</packaging>
     <properties>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
