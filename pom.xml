@@ -17,7 +17,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <quarkus-mapstruct.version>1.1.0</quarkus-mapstruct.version>
         <skipITs>false</skipITs>
-        <surefire-plugin.version>3.5.5</surefire-plugin.version>
+        <surefire-plugin.version>3.5.6</surefire-plugin.version>
     </properties>
 
     <dependencyManagement>
