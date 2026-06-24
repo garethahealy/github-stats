@@ -12,7 +12,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.platform.version>3.35.4</quarkus.platform.version>
+        <quarkus.platform.version>3.37.0</quarkus.platform.version>
         <graphql.codegen.version>5.10.0</graphql.codegen.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <quarkus-mapstruct.version>1.1.0</quarkus-mapstruct.version>
