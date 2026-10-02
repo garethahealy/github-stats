@@ -42,7 +42,7 @@ jobs:
         env:
           GITHUB_LOGIN: ${{ secrets.COP_GITHUB_LOGIN }}
           GITHUB_OAUTH: ${{ secrets.COP_GITHUB_OAUTH }}
-        run: ./mvnw clean install -Pnative -DskipTests --batch-mode
+        run: ./mvnw clean install -Pnative -DskipTests -DskipITs=true --batch-mode
 
       - name: Test
         env:
